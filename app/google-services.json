@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "963251373970",
+    "project_id": "mano-solidaria-unaj",
+    "storage_bucket": "mano-solidaria-unaj.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:963251373970:android:a1a1c6c74977cdac74e34b",
+        "android_client_info": {
+          "package_name": "com.mano_solidaria.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBegzkxCm1hGXv1deXxEgYpvB8FBgblrDs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
