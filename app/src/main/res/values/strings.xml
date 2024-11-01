@@ -9,4 +9,7 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <string name="prefs_file">com.mano_solidaria.PREFERENCE_FILE_KEY</string>
+    <string name="default_web_client_id">mano-solidaria-unaj</string>
+
 </resources>
