@@ -103,6 +103,7 @@ class LoginActivity : AppCompatActivity() {
 
         google_boton.setOnClickListener{
             //configuración
+
             val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -114,7 +115,6 @@ class LoginActivity : AppCompatActivity() {
             startActivityForResult(googleClient.signInIntent, google_Sign_In)
 
         }
-
     }
 
     private fun showAlert(){
@@ -149,12 +149,13 @@ class LoginActivity : AppCompatActivity() {
                     val credential = GoogleAuthProvider.getCredential(account.idToken, null)
 
                     FirebaseAuth.getInstance().signInWithCredential(credential)
-
-//                    if (it.isSuccessful){
-//                        showHome(account.email ?: "", ProviderType.Google)
-//                    }else{
-//                        showAlert()
-//                    }
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                showHome(account.email ?: "", ProviderType.Google)
+                            } else {
+                                showAlert()
+                            }
+                        }
 
                 }
             } catch (e: ApiException){
