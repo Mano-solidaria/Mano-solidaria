@@ -38,7 +38,7 @@
             android:textSize="20sp"
             android:text="Email" />
 
-        <com.google.android.material.textfield.TextInputEditText
+        <EditText
             android:id="@+id/email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -59,15 +59,15 @@
             android:textColor="@color/black"
             android:text="Contraseña" />
 
-        <com.google.android.material.textfield.TextInputEditText
+        <EditText
             android:id="@+id/password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="60dp"
             android:layout_marginTop="10dp"
-            android:inputType="text"
             android:textColor="@color/black"
             android:textColorHint="@color/black"
+            android:inputType="textPassword"
             android:hint="Ingrese su contraseña" />
 
         <LinearLayout
@@ -84,7 +84,7 @@
                 android:layout_width="150dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="20dp"
-                android:text="Login" />
+                android:text="Log in" />
 
             <Button
                 android:id="@+id/sign_in"
