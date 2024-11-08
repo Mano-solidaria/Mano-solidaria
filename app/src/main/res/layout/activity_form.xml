@@ -1,133 +1,164 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main_layout"
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Rol de Usuario"
-        android:textSize="15sp" />
-
-    <LinearLayout
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/main_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingBottom="4dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Solicitante"
-            android:layout_marginEnd="8dp" />
+            android:text="Rol de Usuario"
+            android:textSize="15sp" />
 
-        <Switch
-            android:id="@+id/usuario_rol_switch"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:thumbTint="@color/purple_700"
-            android:trackTint="@color/black"/>
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingBottom="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Solicitante" />
+
+            <Switch
+                android:id="@+id/usuario_rol_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:thumbTint="@color/purple_700"
+                android:trackTint="@color/black" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Donante" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Donante"
-            android:layout_marginStart="8dp" />
+            android:text="Nombre"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/usuario_nombre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Nombre de usuario"
+            android:inputType="textEmailAddress" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/usuario_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Ingrese su email" />
+
+        <TextView
+            android:id="@+id/usuario_contrasenia_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Contraseña"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/usuario_contrasenia"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Ingrese una contraseña"
+            android:inputType="textPassword" />
+
+        <TextView
+            android:id="@+id/horario_atencion_inicio_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Horario de Atención (Inicio)"
+            android:textSize="15sp" />
+
+        <TimePicker
+            android:id="@+id/horario_atencion_inicio"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_marginBottom="16dp"
+            android:timePickerMode="spinner" />
+
+        <TextView
+            android:id="@+id/horario_atencion_fin_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Horario de Atención (Fin)"
+            android:textSize="15sp" />
+
+        <TimePicker
+            android:id="@+id/horario_atencion_fin"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_marginBottom="16dp"
+            android:timePickerMode="spinner" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dirección"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/usuario_direccion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:hint="Ingrese su dirección" />
+
+
+        <androidx.cardview.widget.CardView
+            app:cardBackgroundColor="@color/black"
+            app:cardCornerRadius="38dp"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp">
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/autocomplete_fragment"
+                android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:map="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/map_form"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            map:cameraTilt="30"
+            map:uiRotateGestures="true"
+            map:uiZoomControls="true" />
+
+        <Button
+            android:id="@+id/boton_guardar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Registrarme" />
+
     </LinearLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Nombre"
-        android:textSize="15sp" />
-
-    <EditText
-        android:id="@+id/usuario_nombre"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Nombre de usuario"
-        android:inputType="textEmailAddress"
-        android:layout_marginBottom="16dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Email"
-        android:textSize="15sp" />
-
-    <EditText
-        android:id="@+id/usuario_email"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Ingrese su email"
-        android:layout_marginBottom="16dp" />
-
-    <TextView
-        android:id="@+id/usuario_contrasenia_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Contraseña"
-        android:textSize="15sp" />
-
-    <EditText
-        android:id="@+id/usuario_contrasenia"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textPassword"
-        android:hint="Ingrese una contraseña"
-        android:layout_marginBottom="16dp" />
-
-    <TextView
-        android:id="@+id/horario_atencion_inicio_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Horario de Atención (Inicio)"
-        android:textSize="15sp" />
-
-    <TimePicker
-        android:id="@+id/horario_atencion_inicio"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_marginBottom="16dp"
-        android:timePickerMode="spinner" />
-
-    <TextView
-        android:id="@+id/horario_atencion_fin_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Horario de Atención (Fin)"
-        android:textSize="15sp" />
-
-    <TimePicker
-        android:id="@+id/horario_atencion_fin"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_marginBottom="16dp"
-        android:timePickerMode="spinner" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Dirección"
-        android:textSize="15sp" />
-
-    <EditText
-        android:id="@+id/usuario_direccion"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Ingrese su dirección"
-        android:layout_marginBottom="10dp" />
-
-    <Button
-        android:id="@+id/boton_guardar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Registrarme" />
-
-</LinearLayout>
+</ScrollView>

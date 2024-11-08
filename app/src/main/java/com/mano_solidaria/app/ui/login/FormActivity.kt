@@ -12,17 +12,43 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.TimePicker
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Status
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.model.PlaceTypes
+import com.google.android.libraries.places.api.model.RectangularBounds
+import com.google.android.libraries.places.api.model.TypeFilter
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
+import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
+import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import com.mano_solidaria.app.BuildConfig
 import com.mano_solidaria.app.R
+import kotlinx.coroutines.delay
+import java.util.Arrays
+import java.util.Locale
 
 
-class FormActivity : AppCompatActivity() {
+class FormActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var usuarioRolSwitch : Switch
     private lateinit var horarioApertura : TimePicker
@@ -46,10 +72,55 @@ class FormActivity : AppCompatActivity() {
     private var userFirebase = FirebaseAuth.getInstance().currentUser
     private var provider: String = ""
     private var LogByGoogle: Boolean = false
+    private lateinit var mMap: GoogleMap
+    private lateinit var mapFragment: SupportMapFragment
+    private lateinit var autocomplete: AutocompleteSupportFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_form)
+
+        val apiKey = BuildConfig.MAPS_API_KEY
+
+        // Construct a PlacesClient
+        Places.initialize(applicationContext, apiKey)
+
+        // Log an error if apiKey is not set.
+        if (apiKey.isEmpty() || apiKey == "DEFAULT_API_KEY") {
+            Log.e("Places test", "No api key")
+            finish()
+            return
+        }
+
+
+        autocomplete = supportFragmentManager.findFragmentById(R.id.autocomplete_fragment)
+            as AutocompleteSupportFragment
+
+        autocomplete.setTypesFilter(listOf("landmark", "restaurant", "store",
+                                            "supermarket", "drugstore",
+                                            "convenience_store", "meal_takeaway",
+                                            "meal_delivery", "bakery"
+                                            ))
+        autocomplete.setTypesFilter(listOf(PlaceTypes.ADDRESS))
+        autocomplete.setCountries("AR")
+        autocomplete.setPlaceFields(listOf(Place.Field.ID, Place.Field.ADDRESS, Place.Field.LAT_LNG))
+
+        autocomplete.setOnPlaceSelectedListener(object :PlaceSelectionListener{
+            override fun onError(p0: Status) {
+                Toast.makeText(this@FormActivity, "busqueda cancelada", Toast.LENGTH_SHORT).show()
+            }
+            override fun onPlaceSelected(p0: Place) {
+                val add = p0.address
+                val id = p0.id
+                val latLng = p0.latLng!!
+                val name = p0.name
+                zoomOnMap(latLng)
+            }
+        })
+
+
+
+
 
         //Hace los inputs y esas cosas y qsyo, tengo una paja. Se hace mañana. Exitos Franco del lunes (ahre que ya es Lunes)
 
@@ -64,7 +135,7 @@ class FormActivity : AppCompatActivity() {
         password = findViewById(R.id.usuario_contrasenia) //Comprobar que no es null
 
         if (userFirebase != null){
-            LogByGoogle = true //No es muy escalable ya que si se desea hacer login con por ejemplo facebook no se puede pero me tiene los huevos lleno ya. Solo voy a comentar ProviderData y ProviderId (Buscalo)
+            LogByGoogle = true //No es muy escalable ya que si se desea hacer login con por ejemplo facebook no se puede pero me tiene los huevos lleno ya. Solo voy a comentar ProviderData y ProviderId (Buscalo) // chupala estoy con otras cosas
             fillOutEmail()
             hidePassword()
         }
@@ -92,8 +163,12 @@ class FormActivity : AppCompatActivity() {
 
         sendLogin = findViewById(R.id.boton_guardar)
 
-        eventListeners()
 
+        mapFragment = supportFragmentManager
+            .findFragmentById(R.id.map_form) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+
+        eventListeners()
     }
 
     private fun eventListeners(){
@@ -319,4 +394,36 @@ class FormActivity : AppCompatActivity() {
 
         return isValid
     }
+
+
+
+    private fun zoomOnMap(latLng: LatLng){
+        val newLatLng = CameraUpdateFactory.newLatLngZoom(latLng,15f)
+        mMap.addMarker(MarkerOptions().position(latLng))
+        mMap.animateCamera(
+            newLatLng,
+            4000,
+            null
+        )
+    }
+
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+
+        // Buenos Aires, Argentina
+        val initialLocation = LatLng(-34.6037, -58.3816)
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLocation, 5f))
+
+        val place = LatLng(-34.77459095976608, -58.266914119799154)
+        val newLatLng = CameraUpdateFactory.newLatLngZoom(place,15f)
+
+        mMap.addMarker(MarkerOptions().position(place).title("Marker in unaj city "))
+        mMap.animateCamera(
+            newLatLng,
+            5000,
+            null
+        )
+    }
 }
+
