@@ -117,8 +117,8 @@ class LoginActivity : AppCompatActivity() {
 
         title = "Autenticación"
 
-        inicio_sesion = findViewById(R.id.sign_in)
-        registro = findViewById(R.id.login)
+        inicio_sesion = findViewById(R.id.login)
+        registro = findViewById(R.id.sign_in)
         mail = findViewById(R.id.email)
         contrasena = findViewById(R.id.password)
         google_boton = findViewById(R.id.login_google)
