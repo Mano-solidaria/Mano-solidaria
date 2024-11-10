@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.mano_solidaria.app.R
 import com.mano_solidaria.app.databinding.ActivityHomeBinding
-
+import com.mano_solidaria.app.ui.donante.ListaPropuestasActivity // Importa la actividad ListaPropuestasActivity
 
 class HomeActivity : AppCompatActivity() {
 
@@ -21,33 +21,27 @@ class HomeActivity : AppCompatActivity() {
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-
-//        val bundle = intent.extras
-//        val provider = bundle?.getString("provider")
-//        val email = bundle?.getString("email")
-
+        // Obtenemos los valores de las preferencias
         val prefs = getSharedPreferences(getString(R.string.prefs_file), Context.MODE_PRIVATE)
         val email = prefs.getString("email", null)
         val provider = prefs.getString("provider", null)
 
-        setup(email ?: "", provider ?:"")
+        setup(email ?: "", provider ?: "")
 
-        //Guardado de datos
-
-//        val prefs = getSharedPreferences(getString(R.string.prefs_file), MODE_PRIVATE).edit()
-//        prefs.putString("email",email)
-//        prefs.putString("provider", provider)
-//        prefs.apply()
-
+        // Configuramos el botón "Siguiente"
+        binding.nextButton.setOnClickListener {
+            // Creamos un Intent para navegar a ListaPropuestasActivity
+            val intent = Intent(this, ListaPropuestasActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     private fun setup(email: String, provider: String){
-
-        title="Inicio"
+        title = "Inicio"
         binding.emailTextView.text = email
         binding.passwordTextView.text = provider
         binding.logOutButton.setOnClickListener{
-            //Borrado de datos
+            // Borramos los datos guardados y cerramos sesión
             val prefs = getSharedPreferences(getString(R.string.prefs_file), MODE_PRIVATE).edit()
             prefs.clear()
             prefs.apply()
@@ -59,7 +53,5 @@ class HomeActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
-
     }
-
 }

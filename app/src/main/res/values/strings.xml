@@ -5,5 +5,8 @@
     <string name="prefs_file">com.mano_solidaria.PREFERENCE_FILE_KEY</string>
     <string name="default_web_client_id">963251373970-ufcki0g7c35fq7ci4g465p197kl2tp2m.apps.googleusercontent.com</string>
     <string name="title_activity_maps">MapsActivity</string>
+    <string name="title_activity_propuesta_detail_host">PropuestaDetailHostActivity</string>
+    <string name="title_propuesta_list">Lista propuestas</string>
+    <string name="title_propuesta_detail">Propuesta Detail</string>
 
 </resources>

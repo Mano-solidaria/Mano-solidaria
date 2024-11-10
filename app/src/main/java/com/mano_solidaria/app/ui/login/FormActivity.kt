@@ -174,6 +174,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun eventListeners(){
         usuarioRolSwitch.setOnCheckedChangeListener { _, isChecked -> //Evento para que aparezcan los horarios o no, acorde al rol escogido.
             visibility(isChecked)
+            userType = if (isChecked) "Donante" else "Solicitante"
         }
 
         sendLogin.setOnClickListener{
