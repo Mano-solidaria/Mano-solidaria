@@ -11,6 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -22,6 +23,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.delay
 
 
@@ -110,7 +113,11 @@ class MainDonadoresActivity : ComponentActivity() {
     fun DonadorDetailScreen(itemId: String?) {
         var donacion by remember { mutableStateOf<Donacion?>(null) }
         var reservas by remember { mutableStateOf<List<Reserva>>(emptyList()) }
+        var diasRestantes by remember { mutableStateOf(1) }  // Valor por defecto de 0 días
         val scope = rememberCoroutineScope()
+
+        // Obtener el contexto actual para el Toast
+        val context = LocalContext.current
 
         LaunchedEffect(itemId) {
             itemId?.let {
@@ -141,7 +148,41 @@ class MainDonadoresActivity : ComponentActivity() {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text("Descripción: ${it.descripcion}")
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = {}, modifier = Modifier.fillMaxWidth()) { Text("Extender duración") }
+
+                        // Botón de extender duración
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Button(onClick = {
+                                // Llamar a la función de actualizar la fecha en el Repository
+                                scope.launch {
+                                    // Extiende la duración
+                                    DonacionRepository.actualizarFechaFin(it.id, diasRestantes)
+
+                                    // Sumar los días restantes al valor actual de 'tiempoRestante'
+                                    val tiempoRestanteActual = it.tiempoRestante.split(" ")[0].toIntOrNull() ?: 0
+                                    val nuevoTiempoRestante = tiempoRestanteActual + diasRestantes
+
+                                    // Actualizar el valor de 'tiempoRestante' en la donación
+                                    donacion = donacion?.copy(tiempoRestante = "$nuevoTiempoRestante días")
+
+                                    // Mostrar un Toast indicando que la duración se extendió
+                                    Toast.makeText(context, "Duración extendida", Toast.LENGTH_SHORT).show()
+                                }
+                            }, modifier = Modifier.weight(1f).height(56.dp)) {
+                                Text("Extender duración")
+                            }
+
+                            // Campo de texto para ingresar los días
+                            TextField(
+                                value = diasRestantes.toString(),
+                                onValueChange = { newValue ->
+                                    diasRestantes = newValue.toIntOrNull() ?: 0  // Convertir a entero, o establecer 0 si es inválido
+                                },
+                                label = { Text("Días") },
+                                modifier = Modifier.width(80.dp).padding(start = 8.dp).height(56.dp),
+                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+                            )
+
+                        }
 
                         // Mostrar reservas
                         Spacer(modifier = Modifier.height(16.dp))
@@ -163,6 +204,7 @@ class MainDonadoresActivity : ComponentActivity() {
             }
         }
     }
+
 
     @Composable
     fun ReservaItem(reserva: Reserva) {

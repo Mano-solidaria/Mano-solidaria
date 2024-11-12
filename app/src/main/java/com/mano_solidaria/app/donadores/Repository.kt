@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.mano_solidaria.app.Utils.calcularDuracion
 import kotlinx.coroutines.tasks.await
+import java.util.Calendar
 
 data class Donacion(
     val id: String,
@@ -93,6 +94,47 @@ object DonacionRepository {
             e.printStackTrace()
         }
     }
+    // Función para actualizar la fechaFin sumando los días al valor actual
+    suspend fun actualizarFechaFin(donacionId: String, numeroDias: Int) {
+        try {
+            // Obtener la donación actual por su ID
+            val donacionRef = db.collection("donaciones").document(donacionId)
+
+            // Obtener el documento de la donación
+            val donacionSnapshot = donacionRef.get().await()
+
+            // Verificar si la donación existe
+            if (donacionSnapshot.exists()) {
+                // Obtener la fechaFin actual
+                val fechaFinActual = donacionSnapshot.getTimestamp("fechaFin")?.toDate()
+                if (fechaFinActual != null) {
+                    // Crear un objeto Calendar a partir de la fecha actual
+                    val calendar = Calendar.getInstance()
+                    calendar.time = fechaFinActual
+
+                    // Sumar los días especificados al campo fechaFin
+                    calendar.add(Calendar.DAY_OF_YEAR, numeroDias)
+
+                    // Crear la nueva fecha de finalización
+                    val nuevaFechaFin = calendar.time
+
+                    // Actualizar el campo fechaFin con la nueva fecha calculada
+                    donacionRef.update("fechaFin", nuevaFechaFin).await()
+
+                    // Informar que la actualización fue exitosa
+                    println("FechaFin actualizada correctamente.")
+                } else {
+                    println("La fechaFin no se encontró en el documento.")
+                }
+            } else {
+                println("No se encontró el documento de la donación con el ID proporcionado.")
+            }
+        } catch (e: Exception) {
+            // Manejo de errores
+            e.printStackTrace()
+        }
+    }
+
 
     // Función para convertir un DocumentSnapshot en un objeto Reserva
     private fun DocumentSnapshot.toReserva(): Reserva {
