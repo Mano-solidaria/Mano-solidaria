@@ -12,13 +12,12 @@ android {
 
     defaultConfig {
         applicationId = "com.mano_solidaria.app"
-        minSdk = 24    //puede ser hasta 19 el min
+        minSdk = 24    // Puede ser hasta 19 el min
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
     }
 
     buildTypes {
@@ -30,19 +29,28 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
     buildFeatures {
         viewBinding = true
         dataBinding = true
         buildConfig = true
+        compose = true // Habilitar Compose
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.0" // Versión correspondiente a Compose
     }
 }
+
 
 
 secrets {
@@ -96,5 +104,20 @@ dependencies {
     // If updating kotlin-bom version number above, also edit project-level build.gradle definition of $kotlin_version variable
     // implementation(platform("org.jetbrains.kotlin:kotlin-bom:$kotlin_version"))
     implementation("com.google.android.libraries.places:places:3.3.0")
+
+    // Dependencias de Jetpack Compose
+    implementation("androidx.compose.ui:ui:1.5.0")
+    implementation("androidx.compose.material:material:1.5.0")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
+    implementation("androidx.compose.foundation:foundation:1.5.0")
+
+    // Dependencia para Navigation Compose
+    implementation("androidx.navigation:navigation-compose:2.7.0")
+    implementation ("io.coil-kt:coil-compose:2.3.0")
+
+
+    // Dependencias para Lifecycle y ViewModel en Compose
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 }
 
