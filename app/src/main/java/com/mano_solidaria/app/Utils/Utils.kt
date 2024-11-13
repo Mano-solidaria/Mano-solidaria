@@ -1,7 +1,8 @@
 package com.mano_solidaria.app.Utils
 
-import java.util.*
 
+
+import java.util.Date
 fun calcularDuracion(fechaInicio: Date?, fechaFin: Date?): String {
     return if (fechaInicio != null && fechaFin != null) {
         val duracion = fechaFin.time - fechaInicio.time
@@ -10,3 +11,4 @@ fun calcularDuracion(fechaInicio: Date?, fechaFin: Date?): String {
         "Fecha no disponible"
     }
 }
+

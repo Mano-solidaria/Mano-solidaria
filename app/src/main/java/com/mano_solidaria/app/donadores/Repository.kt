@@ -163,7 +163,7 @@ object DonacionRepository {
         val pesoReservado = (this.get("pesoReservado") as? Double ?: 0.0).toInt()
         val pesoEntregado = (this.get("pesoEntregado") as? Double ?: 0.0).toInt()
         val descripcion = this.getString("descripcion") ?: "No disponible"
-        val imageURL = this.getString("imageURL") ?: ""
+        val imagenURL = this.getString("imagenURL") ?: ""
         val fechaInicio = this.getTimestamp("fechaInicio")?.toDate()
         val fechaFin = this.getTimestamp("fechaFin")?.toDate()
         val duracion = calcularDuracion(fechaInicio, fechaFin)
@@ -172,7 +172,7 @@ object DonacionRepository {
             id = id,
             pesoAlimento = "$pesoTotal kg de $alimento",
             tiempoRestante = duracion,
-            imagenUrl = imageURL,
+            imagenUrl = imagenURL,
             descripcion = descripcion,
             pesoReservado = pesoReservado,
             pesoEntregado = pesoEntregado,

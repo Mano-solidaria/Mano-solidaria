@@ -4,17 +4,26 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mano_solidaria.app.R
-import java.util.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.*
+import retrofit2.converter.gson.GsonConverterFactory
+import java.io.File
+import java.io.FileOutputStream
+import java.util.Date
 
 class RegistrarDonacionActivity : AppCompatActivity() {
     private lateinit var alimentoEditText: EditText
@@ -23,7 +32,6 @@ class RegistrarDonacionActivity : AppCompatActivity() {
     private lateinit var infoAdicionalEditText: EditText
     private lateinit var imgFoto: ImageView
     private lateinit var btnRegistrar: Button
-    private lateinit var btnElegirFoto: Button
     private lateinit var db: FirebaseFirestore
     private var imageUri: Uri? = null
 
@@ -38,18 +46,10 @@ class RegistrarDonacionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_registrar_donacion)
-
-        alimentoEditText = findViewById(R.id.alimentoEditText)
-        pesoEditText = findViewById(R.id.pesoEditText)
-        duracionEditText = findViewById(R.id.duracionEditText)
-        infoAdicionalEditText = findViewById(R.id.infoAdicionalEditText)
-        imgFoto = findViewById(R.id.imgFoto)
-        btnRegistrar = findViewById(R.id.btnRegistrar)
-        btnElegirFoto = findViewById(R.id.btnElegirFoto)
-
+        initUI()
         db = FirebaseFirestore.getInstance()
 
-        btnElegirFoto.setOnClickListener {
+        findViewById<Button>(R.id.btnElegirFoto).setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             imagePickerLauncher.launch(intent)
         }
@@ -59,6 +59,15 @@ class RegistrarDonacionActivity : AppCompatActivity() {
         }
     }
 
+    private fun initUI() {
+        alimentoEditText = findViewById(R.id.alimentoEditText)
+        pesoEditText = findViewById(R.id.pesoEditText)
+        duracionEditText = findViewById(R.id.duracionEditText)
+        infoAdicionalEditText = findViewById(R.id.infoAdicionalEditText)
+        imgFoto = findViewById(R.id.imgFoto)
+        btnRegistrar = findViewById(R.id.btnRegistrar)
+    }
+
     private fun registrarDonacion() {
         val alimento = alimentoEditText.text.toString().trim()
         val pesoTotal = pesoEditText.text.toString().toDoubleOrNull()
@@ -66,42 +75,88 @@ class RegistrarDonacionActivity : AppCompatActivity() {
         val descripcion = infoAdicionalEditText.text.toString().trim()
         val donanteId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val fechaInicio = Timestamp.now()
-        val fechaFin = if (duracionDias != null) {
-            Timestamp(Date(fechaInicio.toDate().time + duracionDias * 24 * 60 * 60 * 1000L))
-        } else {
-            null
-        }
+        val fechaFin = duracionDias?.let { Timestamp(Date(fechaInicio.toDate().time + it * 86400000L)) }
 
         if (alimento.isEmpty() || pesoTotal == null || duracionDias == null || descripcion.isEmpty()) {
-            Toast.makeText(this, "Por favor, complete todos los campos correctamente.", Toast.LENGTH_SHORT).show()
+            showToast("Por favor, complete todos los campos correctamente.")
             return
         }
 
-        // URL de la imagen
-        val imagenURL = "https://imagenes.elpais.com/resizer/v2/4HWUG3I7PVA7VKAWLQVCBUL4E4.jpg?auth=114b5a92f5b098e2c67d9642883a4e7a3010b6020bac133f60f1c766f565b78f&width=1200"
+        imageUri?.let {
+            uploadImage(it) { imagenURL ->
+                if (imagenURL.isNotEmpty()) {
+                    val donacionData = hashMapOf(
+                        "alimento" to alimento,
+                        "descripcion" to descripcion,
+                        "donanteId" to db.document("users/$donanteId"),
+                        "estado" to "activo",
+                        "fechaInicio" to fechaInicio,
+                        "fechaFin" to fechaFin,
+                        "pesoEntregado" to 0,
+                        "pesoReservado" to 0,
+                        "pesoTotal" to pesoTotal,
+                        "imagenURL" to imagenURL
+                    )
 
-        // Datos de la donación, incluyendo la URL de la imagen
-        val donacionData = hashMapOf(
-            "alimento" to alimento,
-            "descripcion" to descripcion,
-            "donanteId" to db.document("users/$donanteId"),
-            "estado" to "activo",
-            "fechaInicio" to fechaInicio,
-            "fechaFin" to fechaFin,
-            "pesoEntregado" to 0,
-            "pesoReservado" to 0,
-            "pesoTotal" to pesoTotal, // Almacenado como número
-            "imagenURL" to imagenURL // Añadido el campo de la URL de la imagen
-        )
+                    db.collection("donaciones").add(donacionData)
+                        .addOnSuccessListener {
+                            showToast("Donación registrada exitosamente.")
+                            finish()  // Cierra la actividad después de mostrar el mensaje de éxito
+                        }
+                        .addOnFailureListener { e ->
+                            showToast("Error al registrar donación: ${e.message}")
+                        }
+                    loadImage(imagenURL)
+                } else {
+                    showToast("Error al subir la imagen. Intente de nuevo.")
+                }
+            }
+        } ?: showToast("Por favor seleccione una imagen.")
+    }
 
-        db.collection("donaciones")
-            .add(donacionData)
-            .addOnSuccessListener {
-                Toast.makeText(this, "Donación registrada exitosamente.", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Error al registrar donación: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+    private fun uploadImage(uri: Uri, callback: (String) -> Unit) {
+        val file = getFileFromUri(uri) ?: run {
+            showToast("No se pudo obtener el archivo de imagen")
+            return
+        }
+
+        val requestBody = RequestBody.create("image/*".toMediaTypeOrNull(), file)
+        val body = MultipartBody.Part.createFormData("image", file.name, requestBody)
+
+        Retrofit.Builder()
+            .baseUrl("https://marcelomp3.pythonanywhere.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+            .uploadImage(body)
+            .enqueue(object : Callback<Map<String, String>> {
+                override fun onResponse(call: Call<Map<String, String>>, response: Response<Map<String, String>>) {
+                    callback(response.body()?.get("location") ?: "")
+                }
+
+                override fun onFailure(call: Call<Map<String, String>>, t: Throwable) {
+                    showToast("Error de red: ${t.message}")
+                }
+            })
+    }
+
+    private fun getFileFromUri(uri: Uri): File? {
+        val fileName = contentResolver.query(uri, null, null, null, null)?.use {
+            it.takeIf { it.moveToFirst() }?.getString(it.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+        } ?: return null
+
+        val tempFile = File(cacheDir, fileName).apply { createNewFile() }
+        contentResolver.openInputStream(uri)?.use { input ->
+            FileOutputStream(tempFile).use { output -> input.copyTo(output) }
+        }
+        return tempFile
+    }
+
+    private fun loadImage(imagenUrl: String) {
+        Glide.with(this).load(imagenUrl).into(imgFoto)
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
