@@ -1,12 +1,25 @@
 package com.mano_solidaria.app.donadores
 
+import ApiService
+import android.annotation.SuppressLint
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
-
 import com.google.firebase.firestore.DocumentSnapshot
 import com.mano_solidaria.app.Utils.calcularDuracion
 import kotlinx.coroutines.tasks.await
 import java.util.Calendar
+import android.net.Uri
+import android.provider.OpenableColumns
+import com.google.firebase.Timestamp
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import retrofit2.*
+import retrofit2.converter.gson.GsonConverterFactory
+import java.io.File
+import java.io.FileOutputStream
+import okhttp3.MultipartBody
+import android.content.Context
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.util.Date
 
 data class Donacion(
     val id: String,
@@ -20,142 +33,154 @@ data class Donacion(
 )
 
 data class Reserva(
-    val id: String,  // Agregar el id de la reserva
+    val id: String,
     val donacionId: String,
     val palabraClave: String,
     val pesoReservado: Int,
     val usuarioReservadorId: String,
-    val estado: String  // Nuevo campo agregado
+    val estado: String
 )
 
-object DonacionRepository {
+object Repository {
     private val db = FirebaseFirestore.getInstance()
 
-    // Función para obtener todas las donaciones
+    fun currentUser(): String? = FirebaseAuth.getInstance().currentUser?.uid
+
     suspend fun getDonaciones(): List<Donacion> {
         return try {
-            // Obtener el UID del usuario logueado
             val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
-
-            // Filtrar las donaciones por el donanteId que coincida con el UID del usuario logueado
             val snapshots = db.collection("donaciones")
-                .whereEqualTo("donanteId", db.collection("users").document(userId)) // Filtrar por donanteId
+                .whereEqualTo("donanteId", db.collection("users").document(userId))
                 .get()
                 .await()
-
-            // Convertir los documentos a objetos Donacion
             snapshots.documents.map { it.toDonacion() }
         } catch (e: Exception) {
-            emptyList()  // En caso de error, devuelve una lista vacía
+            emptyList()
         }
     }
 
-    // Función para obtener una donación por su ID
     suspend fun getDonacionById(id: String): Donacion? {
         return try {
             val document = db.collection("donaciones").document(id).get().await()
             document.toDonacion()
         } catch (e: Exception) {
-            null  // En caso de error, devuelve null
+            null
         }
     }
 
-    // Función para obtener las reservas por ID de la donación
     fun obtenerReservasPorDonacion(donacionId: String, onResult: (List<Reserva>) -> Unit) {
-        // Obtener referencia al documento de la donación
         val donacionRef = db.collection("donaciones").document(donacionId)
 
         db.collection("reservas")
-            .whereEqualTo("donacionId", donacionRef)  // Filtrar por la referencia de la donación
+            .whereEqualTo("donacionId", donacionRef)
             .get()
             .addOnSuccessListener { querySnapshot ->
-                val reservas = mutableListOf<Reserva>()
-                for (document in querySnapshot.documents) {
-                    // Asegúrate de que 'toReserva' maneje correctamente los campos, incluyendo referencias y fechas
-                    val reserva = document.toReserva()
-                    reservas.add(reserva)
-                }
-                onResult(reservas)  // Devuelve la lista de reservas
+                val reservas = querySnapshot.documents.map { it.toReserva() }
+                onResult(reservas)
             }
             .addOnFailureListener {
-                onResult(emptyList())  // En caso de error, devuelve una lista vacía
+                onResult(emptyList())
             }
     }
+
     suspend fun confirmarEntrega(reservaId: String) {
         try {
-            // Obtener referencia al documento de la reserva por su ID
             val reservaRef = db.collection("reservas").document(reservaId)
-
-            // Actualizar el campo "estado" a "entregado"
-            reservaRef.update("estado", "entregado").await()  // Espera a que la operación termine
-
+            reservaRef.update("estado", "entregado").await()
         } catch (e: Exception) {
-            // Manejo de errores si la actualización falla
             e.printStackTrace()
         }
     }
-    // Función para actualizar la fechaFin sumando los días al valor actual
+
     suspend fun actualizarFechaFin(donacionId: String, numeroDias: Int) {
         try {
-            // Obtener la donación actual por su ID
             val donacionRef = db.collection("donaciones").document(donacionId)
-
-            // Obtener el documento de la donación
             val donacionSnapshot = donacionRef.get().await()
 
-            // Verificar si la donación existe
-            if (donacionSnapshot.exists()) {
-                // Obtener la fechaFin actual
-                val fechaFinActual = donacionSnapshot.getTimestamp("fechaFin")?.toDate()
-                if (fechaFinActual != null) {
-                    // Crear un objeto Calendar a partir de la fecha actual
-                    val calendar = Calendar.getInstance()
-                    calendar.time = fechaFinActual
-
-                    // Sumar los días especificados al campo fechaFin
-                    calendar.add(Calendar.DAY_OF_YEAR, numeroDias)
-
-                    // Crear la nueva fecha de finalización
-                    val nuevaFechaFin = calendar.time
-
-                    // Actualizar el campo fechaFin con la nueva fecha calculada
-                    donacionRef.update("fechaFin", nuevaFechaFin).await()
-
-                    // Informar que la actualización fue exitosa
-                    println("FechaFin actualizada correctamente.")
-                } else {
-                    println("La fechaFin no se encontró en el documento.")
+            donacionSnapshot.getTimestamp("fechaFin")?.toDate()?.let {
+                val calendar = Calendar.getInstance().apply {
+                    time = it
+                    add(Calendar.DAY_OF_YEAR, numeroDias)
                 }
-            } else {
-                println("No se encontró el documento de la donación con el ID proporcionado.")
+                donacionRef.update("fechaFin", calendar.time).await()
             }
         } catch (e: Exception) {
-            // Manejo de errores
             e.printStackTrace()
         }
     }
 
+    suspend fun registrarDonacion(donanteId: String, alimento: String, pesoTotal: Double, duracionDias: Int, descripcion: String, imageUri: Uri, context: Context): String {
+        val fechaInicio = Timestamp.now()
+        val fechaFin = Timestamp(Date(fechaInicio.toDate().time + duracionDias * 86400000L))
 
-    // Función para convertir un DocumentSnapshot en un objeto Reserva
-    private fun DocumentSnapshot.toReserva(): Reserva {
-        val id = this.id
-        val donacionId = this.getDocumentReference("donacionId")?.id ?: ""  // Usamos la referencia del documento
-        val palabraClave = this.getString("palabraClave") ?: ""
-        val pesoReservado = (this.get("pesoReservado") as? Long ?: 0).toInt()
-        val usuarioReservadorId = this.getDocumentReference("usuarioReservador")?.id ?: ""  // Usamos la referencia del documento
-        val estado = this.getString("estado") ?: "pendiente"  // Nuevamente, "pendiente" por defecto
+        val imagenURL = uploadImage(context, imageUri)
+        if (imagenURL.isEmpty()) return "Error al subir la imagen. Intente de nuevo."
 
-        return Reserva(
-            id = id,
-            donacionId = donacionId,
-            palabraClave = palabraClave,
-            pesoReservado = pesoReservado,
-            usuarioReservadorId = usuarioReservadorId,
-            estado = estado  // Asignamos el estado
+        val donacionData = hashMapOf(
+            "alimento" to alimento,
+            "descripcion" to descripcion,
+            "donanteId" to db.document("users/$donanteId"),
+            "estado" to "activo",
+            "fechaInicio" to fechaInicio,
+            "fechaFin" to fechaFin,
+            "pesoEntregado" to 0,
+            "pesoReservado" to 0,
+            "pesoTotal" to pesoTotal,
+            "imagenURL" to imagenURL
         )
+
+        return try {
+            db.collection("donaciones").add(donacionData).await()
+            "Donación registrada exitosamente."
+        } catch (e: Exception) {
+            "Error al registrar donación: ${e.message}"
+        }
     }
 
-    // Función para convertir un DocumentSnapshot en un objeto Donacion
+    suspend fun uploadImage(context: Context, uri: Uri): String {
+        return try {
+            val file = getFileFromUri(context, uri) ?: return ""
+            val requestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
+            val body = MultipartBody.Part.createFormData("image", file.name, requestBody)
+
+            val retrofit = Retrofit.Builder()
+                .baseUrl("https://marcelomp3.pythonanywhere.com/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            val apiService = retrofit.create(ApiService::class.java)
+
+            val response = apiService.uploadImage(body)
+            if (response.isSuccessful) response.body()?.get("location") ?: "" else ""
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ""
+        }
+    }
+
+    @SuppressLint("Range")
+    fun getFileFromUri(context: Context, uri: Uri): File? {
+        val fileName = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)) else null
+        } ?: return null
+
+        val tempFile = File(context.cacheDir, fileName).apply { createNewFile() }
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            FileOutputStream(tempFile).use { outputStream -> inputStream.copyTo(outputStream) }
+        }
+        return tempFile
+    }
+
+    private fun DocumentSnapshot.toReserva(): Reserva {
+        val id = this.id
+        val donacionId = this.getDocumentReference("donacionId")?.id ?: ""
+        val palabraClave = this.getString("palabraClave") ?: ""
+        val pesoReservado = (this.get("pesoReservado") as? Long ?: 0).toInt()
+        val usuarioReservadorId = this.getDocumentReference("usuarioReservador")?.id ?: ""
+        val estado = this.getString("estado") ?: "pendiente"
+        return Reserva(id, donacionId, palabraClave, pesoReservado, usuarioReservadorId, estado)
+    }
+
     private fun DocumentSnapshot.toDonacion(): Donacion {
         val id = this.id
         val alimento = this.getString("alimento") ?: "Desconocido"
@@ -167,16 +192,6 @@ object DonacionRepository {
         val fechaInicio = this.getTimestamp("fechaInicio")?.toDate()
         val fechaFin = this.getTimestamp("fechaFin")?.toDate()
         val duracion = calcularDuracion(fechaInicio, fechaFin)
-
-        return Donacion(
-            id = id,
-            pesoAlimento = "$pesoTotal kg de $alimento",
-            tiempoRestante = duracion,
-            imagenUrl = imagenURL,
-            descripcion = descripcion,
-            pesoReservado = pesoReservado,
-            pesoEntregado = pesoEntregado,
-            pesoTotal = pesoTotal
-        )
+        return Donacion(id, "$pesoTotal kg de $alimento", duracion, imagenURL, descripcion, pesoReservado, pesoEntregado, pesoTotal)
     }
 }

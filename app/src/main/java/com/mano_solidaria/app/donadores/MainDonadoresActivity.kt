@@ -1,6 +1,4 @@
-// MainDonadoresActivity.kt
 package com.mano_solidaria.app.donadores
-import androidx.compose.ui.platform.LocalContext
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -25,10 +23,11 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
-import kotlinx.coroutines.delay
+import androidx.compose.ui.platform.LocalContext
 
 
 class MainDonadoresActivity : ComponentActivity() {
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,16 +53,14 @@ class MainDonadoresActivity : ComponentActivity() {
 
         LaunchedEffect(true) {
             scope.launch {
-                val donacionesList = DonacionRepository.getDonaciones()
+                val donacionesList = Repository.getDonaciones()
                 donadores.clear()
                 donadores.addAll(donacionesList)
             }
         }
 
         Scaffold(
-            topBar = {
-                TopAppBar(title = { Text("Donaciones Activas") })
-            }
+            topBar = { TopAppBar(title = { Text("Donaciones Activas") }) }
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 Button(
@@ -108,23 +105,19 @@ class MainDonadoresActivity : ComponentActivity() {
         }
         Divider()
     }
+
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     @Composable
     fun DonadorDetailScreen(itemId: String?) {
         var donacion by remember { mutableStateOf<Donacion?>(null) }
         var reservas by remember { mutableStateOf<List<Reserva>>(emptyList()) }
-        var diasRestantes by remember { mutableStateOf(1) }  // Valor por defecto de 0 días
-        val scope = rememberCoroutineScope()
-
-        // Obtener el contexto actual para el Toast
+        var diasRestantes by remember { mutableIntStateOf(1) }
         val context = LocalContext.current
 
         LaunchedEffect(itemId) {
             itemId?.let {
-                // Cargar la donación por ID
-                donacion = DonacionRepository.getDonacionById(it)
-                // Cargar las reservas para esta donación
-                DonacionRepository.obtenerReservasPorDonacion(it) { reservasList ->
+                donacion = Repository.getDonacionById(it)
+                Repository.obtenerReservasPorDonacion(it) { reservasList ->
                     reservas = reservasList
                 }
             }
@@ -140,59 +133,19 @@ class MainDonadoresActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp),
                             contentScale = ContentScale.Crop
                         )
-                        Text("Alimento: ${it.pesoAlimento}")
-                        Text("Duración Restante: ${it.tiempoRestante}")
-                        Text("Disponible: ${it.pesoTotal} kg")
-                        Text("Reservado: ${it.pesoReservado} kg")
-                        Text("Entregado: ${it.pesoEntregado} kg")
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Descripción: ${it.descripcion}")
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Botón de extender duración
-                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            Button(onClick = {
-                                // Llamar a la función de actualizar la fecha en el Repository
-                                scope.launch {
-                                    // Extiende la duración
-                                    DonacionRepository.actualizarFechaFin(it.id, diasRestantes)
-
-                                    // Sumar los días restantes al valor actual de 'tiempoRestante'
-                                    val tiempoRestanteActual = it.tiempoRestante.split(" ")[0].toIntOrNull() ?: 0
-                                    val nuevoTiempoRestante = tiempoRestanteActual + diasRestantes
-
-                                    // Actualizar el valor de 'tiempoRestante' en la donación
-                                    donacion = donacion?.copy(tiempoRestante = "$nuevoTiempoRestante días")
-
-                                    // Mostrar un Toast indicando que la duración se extendió
-                                    Toast.makeText(context, "Duración extendida", Toast.LENGTH_SHORT).show()
-                                }
-                            }, modifier = Modifier.weight(1f).height(56.dp)) {
-                                Text("Extender duración")
+                        DonacionDetails(donacion!!)
+                        ExtenderDuracionButton(
+                            donacion = donacion!!,
+                            diasRestantes = diasRestantes,
+                            onDiasRestantesChange = { diasRestantes = it },
+                            onDurationExtended = {
+                                Toast.makeText(context, "Duración extendida", Toast.LENGTH_SHORT).show()
                             }
+                        )
 
-                            // Campo de texto para ingresar los días
-                            TextField(
-                                value = diasRestantes.toString(),
-                                onValueChange = { newValue ->
-                                    diasRestantes = newValue.toIntOrNull() ?: 0  // Convertir a entero, o establecer 0 si es inválido
-                                },
-                                label = { Text("Días") },
-                                modifier = Modifier.width(80.dp).padding(start = 8.dp).height(56.dp),
-                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
-                            )
-
-                        }
-
-                        // Mostrar reservas
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Reservas:", style = MaterialTheme.typography.h6)
-                        // Solo mostrar reservas si hay alguna
                         if (reservas.isNotEmpty()) {
                             LazyColumn(modifier = Modifier.weight(1f)) {
-                                items(reservas.size) { index ->
-                                    ReservaItem(reservas[index])
-                                }
+                                items(reservas.size) { index -> ReservaItem(reservas[index]) }
                             }
                         } else {
                             Text("No hay reservas para esta donación.")
@@ -205,13 +158,60 @@ class MainDonadoresActivity : ComponentActivity() {
         }
     }
 
+    @Composable
+    fun DonacionDetails(donacion: Donacion) {
+        Column {
+            Text("Alimento: ${donacion.pesoAlimento}")
+            Text("Duración Restante: ${donacion.tiempoRestante}")
+            Text("Disponible: ${donacion.pesoTotal} kg")
+            Text("Reservado: ${donacion.pesoReservado} kg")
+            Text("Entregado: ${donacion.pesoEntregado} kg")
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Descripción: ${donacion.descripcion}")
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+
+    @Composable
+    fun ExtenderDuracionButton(
+        donacion: Donacion,
+        diasRestantes: Int,
+        onDiasRestantesChange: (Int) -> Unit,
+        onDurationExtended: () -> Unit
+    ) {
+        val scope = rememberCoroutineScope()
+        val donacionState = remember { mutableStateOf(donacion) }
+
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Button(
+                onClick = {
+                    scope.launch {
+                        Repository.actualizarFechaFin(donacionState.value.id, diasRestantes)
+                        val tiempoRestanteActual = donacionState.value.tiempoRestante.split(" ")[0].toIntOrNull() ?: 0
+                        val nuevoTiempoRestante = tiempoRestanteActual + diasRestantes
+                        donacionState.value = donacionState.value.copy(tiempoRestante = "$nuevoTiempoRestante días")
+                        onDurationExtended()
+                    }
+                },
+                modifier = Modifier.weight(1f).height(56.dp)
+            ) {
+                Text("Extender duración")
+            }
+
+            TextField(
+                value = diasRestantes.toString(),
+                onValueChange = { newValue -> onDiasRestantesChange(newValue.toIntOrNull() ?: 0) },
+                label = { Text("Días") },
+                modifier = Modifier.width(80.dp).padding(start = 8.dp).height(56.dp),
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+            )
+        }
+    }
 
     @Composable
     fun ReservaItem(reserva: Reserva) {
         val scope = rememberCoroutineScope()
-        val context = LocalContext.current // Contexto necesario para el Toast
-
-        // Creamos un estado mutable para seguir el estado de la reserva
+        val context = LocalContext.current
         var updatedReserva by remember { mutableStateOf(reserva) }
 
         Row(
@@ -223,20 +223,14 @@ class MainDonadoresActivity : ComponentActivity() {
             Column(modifier = Modifier.weight(1f)) {
                 Text("Palabra clave: ${updatedReserva.palabraClave}")
                 Text("Kg reservados: ${updatedReserva.pesoReservado}")
-                Text("Estado: ${updatedReserva.estado}")  // Agregamos el campo 'estado'
+                Text("Estado: ${updatedReserva.estado}")
             }
 
-            // Mostrar el botón solo si el estado es "pendiente"
             if (updatedReserva.estado == "pendiente") {
                 Button(onClick = {
-                    // Llamamos a la función confirmarEntrega
                     scope.launch {
-                        DonacionRepository.confirmarEntrega(updatedReserva.id)
-
-                        // Actualizamos el estado local para reflejar el cambio en el UI
-                        updatedReserva = updatedReserva.copy(estado = "entregada") // O el estado que corresponda
-
-                        // Muestra el Toast cuando se confirma la entrega
+                        Repository.confirmarEntrega(updatedReserva.id)
+                        updatedReserva = updatedReserva.copy(estado = "entregada")
                         Toast.makeText(context, "Entrega confirmada", Toast.LENGTH_SHORT).show()
                     }
                 }) {
@@ -244,11 +238,6 @@ class MainDonadoresActivity : ComponentActivity() {
                 }
             }
         }
-
         Divider()
     }
-
-
-
-
 }
