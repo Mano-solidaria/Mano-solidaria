@@ -27,6 +27,9 @@
             android:name=".solicitantes.MainSolicitantesActivity"
             android:exported="false" />
         <activity
+            android:name=".solicitantes.ReservasActivity"
+            android:exported="false" />
+        <activity
             android:name=".donadores.RegistrarDonacionActivity"
             android:exported="false" />
         <activity
