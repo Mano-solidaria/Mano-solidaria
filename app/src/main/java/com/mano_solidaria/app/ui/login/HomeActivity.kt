@@ -66,7 +66,7 @@ class HomeActivity : AppCompatActivity() {
                             startActivity(intent)
                         } else if (userRole == "solicitante") {
                             //val intent = Intent(this, MainSolicitantesActivity::class.java)
-                            val intent = Intent(this, ReservasActivity::class.java)
+                            val intent = Intent(this, MainSolicitantesActivity::class.java)
                             startActivity(intent)
                         } else {
                             Toast.makeText(this, "Rol de usuario no reconocido.", Toast.LENGTH_SHORT).show()
