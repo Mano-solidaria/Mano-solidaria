@@ -67,8 +67,10 @@ object ReservasRepository {
         }
     }
 
-    fun cancelarReserva(id: String){
-        return
+    fun cancelarReserva(id: String) {
+        db.collection("reservas")
+            .document(id)
+            .delete()
     }
 
     private suspend fun getUserNameById(userId: String): String {
