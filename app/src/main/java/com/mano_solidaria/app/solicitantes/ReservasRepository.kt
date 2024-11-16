@@ -28,10 +28,15 @@ data class Reserva(
     val id: String,
     val donacionId: String,
     val palabraClave: String,
-    val pesoReservado: Int,
+    val pesoReservado: String, // por ahora string
     val usuarioReservadorId: String,
     val estado: String,
-    val nombreDonante: String
+    val nombreDonante: String,
+    val imagenURL: String,
+    val distancia: String,
+    val tiempoRestante: String,
+    val alimento: String,
+    val descripcion: String
 )
 
 object ReservasRepository {
@@ -82,7 +87,7 @@ object ReservasRepository {
         val id = this.id
         val donacionId = this.getDocumentReference("donacionId")?.id ?: ""  // Obtener el ID de la donación
         val palabraClave = this.getString("palabraClave") ?: ""  // Obtener la palabra clave
-        val pesoReservado = (this.get("pesoReservado") as? Long ?: 0).toInt()  // Obtener el peso reservado
+        val pesoReservado = (this.get("pesoReservado") as? Long ?: 0).toString()  // Obtener el peso reservado (por ahora string)
         val usuarioReservadorId = this.getDocumentReference("usuarioReservador")?.id ?: ""  // Obtener el ID del reservador
         val estado = this.getString("estado") ?: "pendiente"  // Obtener el estado (si está pendiente o no)
 
@@ -102,7 +107,24 @@ object ReservasRepository {
             "Desconocido"
         }
 
+        // Obtener la URL de la imagen desde el documento de la donación
+        val imagenURL = donacionSnapshot?.getString("imagenURL") ?: "Sin URL"
+
+        // Obtener el nombre del alimento desde el documento de la donación
+        val alimento = donacionSnapshot?.getString("alimento") ?: "Sin nombre de alimento"
+
+        // Obtener la descripcion desde el documento de la donación
+        val descripcion = donacionSnapshot?.getString("descripcion") ?: "Sin descripcion"
+
+        // Mock distancia
+        val distancia = "mock distancia"
+
+        // Mock tiempo restante
+        val tiempoRestante = "mock tiempo restante"
+
         // Crear y retornar un objeto de tipo "Reserva"
-        return Reserva(id, donacionId, palabraClave, pesoReservado, usuarioReservadorId, estado, nombreDonante)
+        return Reserva(id, donacionId, palabraClave, pesoReservado,
+            usuarioReservadorId, estado, nombreDonante, imagenURL,
+            distancia, tiempoRestante, alimento, descripcion)
     }
 }

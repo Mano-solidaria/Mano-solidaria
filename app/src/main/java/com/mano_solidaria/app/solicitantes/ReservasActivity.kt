@@ -81,21 +81,20 @@ class ReservasActivity : ComponentActivity(){
                 .clickable(onClick = onClick)
                 .padding(vertical = 8.dp)
         ) {
-//            AsyncImage(
-//                model = reserva.imagenUrl,
-//                contentDescription = "Imagen de reserva",
-//                modifier = Modifier.size(80.dp).padding(end = 8.dp),
-//                contentScale = ContentScale.Crop
-//            )
-            Column(modifier = Modifier.weight(1f)) {
-//                Text(reserva.pesoReservado)
-//                Text("Distancia")
-                  Text(reserva.id)
-                  Text(reserva.nombreDonante)
+            AsyncImage(
+                model = reserva.imagenURL,
+                contentDescription = "Imagen de reserva",
+                modifier = Modifier.size(80.dp).padding(end = 8.dp),
+                contentScale = ContentScale.Crop
+            )
+            Column(modifier = Modifier.weight(1f).padding(8.dp)) {
+                Text("Peso reservado: ${reserva.pesoReservado}")
+                Text("Distancia: ${reserva.distancia}")
+//               Text(reserva.id)
             }
-            Column(modifier = Modifier.weight(1f)) {
-//                Text("Nombre donante")
-//                Text("Tiempo restante")
+            Column(modifier = Modifier.weight(1f).padding(8.dp)) {
+                Text("Donante: ${reserva.nombreDonante}")
+                Text("Tiempo restante: ${reserva.tiempoRestante}")
             }
         }
         Divider()
@@ -118,12 +117,12 @@ class ReservasActivity : ComponentActivity(){
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 reserva?.let {
                     Column {
-//                        AsyncImage(
-//                            model = it.imagenUrl,
-//                            contentDescription = "Imagen de reserva",
-//                            modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp),
-//                            contentScale = ContentScale.Crop
-//                        )
+                        AsyncImage(
+                            model = it.imagenURL,
+                            contentDescription = "Imagen de reserva",
+                            modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp),
+                            contentScale = ContentScale.Crop
+                        )
                         ReservaDetails(reserva!!)
                     }
                 } ?: run {
@@ -135,14 +134,63 @@ class ReservasActivity : ComponentActivity(){
 
     @Composable
     fun ReservaDetails(reserva: Reserva) {
-        Column {
-            Text("Alimento: Nombre")
-            Text("Reservado: ${reserva.pesoReservado}")
-            Text("Distancia: (distancia)")
-            Text("Duracion: (duracion)")
-            Text("Donante: (donante)")
-            Text("Descripcion: (descripcion) ")
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Fila 1: Alimento y Reservado
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Alimento: ${reserva.alimento}", modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp))
+                Text("Peso reservado: ${reserva.pesoReservado}", modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp))
+                Text("", modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp))
+            }
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Fila 2: Distancia, Duración y Donante
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Distancia: ${reserva.distancia}", modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp))
+                Text("Duración: ${reserva.tiempoRestante}", modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp))
+                Text("Donante: ${reserva.nombreDonante}", modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Fila 3: Descripción
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text("Descripción: ${reserva.descripcion}", modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Fila 4: Tiempo restante
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text("Tiempo restante para retirar: ${reserva.tiempoRestante}", modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Fila 5: Palabra clave
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text("Palabra clave: ${reserva.palabraClave}", modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp))
+            }
         }
     }
 
