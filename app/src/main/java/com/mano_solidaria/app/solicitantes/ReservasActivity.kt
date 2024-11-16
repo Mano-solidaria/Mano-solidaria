@@ -38,7 +38,8 @@ class ReservasActivity : ComponentActivity(){
         NavHost(navController, startDestination = "list") {
             composable("list") { ReservasListScreen(navController) }
             composable("detail/{itemId}") { backStackEntry ->
-                ReservaDetailScreen(backStackEntry.arguments?.getString("itemId"))
+                ReservaDetailScreen(backStackEntry.arguments?.getString("itemId"),
+                    navController = navController)
             }
         }
     }
@@ -102,7 +103,8 @@ class ReservasActivity : ComponentActivity(){
 
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     @Composable
-    fun ReservaDetailScreen(itemId: String?) {
+    fun ReservaDetailScreen(itemId: String?, navController: NavController) {
+        var navController = navController
         var reserva by remember { mutableStateOf<Reserva?>(null) }
         //var diasRestantes by remember { mutableIntStateOf(1) }
         val context = LocalContext.current
@@ -123,7 +125,7 @@ class ReservasActivity : ComponentActivity(){
                             modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp),
                             contentScale = ContentScale.Crop
                         )
-                        ReservaDetails(reserva!!)
+                        ReservaDetails(reserva!!, navController)
                     }
                 } ?: run {
                     Text("Cargando detalles...")
@@ -133,7 +135,10 @@ class ReservasActivity : ComponentActivity(){
     }
 
     @Composable
-    fun ReservaDetails(reserva: Reserva) {
+    fun ReservaDetails(reserva: Reserva, navController: NavController) {
+        var showDialog by remember { mutableStateOf(false) } // Estado para mostrar el diálogo
+        var resultadoCancelacion by remember { mutableStateOf("") } // Mensaje de cancelación
+        var navController = navController
         Column(modifier = Modifier.padding(16.dp)) {
             // Fila 1: Alimento y Reservado
             Row(
@@ -191,7 +196,70 @@ class ReservasActivity : ComponentActivity(){
                     .weight(1f)
                     .padding(8.dp))
             }
+
+            // Fila 6: Botón de Cancelar Reserva
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = {
+                        showDialog = true // Mostrar el diálogo cuando se presiona el botón
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancelar reserva")
+                }
+            }
+
+            // Mostrar el mensaje de resultado de la cancelación
+            if (resultadoCancelacion.isNotEmpty()) {
+                Text(
+                    resultadoCancelacion,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
         }
+
+        // Mostrar el diálogo de confirmación si showDialog es true
+        if (showDialog) {
+            ConfirmacionCancelarReservaDialog(
+                onConfirm = {
+                    // Lógica para cancelar la reserva
+                    ReservasRepository.cancelarReserva(reserva.id)
+
+                    // Mostrar el mensaje de "Reserva cancelada"
+                    //Toast.makeText(LocalContext.current, "Reserva cancelada", Toast.LENGTH_SHORT).show()
+
+                    // Regresar a la pantalla anterior (listado de reservas)
+                    navController.navigate("list") {
+                        // Aquí se asegura de que no agregue "detail/{itemId}" al back stack
+                        popUpTo("detail/{itemId}") { inclusive = true }
+                    } // Regresa a la pantalla anterior
+
+                    showDialog = false // Cerrar el diálogo después de la confirmación
+                },
+                onDismiss = {
+                    showDialog = false // Cerrar el diálogo si el usuario presiona "No"
+                }
+            )
+        }
+    }
+
+    @Composable
+    fun ConfirmacionCancelarReservaDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Confirmación") },
+            text = { Text("¿Estás seguro de que deseas cancelar la reserva?") },
+            confirmButton = {
+                TextButton(onClick = onConfirm) {
+                    Text("Sí")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("No")
+                }
+            }
+        )
     }
 
 }

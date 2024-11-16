@@ -67,6 +67,10 @@ object ReservasRepository {
         }
     }
 
+    fun cancelarReserva(id: String){
+        return
+    }
+
     private suspend fun getUserNameById(userId: String): String {
         val userSnapshot = db.collection("users").document(userId).get().await()
         return userSnapshot.getString("UsuarioNombre") ?: "Nombre desconocido"
