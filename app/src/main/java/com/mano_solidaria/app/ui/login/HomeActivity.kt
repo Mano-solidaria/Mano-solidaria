@@ -12,6 +12,7 @@ import com.mano_solidaria.app.R
 import com.mano_solidaria.app.databinding.ActivityHomeBinding
 import com.mano_solidaria.app.donadores.MainDonadoresActivity
 import com.mano_solidaria.app.solicitantes.MainSolicitantesActivity  // Importa la actividad para solicitantes
+import com.mano_solidaria.app.solicitantes.ReservasActivity
 
 class HomeActivity : AppCompatActivity() {
 
@@ -64,6 +65,7 @@ class HomeActivity : AppCompatActivity() {
                             val intent = Intent(this, MainDonadoresActivity::class.java)
                             startActivity(intent)
                         } else if (userRole == "solicitante") {
+                            //val intent = Intent(this, MainSolicitantesActivity::class.java)
                             val intent = Intent(this, MainSolicitantesActivity::class.java)
                             startActivity(intent)
                         } else {

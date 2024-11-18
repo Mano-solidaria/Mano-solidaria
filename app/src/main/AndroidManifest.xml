@@ -22,6 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Manosolidaria"
         android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="true"
         tools:targetApi="31">
         <!--android:exported="false"-->
         <activity
@@ -37,6 +38,9 @@
         </activity>
         <activity
             android:name=".solicitantes.MainSolicitantesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".solicitantes.ReservasActivity"
             android:exported="false" />
         <activity
             android:name=".donadores.RegistrarDonacionActivity"
