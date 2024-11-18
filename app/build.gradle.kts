@@ -18,6 +18,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
 
     buildTypes {
@@ -48,6 +51,11 @@ android {
 
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.0" // Versión correspondiente a Compose
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
 }
 
@@ -80,6 +88,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -99,7 +111,9 @@ dependencies {
     implementation(kotlin("script-runtime"))
 
     // Maps SDK for Android
+    implementation ("com.google.maps.android:maps-compose:4.4.1")
     implementation("com.google.android.gms:play-services-maps:19.0.0")
+
 
     // If updating kotlin-bom version number above, also edit project-level build.gradle definition of $kotlin_version variable
     // implementation(platform("org.jetbrains.kotlin:kotlin-bom:$kotlin_version"))
@@ -110,6 +124,8 @@ dependencies {
     implementation("androidx.compose.material:material:1.5.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
     implementation("androidx.compose.foundation:foundation:1.5.0")
+
+
 
     // Dependencia para Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.7.0")
@@ -125,5 +141,9 @@ dependencies {
     implementation ("com.squareup.okhttp3:okhttp:4.10.0")
 
     implementation (libs.glide)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
 
