@@ -77,7 +77,11 @@ class RegistrarDonacionActivity : AppCompatActivity() {
                     this@RegistrarDonacionActivity
                 )
                 Toast.makeText(this@RegistrarDonacionActivity, resultado, Toast.LENGTH_SHORT).show()
-                if (resultado == "Donación registrada exitosamente.") finish()
+                if (resultado == "Donación registrada exitosamente.") { //finish()
+                    val intent = Intent(this@RegistrarDonacionActivity, MainDonadoresActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK //PRIMERA SOLUCION HASTA QUE SE VUELVA A HABLAR
+                    startActivity(intent)
+                }
                 else Toast.makeText(this@RegistrarDonacionActivity, "Error al registrar donación: $resultado", Toast.LENGTH_SHORT).show()
             }
         }

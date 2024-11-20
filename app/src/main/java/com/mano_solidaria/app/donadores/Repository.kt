@@ -29,7 +29,8 @@ data class Donacion(
     val descripcion: String,
     val pesoReservado: Int,
     val pesoEntregado: Int,
-    val pesoTotal: Int
+    val pesoTotal: Int,
+    val estado: String
 )
 
 data class Reserva(
@@ -192,6 +193,7 @@ object Repository {
         val fechaInicio = this.getTimestamp("fechaInicio")?.toDate()
         val fechaFin = this.getTimestamp("fechaFin")?.toDate()
         val duracion = calcularDuracion(fechaInicio, fechaFin)
-        return Donacion(id, "$pesoTotal kg de $alimento", duracion, imagenURL, descripcion, pesoReservado, pesoEntregado, pesoTotal)
+        val estado = this.getString("estado") ?: ""
+        return Donacion(id, "$pesoTotal kg de $alimento", duracion, imagenURL, descripcion, pesoReservado, pesoEntregado, pesoTotal, estado)
     }
 }

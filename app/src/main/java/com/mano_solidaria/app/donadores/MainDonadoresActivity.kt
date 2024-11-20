@@ -31,6 +31,8 @@ class MainDonadoresActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val intent = Intent(this, NotificationService::class.java)
+        startService(intent)
         setContent { MainDonadoresApp() }
     }
 
@@ -165,6 +167,7 @@ class MainDonadoresActivity : ComponentActivity() {
             Text("Duración Restante: ${donacion.tiempoRestante}")
             Text("Disponible: ${donacion.pesoTotal} kg")
             Text("Reservado: ${donacion.pesoReservado} kg")
+            Text("Estado: ${donacion.estado}")
             Text("Entregado: ${donacion.pesoEntregado} kg")
             Spacer(modifier = Modifier.height(16.dp))
             Text("Descripción: ${donacion.descripcion}")

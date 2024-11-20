@@ -25,10 +25,15 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
+import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import org.mindrot.jbcrypt.BCrypt
 
 
 class LoginActivity : AppCompatActivity() {
@@ -60,7 +65,8 @@ class LoginActivity : AppCompatActivity() {
                                 loginByGoogle()
                                 //showHome(user!!.email.toString(), ProviderType.Google)
                             } else {
-                                showAlert()
+                                val message= loginFallido(task.exception)
+                                showAlert(message)
                             }
                         }
                 } else {
@@ -135,9 +141,12 @@ class LoginActivity : AppCompatActivity() {
                     if (it.isSuccessful){
                         showHome(it.result?.user?.email ?: "", ProviderType.Basic)
                     }else{
-                        showAlert()
+                        val errorMessage = loginFallido(it.exception)
+                        showAlert(errorMessage)
                     }
                 }
+            } else {
+                showAlert("Por favor, completa todos los campos")
             }
         }
 
@@ -146,6 +155,9 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+//    fun validatePassword(contrasena: String, hash: String): Boolean {
+//        return BCrypt.checkpw(contrasena, hash)
+//    }
 
     private fun startGoogle(){
         //configuración
@@ -175,10 +187,10 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    private fun showAlert(){
+    private fun showAlert(message: String){
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Error")
-        builder.setMessage("Se ha producido un error autenticando al usuario")
+        builder.setMessage(message)
         builder.setPositiveButton("Aceptar",null)
         val dialog: AlertDialog = builder.create()
         dialog.show()
@@ -215,6 +227,38 @@ class LoginActivity : AppCompatActivity() {
             }.addOnFailureListener { e ->
                 Log.w("Firestore", "Error al verificar el usuario", e)
             }
+        }
+    }
+}
+
+private fun loginFallido(exception: Exception?): String {
+    return when (exception) {
+        is FirebaseAuthInvalidCredentialsException -> {
+            when (exception.errorCode) {
+                "ERROR_INVALID_EMAIL" -> "Formato de correo no válido."
+                "ERROR_USER_DISABLED" -> "La cuenta ha sido deshabilitada."
+                "ERROR_INVALID_CREDENTIAL" -> "El correo electrónico o la contraseña que ingresaste no son correctos. Por favor, revisa tus datos e inténtalo nuevamente"
+                else -> "Credenciales no válidas. Verifica tus datos."
+            }
+        }
+        is FirebaseAuthInvalidUserException -> {
+            when (exception.errorCode) {
+                "ERROR_USER_NOT_FOUND" -> "El usuario no existe. Verifica el correo o regístrate."
+                "ERROR_USER_DISABLED" -> "La cuenta ha sido deshabilitada."
+                else -> "Usuario no encontrado o cuenta desactivada."
+            }
+        }
+        is FirebaseAuthUserCollisionException -> {
+            "Conflicto de usuarios: ${exception.message}"
+        }
+        is FirebaseAuthException -> {
+            "Error de autenticación de Firebase: ${exception.message}"
+        }
+        null -> {
+            "Error desconocido de inicio de sesión."
+        }
+        else -> {
+            "Error inesperado: ${exception.message}"
         }
     }
 }
