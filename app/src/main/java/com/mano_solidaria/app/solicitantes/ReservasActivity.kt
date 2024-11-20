@@ -6,6 +6,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.platform.LocalContext
 import com.mano_solidaria.app.solicitantes.ReservasRepository
@@ -81,6 +83,7 @@ class ReservasActivity : ComponentActivity(){
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
                 .padding(vertical = 8.dp)
+                .border(1.dp, color = Color.Black)
         ) {
             AsyncImage(
                 model = reserva.imagenURL,
@@ -98,7 +101,7 @@ class ReservasActivity : ComponentActivity(){
                 Text("Tiempo restante: ${reserva.tiempoRestante}")
             }
         }
-        Divider()
+        //Divider()
     }
 
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -142,7 +145,7 @@ class ReservasActivity : ComponentActivity(){
         Column(modifier = Modifier.padding(16.dp)) {
             // Fila 1: Alimento y Reservado
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().border(1.dp, color = Color.Black),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Alimento: ${reserva.alimento}", modifier = Modifier
@@ -159,7 +162,7 @@ class ReservasActivity : ComponentActivity(){
 
             // Fila 2: Distancia, Duración y Donante
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().border(1.dp, color = Color.Black),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Distancia: ${reserva.distancia}", modifier = Modifier
@@ -175,7 +178,7 @@ class ReservasActivity : ComponentActivity(){
             Spacer(modifier = Modifier.height(16.dp))
 
             // Fila 3: Descripción
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth().border(1.dp, color = Color.Black)) {
                 Text("Descripción: ${reserva.descripcion}", modifier = Modifier
                     .weight(1f)
                     .padding(8.dp))
@@ -183,7 +186,7 @@ class ReservasActivity : ComponentActivity(){
             Spacer(modifier = Modifier.height(16.dp))
 
             // Fila 4: Tiempo restante
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth().border(1.dp, color = Color.Black)) {
                 Text("Tiempo restante para retirar: ${reserva.tiempoRestante}", modifier = Modifier
                     .weight(1f)
                     .padding(8.dp))
@@ -191,11 +194,12 @@ class ReservasActivity : ComponentActivity(){
             Spacer(modifier = Modifier.height(16.dp))
 
             // Fila 5: Palabra clave
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth().border(1.dp, color = Color.Black)) {
                 Text("Palabra clave: ${reserva.palabraClave}", modifier = Modifier
                     .weight(1f)
                     .padding(8.dp))
             }
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Fila 6: Botón de Cancelar Reserva
             Row(modifier = Modifier.fillMaxWidth()) {

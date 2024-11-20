@@ -23,6 +23,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import java.util.Date
 
 import android.util.Log
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.GeoPoint
 
 data class Reserva(
@@ -49,6 +50,8 @@ object ReservasRepository {
             val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
             val snapshots = db.collection("reservas")
                 .whereEqualTo("usuarioReservador", db.collection("users").document(userId))
+                //.whereNotEqualTo("estado", "cancelada") // Filtro para que el estado no sea "cancelada" (no esta funcionando)
+                .whereIn("estado", listOf("entregado", "retirado", "reservado")) // este funciona bien
                 .get()
                 .await()
 
@@ -69,10 +72,44 @@ object ReservasRepository {
     }
 
     fun cancelarReserva(id: String) {
-        db.collection("reservas")
-            .document(id)
-            .delete()
+        // Primero, obtener la referencia de la reserva
+        val reservaRef = db.collection("reservas").document(id)
+
+        // Obtener la reserva
+        reservaRef.get()
+            .addOnSuccessListener { reserva ->
+                // Obtener el id de la donacion desde la reserva
+                val donacionRef = reserva.getDocumentReference("donacionId")
+                val pesoReservado = reserva.getDouble("pesoReservado") ?: 0.0
+
+                // Verificar que la referencia de la donacion no sea nula
+                if (donacionRef != null) {
+                    // Actualizar el campo pesoReservado en el documento de la donacion
+                    donacionRef.update("pesoReservado", FieldValue.increment(-pesoReservado))
+                        .addOnSuccessListener {
+                            Log.d("Reserva", "Peso actualizado correctamente en la donación.")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.d("Reserva", "Error al actualizar el peso en la donación: ${e.message}")
+                        }
+                } else {
+                    Log.d("Reserva", "No se encontró la referencia de la donación.")
+                }
+
+                // Actualizar la reserva para marcarla como cancelada
+                reservaRef.update("estado", "cancelada")
+                    .addOnSuccessListener {
+                        Log.d("Reserva", "Reserva cancelada con éxito.")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.d("Reserva", "Error al cancelar la reserva: ${e.message}")
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.d("Reserva", "Error al obtener la reserva: ${e.message}")
+            }
     }
+
 
     private suspend fun getUserNameById(userId: String): String {
         val userSnapshot = db.collection("users").document(userId).get().await()
