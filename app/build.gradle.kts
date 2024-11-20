@@ -125,5 +125,8 @@ dependencies {
     implementation ("com.squareup.okhttp3:okhttp:4.10.0")
 
     implementation (libs.glide)
+
+    implementation ("org.mindrot:jbcrypt:0.4")
+
 }
 

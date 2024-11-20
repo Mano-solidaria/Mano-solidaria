@@ -12,12 +12,9 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.TimePicker
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Status
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -25,27 +22,19 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
-import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.model.PlaceTypes
-import com.google.android.libraries.places.api.model.RectangularBounds
-import com.google.android.libraries.places.api.model.TypeFilter
-import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
-import com.google.android.libraries.places.api.net.FindAutocompletePredictionsResponse
-import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
-import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.mano_solidaria.app.BuildConfig
 import com.mano_solidaria.app.R
-import kotlinx.coroutines.delay
-import java.util.Arrays
-import java.util.Locale
+import org.mindrot.jbcrypt.BCrypt
 
 
 class FormActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -63,6 +52,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
     private var userEmail: String = ""
     private var userPassword: String = ""
     private var userAddress: String = ""
+    private var ubicacion: String = ""
     private lateinit var horariosInicio: Horarios
     private lateinit var horariosUsuario: Horarios
     private lateinit var db: FirebaseFirestore
@@ -114,13 +104,10 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
                 val id = p0.id
                 val latLng = p0.latLng!!
                 val name = p0.name
+                setAddress(add, latLng)
                 zoomOnMap(latLng)
             }
         })
-
-
-
-
 
         //Hace los inputs y esas cosas y qsyo, tengo una paja. Se hace mañana. Exitos Franco del lunes (ahre que ya es Lunes)
 
@@ -227,12 +214,12 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
             userPassword = password.text.toString()
         }
         userName = user.text.toString()
-        userAddress = address.text.toString()
         val userData = mutableMapOf( //Este solo se utiliza para comprobar que los campos tengan valores
             "Nombre" to userName,
             "Email" to userEmail,
             "Contraseña" to userPassword,
-            "Direccion" to userAddress
+            "Direccion" to userAddress,
+            "Ubicacion" to  ubicacion
         )
         try {
             validateString(userData)
@@ -248,14 +235,20 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
                     //Se deben de modificar los horarios.
                     throw InconsistenciaHorariaException("Seleccione los horarios")
                 }
-//                else {
-//                    validateDate()
-//                } //Era una validacion bastante mala del horario (Mejorar)
+                else {
+                    validateTime()
+                } //Era una validacion bastante mala del horario (Mejorar)
             }
+            validateEmail(userEmail)
+            validatePassword(userPassword)
             initLogin()
         } catch (e: IllegalArgumentException){
             validateFields()
         } catch (e: InconsistenciaHorariaException) {
+            Toast.makeText(this, "${e.message}", Toast.LENGTH_SHORT).show()
+        } catch (e: EmailException){
+            Toast.makeText(this, "${e.message}", Toast.LENGTH_SHORT).show()
+        } catch (e: PasswordException){
             Toast.makeText(this, "${e.message}", Toast.LENGTH_SHORT).show()
         } catch (e: Exception){
             sendLogin.setError("${e.message}")
@@ -274,7 +267,12 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
                     WriteInDB(userFirebase!!.uid, userData)
                     showHome(userEmail, provider)
                 }else{
-                    showAlert()
+                    val exception = it.exception
+                    if (exception is FirebaseAuthUserCollisionException) {
+                        showAlert("El correo ya está registrado. Por favor, usa otro correo o inicia sesión.")
+                    } else {
+                        showAlert("Error al registrar el usuario: ${exception?.message}")
+                    }
                 }
             }
         }else {
@@ -293,13 +291,53 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun validateDate(){
-        val apertura = horariosUsuario.aperturaHora * 60 + horariosUsuario.aperturaMinuto
-        val cierre = horariosUsuario.cierreHora * 60 + horariosUsuario.aperturaMinuto
-        if (cierre <= apertura) {
-            throw InconsistenciaHorariaException("El horario de cierre debe ser mayor al horario de apertura")
+    private fun validateEmail(email: String){
+        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$".toRegex()
+        if (!emailRegex.matches(email)){
+            throw EmailException("Formato de email no válido")
+        }
+
+        val domain = email.substringAfter('@').lowercase()
+
+        when {
+            domain.endsWith("gmail.com") -> Unit
+            domain.endsWith("yahoo.com") -> Unit
+            domain.endsWith("outlook.com") -> Unit
+            domain.endsWith("hotmail.com") -> Unit
+            else -> throw EmailException("Dominio de email no válido.")
         }
     }
+
+    fun validatePassword(contrasena: String){
+        val passwordRegex = "^(?=.*[A-Z])(?=.*\\d).*\$".toRegex()
+        if(contrasena.length < 6){
+            throw PasswordException("La contraseña debe de tener más que 6 caracteres")
+        }
+        if (!passwordRegex.matches(contrasena)){
+            throw PasswordException("La contraseña debe contener al menos una mayuscula y un valor numerico")
+        }
+    }
+
+//    fun hashPassword(contrasena: String, hash: String): String {
+//        return BCrypt.hashpw(contrasena, hash)
+//    }
+
+    private fun validateTime() {
+        // Minutos pasados desde la medianoche
+        val apertura = horariosUsuario.aperturaHora * 60 + horariosUsuario.aperturaMinuto
+        val cierre = horariosUsuario.cierreHora * 60 + horariosUsuario.cierreMinuto
+
+        // Le sumamos el tiempo correspondiente por si cambia de día.
+        val cierreAjustado = if (cierre < apertura) cierre + 1440 else cierre
+
+        // Sumar 4 horas que es el tiempo mínimo que se encontrará abierto.
+        val minCierreRequerido = apertura + 240
+
+        if (cierreAjustado <= minCierreRequerido) {
+            throw InconsistenciaHorariaException("El horario de cierre debe ser al menos 4 horas después del horario de apertura")
+        }
+    }
+
 
     // Función para verificar si el horario ha sido modificado
     private fun isHorarioModificado(): Boolean {
@@ -308,11 +346,13 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun createUser(): MutableMap<String, String> {
+
         val user = mutableMapOf(
                 "UsuarioRol" to userType.lowercase(),
                 "UsuarioNombre" to userName,
                 "UsuarioMail" to userEmail,
                 "UsuarioDireccion" to userAddress,
+                "Usuarioubicacion" to ubicacion
             )
 
         if (userType.lowercase() == "donante"){
@@ -322,9 +362,12 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
             user["HorarioAtencionFin"] = horarioAtencionCierre
         }
 
-        if (!LogByGoogle){ //Ver que dice cuando es con mail y password
-            user["UsuarioContraseña"] = userPassword
-        }
+//        if (!LogByGoogle){ //Ver que dice cuando es con mail y password
+//            val hash = BCrypt.gensalt()
+//            userPassword = hashPassword(userPassword , hash)
+//            user["UsuarioContraseña"] = userPassword
+//            user["Hash"] = hash
+//        }
 
         return user
     }
@@ -349,10 +392,10 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         startActivity(homeIntent)
     }
 
-    private fun showAlert(){
+    private fun showAlert(message: String){
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Error")
-        builder.setMessage("Se ha producido un error autenticando al usuario")
+        builder.setMessage(message)
         builder.setPositiveButton("Aceptar",null)
         val dialog: AlertDialog = builder.create()
         dialog.show()
@@ -395,8 +438,6 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         return isValid
     }
 
-
-
     private fun zoomOnMap(latLng: LatLng){
         val newLatLng = CameraUpdateFactory.newLatLngZoom(latLng,15f)
         mMap.addMarker(MarkerOptions().position(latLng))
@@ -406,7 +447,6 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
             null
         )
     }
-
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
@@ -424,6 +464,12 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
             5000,
             null
         )
+    }
+
+    private fun setAddress(add: String, latLng: LatLng) {
+        userAddress = add
+        ubicacion = latLng.toString()
+        address.setText(add)
     }
 }
 

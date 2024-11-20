@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:background="#FFFFFF">
+
+    <ImageView
+        android:id="@+id/iconoApp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_launcher_foreground" />
+
+    <!-- Contenedor de texto -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/notification_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingStart="8dp">
+
+        <!-- Título -->
+        <TextView
+            android:id="@+id/tituloNotificacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nueva Reserva de Donación"
+            app:layout_constraintStart_toStartOf="@+id/notification_container"
+            app:layout_constraintEnd_toEndOf="@+id/notification_container"
+            app:layout_constraintTop_toTopOf="@+id/notification_container"
+            android:layout_marginTop="10dp"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            tools:ignore="MissingConstraints" />
+
+        <!-- Detalle (ejemplo: peso y tipo de donación) -->
+        <TextView
+            android:id="@+id/detalleNotificacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="@+id/notification_container"
+            app:layout_constraintStart_toStartOf="@+id/notification_container"
+            android:layout_marginBottom="15dp"
+            android:hint="20 kg Pollo"
+            android:layout_marginLeft="20dp"
+            android:textColor="#000000"
+            android:textSize="15sp"
+            tools:ignore="MissingConstraints" />
+
+        <TextView
+            android:id="@+id/reservaNotificacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="@+id/notification_container"
+            app:layout_constraintEnd_toEndOf="@+id/notification_container"
+            android:layout_marginBottom="15dp"
+            android:hint="20 kg Pollo"
+            android:layout_marginRight="20dp"
+            android:textColor="#000000"
+            android:textSize="15sp"
+            tools:ignore="MissingConstraints" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

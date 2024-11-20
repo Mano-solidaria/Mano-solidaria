@@ -125,6 +125,7 @@
             android:id="@+id/usuario_direccion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:focusable="false"
             android:layout_marginBottom="10dp"
             android:hint="Ingrese su dirección" />
 
