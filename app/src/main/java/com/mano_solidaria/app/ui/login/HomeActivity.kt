@@ -13,6 +13,7 @@ import com.mano_solidaria.app.databinding.ActivityHomeBinding
 import com.mano_solidaria.app.donadores.MainDonadoresActivity
 import com.mano_solidaria.app.solicitantes.MainSolicitantesActivity  // Importa la actividad para solicitantes
 import com.mano_solidaria.app.solicitantes.ReservasActivity
+import com.mano_solidaria.app.solicitantes.SolicitantesPropuestasActivity
 
 class HomeActivity : AppCompatActivity() {
 
@@ -66,7 +67,8 @@ class HomeActivity : AppCompatActivity() {
                             startActivity(intent)
                         } else if (userRole == "solicitante") {
                             //val intent = Intent(this, MainSolicitantesActivity::class.java)
-                            val intent = Intent(this, MainSolicitantesActivity::class.java)
+                            //val intent = Intent(this, MainSolicitantesActivity::class.java)
+                            val intent = Intent(this, SolicitantesPropuestasActivity::class.java)
                             startActivity(intent)
                         } else {
                             Toast.makeText(this, "Rol de usuario no reconocido.", Toast.LENGTH_SHORT).show()

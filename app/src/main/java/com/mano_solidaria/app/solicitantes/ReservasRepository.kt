@@ -23,6 +23,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import java.util.Date
 
 import android.util.Log
+import com.google.firebase.firestore.GeoPoint
 
 data class Reserva(
     val id: String,
@@ -76,6 +77,11 @@ object ReservasRepository {
     private suspend fun getUserNameById(userId: String): String {
         val userSnapshot = db.collection("users").document(userId).get().await()
         return userSnapshot.getString("UsuarioNombre") ?: "Nombre desconocido"
+    }
+
+    suspend fun getUserLatLngById(userId: String): GeoPoint {
+        val userSnapshot = db.collection("users").document(userId).get().await()
+        return userSnapshot.getGeoPoint("Usuarioubicacion") ?: GeoPoint(37.7749, -122.4194)
     }
 
     private suspend fun getUsuarioDonadorIdByDonacionId(donacionId: String): String {
