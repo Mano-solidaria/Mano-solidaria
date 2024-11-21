@@ -15,7 +15,7 @@ data class Reserva(
     val id: String,
     val donacionId: String,
     val palabraClave: String,
-    val pesoReservado: String, // por ahora string
+    var pesoReservado: String, // por ahora string
     val usuarioReservadorId: String,
     val estado: String,
     val nombreDonante: String,
@@ -31,7 +31,6 @@ data class Reserva(
 
 object ReservasRepository {
     private val db = FirebaseFirestore.getInstance()
-    fun currentUser(): String? = FirebaseAuth.getInstance().currentUser?.uid
 
     suspend fun getReservas(): List<Reserva> {
         return try {
@@ -47,15 +46,6 @@ object ReservasRepository {
             snapshots.documents.map { it.toReserva() }
         } catch (e: Exception) {
             emptyList()
-        }
-    }
-
-    suspend fun getReservaById(id: String): Reserva? {
-        return try {
-            val document = db.collection("reservas").document(id).get().await()
-            document.toReserva()
-        } catch (e: Exception) {
-            null
         }
     }
 
@@ -122,28 +112,18 @@ object ReservasRepository {
                     Log.d("Reserva", "No se encontró la referencia de la donación.")
                 }
 
-                // actualizar la reserva para marcarla como cancelada
+                // actualizar el peso reservado de la reserva
                 reservaRef.update("pesoReservado", nuevoPesoReservado)
                     .addOnSuccessListener {
-                        Log.d("Reserva", "Reserva cancelada con éxito.")
+                        Log.d("Reserva", "Reserva modificada con éxito.")
                     }
                     .addOnFailureListener { e ->
-                        Log.d("Reserva", "Error al cancelar la reserva: ${e.message}")
+                        Log.d("Reserva", "Error al modificar la reserva: ${e.message}")
                     }
             }
             .addOnFailureListener { e ->
                 Log.d("Reserva", "Error al obtener la reserva: ${e.message}")
             }
-    }
-
-    private suspend fun getUserNameById(userId: String): String {
-        val userSnapshot = db.collection("users").document(userId).get().await()
-        return userSnapshot.getString("UsuarioNombre") ?: "Nombre desconocido"
-    }
-
-    private suspend fun getUsuarioDonadorIdByDonacionId(donacionId: String): String {
-        var donacionSnapshot = db.collection("donaciones").document(donacionId).get().await()
-        return donacionSnapshot.getString("donanteId") ?: "Donante desconocido"
     }
 
     fun calcularDistanciaEnKm(geoPoint1: GeoPoint, geoPoint2: GeoPoint): Float {

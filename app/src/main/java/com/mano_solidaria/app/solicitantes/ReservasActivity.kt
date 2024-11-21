@@ -48,11 +48,27 @@ class ReservasActivity : ComponentActivity(){
     @Composable
     fun VerReservasApp() {
         val navController = rememberNavController()
+        val reservas = remember { mutableStateListOf<Reserva>() } // Asegúrate de que 'reservas' esté disponible
+
+        // Cargar las reservas antes de navegar, o usar un estado de cargado
+        LaunchedEffect(true) {
+            val reservasList = ReservasRepository.getReservas()
+            reservas.clear()
+            reservas.addAll(reservasList)
+        }
+
         NavHost(navController, startDestination = "list") {
             composable("list") { ReservasListScreen(navController) }
             composable("detail/{itemId}") { backStackEntry ->
-                ReservaDetailScreen(backStackEntry.arguments?.getString("itemId"),
-                    navController = navController)
+                val itemId = backStackEntry.arguments?.getString("itemId")
+                val reserva = reservas.find { it.id == itemId } // Comparar correctamente
+
+                if (reserva != null) {
+                    ReservaDetailScreen(reserva = reserva, navController = navController)
+                } else {
+                    // Manejo de error si no se encuentra la reserva (opcional)
+                    Text("Reserva no encontrada")
+                }
             }
         }
     }
@@ -61,7 +77,7 @@ class ReservasActivity : ComponentActivity(){
     @Composable
     fun ReservasListScreen(navController: NavController) {
         val reservas = remember { mutableStateListOf<Reserva>() }
-        val geoPointsAMostrar = remember { mutableStateListOf<GeoPoint>() } // estado para los GeoPoints
+        val geoPointsAMostrar = remember { mutableStateListOf<GeoPoint>() }
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(true) {
@@ -70,10 +86,9 @@ class ReservasActivity : ComponentActivity(){
                 reservas.clear()
                 reservas.addAll(reservasList)
 
-                // extraer los GeoPoints desde la lista de reservas
                 geoPointsAMostrar.clear()
                 geoPointsAMostrar.addAll(reservasList.mapNotNull { reserva ->
-                    reserva.ubicacionDonante // suponiendo que es de tipo GeoPoint
+                    reserva.ubicacionDonante
                 })
             }
         }
@@ -88,6 +103,7 @@ class ReservasActivity : ComponentActivity(){
 
                 items(reservas.size) { index ->
                     ReservaItem(reservas[index]) {
+                        // Pasamos la reserva completa al detalle, no solo el ID
                         navController.navigate("detail/${reservas[index].id}")
                     }
                 }
@@ -96,11 +112,11 @@ class ReservasActivity : ComponentActivity(){
     }
 
     @Composable
-    fun ReservaItem(reserva: Reserva, onClick: () -> Unit) {
+    fun ReservaItem(reserva: Reserva, onClick: (Reserva) -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .clickable(onClick = { onClick(reserva) })
                 .padding(vertical = 8.dp)
                 .border(1.dp, color = Color.Black)
         ) {
@@ -111,37 +127,24 @@ class ReservasActivity : ComponentActivity(){
                 contentScale = ContentScale.Crop
             )
             Column(modifier = Modifier.weight(1f).padding(8.dp)) {
-                Text("Peso reservado: ${reserva.pesoReservado}")
-                Text("Distancia: ${reserva.distancia}")
+                Text("Peso reservado: ${reserva.pesoReservado} kg")
+                Text("Distancia: ${reserva.distancia} km")
             }
             Column(modifier = Modifier.weight(1f).padding(8.dp)) {
                 Text("Donante: ${reserva.nombreDonante}")
-                Text("Inicio de donación: ${reserva.tiempoInicial}")
+                Text("Fecha de publicación de donación: ${reserva.tiempoInicial}")
             }
         }
     }
 
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     @Composable
-    fun ReservaDetailScreen(itemId: String?, navController: NavController) {
-        var navController = navController
-        var reserva by remember { mutableStateOf<Reserva?>(null) }
-        LocalContext.current
-
-        LaunchedEffect(itemId) {
-            itemId?.let {
-                reserva = ReservasRepository.getReservaById(it)
-            }
-        }
-
+    fun ReservaDetailScreen(reserva: Reserva, navController: NavController) {
         Scaffold(topBar = { TopAppBar(title = { Text("Detalle de la reserva") }) }) {
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                reserva?.let {
-                    Column {
-                        ReservaDetails(reserva!!, navController)
-                    }
-                } ?: run {
-                    Text("Cargando detalles...")
+                // Ahora ya tienes la reserva completa directamente
+                Column {
+                    ReservaDetails(reserva = reserva, navController = navController)
                 }
             }
         }
@@ -218,14 +221,14 @@ class ReservasActivity : ComponentActivity(){
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            "Alimento: ${reserva.alimento}",
+                            "Nombre de alimento: ${reserva.alimento}",
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
                         Text(
-                            "Peso reservado: ${reserva.pesoReservado}",
+                            "Peso reservado: ${reserva.pesoReservado} kg",
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
-                        Text("Rango reserva: ${reserva.rangoReserva}", modifier = Modifier.weight(1f).padding(8.dp))
+                        Text("Máxima reserva posible: ${reserva.rangoReserva} kg", modifier = Modifier.weight(1f).padding(8.dp))
                     }
                 }
 
@@ -238,11 +241,11 @@ class ReservasActivity : ComponentActivity(){
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            "Distancia: ${reserva.distancia}",
+                            "Distancia: ${reserva.distancia} km",
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
                         Text(
-                            "Inicio de donación: ${reserva.tiempoInicial}",
+                            "Fecha de publicación de donación: ${reserva.tiempoInicial}",
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
                         Text(
@@ -274,7 +277,7 @@ class ReservasActivity : ComponentActivity(){
                             .border(1.dp, color = Color.Black)
                     ) {
                         Text(
-                            "Palabra clave: ${reserva.palabraClave}",
+                            "Palabra(s) clave: ${reserva.palabraClave}",
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
                     }
@@ -284,7 +287,7 @@ class ReservasActivity : ComponentActivity(){
                 item {
                     BotonModificarReserva(
                         onModifyClick = {
-                            showModifyDialog = true // Mostrar el diálogo de modificar reserva
+                            showModifyDialog = true // mostrar el dialogo de modificar reserva
                         }
                     )
                 }
@@ -294,7 +297,7 @@ class ReservasActivity : ComponentActivity(){
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Button(
                             onClick = {
-                                showDialog = true // Mostrar el diálogo cuando se presiona el botón
+                                showDialog = true // Mostrar el dialogo cuando se presiona el botón
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -334,7 +337,7 @@ class ReservasActivity : ComponentActivity(){
                     title = { Text("Modificar reserva") },
                     text = {
                         Column {
-                            Text("Rango de reserva: ${reserva.rangoReserva} kg")
+                            Text("Máxima reserva posible: mínimo 1 kg, máximo ${reserva.rangoReserva} kg")
                             TextField(
                                 value = newReservaValue,
                                 onValueChange = { newReservaValue = it },
@@ -356,10 +359,12 @@ class ReservasActivity : ComponentActivity(){
                                             newValue
                                         )
                                     }
+
+                                    // Actualizar la reserva localmente (solo la reserva modificada)
+                                    reserva.pesoReservado = newValue.toString()
+
                                     showModifyDialog = false
-                                    navController.navigate("list") {
-                                        popUpTo("detail/{itemId}") { inclusive = true }
-                                    }
+
                                 } else {
                                     // si el valor no es valido, mostrar un mensaje
                                     showSnackbarModif = true
