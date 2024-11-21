@@ -1,17 +1,24 @@
 package com.mano_solidaria.app.ui.login
 
+import ApiService
+import ApiServiceLogin
+import android.app.Activity
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.TimePicker
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.common.api.Status
@@ -34,7 +41,20 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.mano_solidaria.app.BuildConfig
 import com.mano_solidaria.app.R
-import org.mindrot.jbcrypt.BCrypt
+import com.mano_solidaria.app.donadores.Repository.getFileFromUri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Multipart
+import retrofit2.http.POST
+import retrofit2.http.Part
 
 
 class FormActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -65,6 +85,10 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var mapFragment: SupportMapFragment
     private lateinit var autocomplete: AutocompleteSupportFragment
+    // carga imagen
+    private lateinit var imgFoto: ImageView
+    private lateinit var btnElegirFoto: Button
+    private var imageUri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -148,7 +172,12 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
 //        horarioApertura.visibility = if (usuarioRolSwitch.isChecked) View.VISIBLE else View.GONE
 //        horarioCierre.visibility = if (usuarioRolSwitch.isChecked) View.VISIBLE else View.GONE
 
+
+
         sendLogin = findViewById(R.id.boton_guardar)
+
+        imgFoto = findViewById(R.id.imgFoto)
+        btnElegirFoto = findViewById(R.id.btnElegirFoto)
 
 
         mapFragment = supportFragmentManager
@@ -167,6 +196,20 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
             validateData()
         }
 
+        // boton imagen
+        btnElegirFoto.setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            resultLauncher.launch(intent)
+        }
+
+    }
+
+    // carga imagen
+    private val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            imageUri = result.data?.data
+            imgFoto.setImageURI(imageUri)
+        }
     }
 
     private  fun hidePassword(){
@@ -241,6 +284,10 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             validateEmail(userEmail)
             validatePassword(userPassword)
+            if (imageUri == null) {
+                Toast.makeText(this, "Por favor seleccione una imagen.", Toast.LENGTH_SHORT).show()
+                return
+            }
             initLogin()
         } catch (e: IllegalArgumentException){
             validateFields()
@@ -257,30 +304,38 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun initLogin() {
         provider = ProviderType.Google.toString()
-        if (userFirebase == null){
-            FirebaseAuth.getInstance().createUserWithEmailAndPassword(
-                userEmail, userPassword).addOnCompleteListener{
-                if (it.isSuccessful) {
-                    userFirebase = FirebaseAuth.getInstance().currentUser
-                    provider = ProviderType.Basic.toString()
-                    val userData = createUser()
-                    WriteInDB(userFirebase!!.uid, userData)
-                    showHome(userEmail, provider)
-                }else{
-                    val exception = it.exception
-                    if (exception is FirebaseAuthUserCollisionException) {
+
+        // Llamamos a la función suspendida en un contexto adecuado (lanzamos una corutina)
+        GlobalScope.launch(Dispatchers.Main) {
+            if (userFirebase == null) {
+                try {
+                    val result = FirebaseAuth.getInstance().createUserWithEmailAndPassword(userEmail, userPassword).await()
+                    if (result.user != null) {
+                        userFirebase = result.user
+                        provider = ProviderType.Basic.toString()
+                        val userData = createUser()  // Ahora podemos llamar a createUser aquí
+                        WriteInDB(userFirebase!!.uid, userData)
+                        showHome(userEmail, provider)
+                    } else {
+                        showAlert("Error al registrar el usuario.")
+                    }
+                } catch (e: Exception) {
+                    // Aquí manejamos cualquier error que ocurra durante el registro
+                    if (e is FirebaseAuthUserCollisionException) {
                         showAlert("El correo ya está registrado. Por favor, usa otro correo o inicia sesión.")
                     } else {
-                        showAlert("Error al registrar el usuario: ${exception?.message}")
+                        showAlert("Error al registrar el usuario: ${e.message}")
                     }
                 }
+            } else {
+                // Si el usuario ya está autenticado, simplemente lo registramos
+                val userData = createUser()
+                WriteInDB(userFirebase!!.uid, userData)
+                showHome(userEmail, provider)
             }
-        }else {
-            val userData = createUser()
-            WriteInDB(userFirebase!!.uid, userData)
-            showHome(userEmail, provider)
         }
     }
+
 
     private fun validateString(data: MutableMap<String, String>) {
         for ((key, value) in data) {
@@ -345,14 +400,26 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
                 || (horariosUsuario.cierreHora != horariosInicio.cierreHora || horariosUsuario.aperturaMinuto != horariosInicio.cierreMinuto)
     }
 
-    private fun createUser(): MutableMap<String, String> {
+    private suspend fun createUser(): MutableMap<String, String?> {
+
+        val imagenURL = imageUri?.let {
+            Log.d("CreateUser", "Iniciando la carga de la imagen con URI: $it")
+            uploadImage(applicationContext, it) }
+        if (imagenURL != null) {
+            Log.d("CreateUser", "Imagen subida correctamente. URL: $imagenURL")
+            if (imagenURL.isEmpty()) {
+                Log.e("CreateUser", "Error: La URL de la imagen está vacía después de la subida.")
+                throw Exception("Error al subir la imagen")
+            }
+        }
 
         val user = mutableMapOf(
                 "UsuarioRol" to userType.lowercase(),
                 "UsuarioNombre" to userName,
                 "UsuarioMail" to userEmail,
                 "UsuarioDireccion" to userAddress,
-                "Usuarioubicacion" to ubicacion
+                "Usuarioubicacion" to ubicacion,
+                "UsuarioImagen" to imagenURL
             )
 
         if (userType.lowercase() == "donante"){
@@ -372,7 +439,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         return user
     }
 
-    private fun WriteInDB(userUID: String, user: MutableMap<String, String>) {
+    private fun WriteInDB(userUID: String, user: MutableMap<String, String?>) {
         db.collection("users").document(userUID) // Usa el UID como ID del documento
             .set(user)
             .addOnSuccessListener {
@@ -471,5 +538,48 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         ubicacion = latLng.toString()
         address.setText(add)
     }
+
+    suspend fun uploadImage(context: Context, uri: Uri): String {
+        return try {
+            Log.d("UploadImage", "Iniciando carga de imagen")
+
+            val file = getFileFromUri(context, uri) ?: run {
+                Log.e("UploadImage", "Error: no se pudo obtener el archivo de la URI.")
+                return ""
+            }
+            Log.d("UploadImage", "Archivo obtenido: ${file.name}")
+
+            val requestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
+            val body = MultipartBody.Part.createFormData("image", file.name, requestBody)
+            Log.d("UploadImage", "Creado el cuerpo de la solicitud Multipart.")
+
+            val retrofit = Retrofit.Builder()
+                .baseUrl("https://marcelomp3.pythonanywhere.com/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            Log.d("UploadImage", "Retrofit configurado")
+
+            val apiServiceLogin = retrofit.create(ApiServiceLogin::class.java)
+            Log.d("UploadImage", "Llamando al servicio para subir la imagen.")
+
+            val response = apiServiceLogin.subirImagen(body)
+            Log.d("UploadImage", "Respuesta del servidor: ${response.code()}")
+
+            if (response.isSuccessful) {
+                val location = response.body()?.get("location")
+                Log.d("UploadImage", "Imagen cargada exitosamente. URL: $location")
+                location ?: ""
+            } else {
+                Log.e("UploadImage", "Error al cargar la imagen. Código de respuesta: ${response.code()}")
+                ""
+            }
+        } catch (e: Exception) {
+            Log.e("UploadImage", "Excepción al subir imagen", e)
+            e.printStackTrace()
+            ""
+        }
+    }
+
 }
 
