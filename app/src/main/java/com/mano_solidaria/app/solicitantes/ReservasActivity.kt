@@ -61,7 +61,7 @@ class ReservasActivity : ComponentActivity(){
     @Composable
     fun ReservasListScreen(navController: NavController) {
         val reservas = remember { mutableStateListOf<Reserva>() }
-        val geoPointsAMostrar = remember { mutableStateListOf<GeoPoint>() } // Estado para los GeoPoints
+        val geoPointsAMostrar = remember { mutableStateListOf<GeoPoint>() } // estado para los GeoPoints
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(true) {
@@ -70,10 +70,10 @@ class ReservasActivity : ComponentActivity(){
                 reservas.clear()
                 reservas.addAll(reservasList)
 
-                // Extraer los GeoPoints desde la lista de reservas
+                // extraer los GeoPoints desde la lista de reservas
                 geoPointsAMostrar.clear()
                 geoPointsAMostrar.addAll(reservasList.mapNotNull { reserva ->
-                    reserva.ubicacionDonante // Suponiendo que es de tipo GeoPoint
+                    reserva.ubicacionDonante // suponiendo que es de tipo GeoPoint
                 })
             }
         }
@@ -81,13 +81,14 @@ class ReservasActivity : ComponentActivity(){
         Scaffold(
             topBar = { TopAppBar(title = { Text("Reservas activas") }) }
         ) {
-            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                MostrarMapaMultiplesPuntos(geoPointsAMostrar) // Ahora es accesible
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(reservas.size) { index ->
-                        ReservaItem(reservas[index]) {
-                            navController.navigate("detail/${reservas[index].id}")
-                        }
+            LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                item {
+                    MostrarMapaMultiplesPuntos(geoPointsAMostrar)
+                }
+
+                items(reservas.size) { index ->
+                    ReservaItem(reservas[index]) {
+                        navController.navigate("detail/${reservas[index].id}")
                     }
                 }
             }
@@ -118,7 +119,6 @@ class ReservasActivity : ComponentActivity(){
                 Text("Inicio de donación: ${reserva.tiempoInicial}")
             }
         }
-        //Divider()
     }
 
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -126,8 +126,7 @@ class ReservasActivity : ComponentActivity(){
     fun ReservaDetailScreen(itemId: String?, navController: NavController) {
         var navController = navController
         var reserva by remember { mutableStateOf<Reserva?>(null) }
-        //var diasRestantes by remember { mutableIntStateOf(1) }
-        val context = LocalContext.current
+        LocalContext.current
 
         LaunchedEffect(itemId) {
             itemId?.let {
@@ -139,13 +138,6 @@ class ReservasActivity : ComponentActivity(){
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 reserva?.let {
                     Column {
-                        MostrarMapaUnPunto(reserva!!.ubicacionDonante)
-                        AsyncImage(
-                            model = it.imagenURL,
-                            contentDescription = "Imagen de reserva",
-                            modifier = Modifier.fillMaxWidth().height(250.dp).padding(16.dp),
-                            contentScale = ContentScale.Crop
-                        )
                         ReservaDetails(reserva!!, navController)
                     }
                 } ?: run {
@@ -157,21 +149,21 @@ class ReservasActivity : ComponentActivity(){
 
     @Composable
     fun ReservaDetails(reserva: Reserva, navController: NavController) {
-        var showDialog by remember { mutableStateOf(false) } // Estado para mostrar el diálogo
-        var showSnackbar by remember { mutableStateOf(false) } // Estado para mostrar el Snackbar
-        var showSnackbarModif by remember { mutableStateOf(false) } // Estado para mostrar el Snackbar de modificacion
-        val snackbarHostState = remember { SnackbarHostState() } // Host para el Snackbar
-        var showModifyDialog by remember { mutableStateOf(false) } // Estado para mostrar el diálogo de modificar reserva
-        var newReservaValue by remember { mutableStateOf("") } // Estado para manejar el nuevo valor de la reserva
+        var showDialog by remember { mutableStateOf(false) } // estado para mostrar el dialogo
+        var showSnackbar by remember { mutableStateOf(false) } // estado para mostrar el snackbar
+        var showSnackbarModif by remember { mutableStateOf(false) } // estado para mostrar el snackbar de modificacion
+        val snackbarHostState = remember { SnackbarHostState() } // host para el snackbar
+        var showModifyDialog by remember { mutableStateOf(false) } // estado para mostrar el dialogo de modificar reserva
+        var newReservaValue by remember { mutableStateOf("") } // estado para manejar el nuevo valor de la reserva
 
 
         LaunchedEffect(showSnackbar) {
             if (showSnackbar) {
                 snackbarHostState.showSnackbar(
                     message = "Operación cancelada",
-                    duration = SnackbarDuration.Short // Duración extendida
+                    duration = SnackbarDuration.Short
                 )
-                showSnackbar = false // Restablecer el estado después de mostrar el mensaje
+                showSnackbar = false // restablecer el estado despues de mostrar el mensaje
             }
         }
 
@@ -181,7 +173,7 @@ class ReservasActivity : ComponentActivity(){
                     message = "Número no válido",
                     duration = SnackbarDuration.Short
                 )
-                showSnackbar = false // Restablecer el estado después de mostrar el mensaje
+                showSnackbar = false
             }
         }
 
@@ -191,12 +183,34 @@ class ReservasActivity : ComponentActivity(){
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp) // Espaciado entre los elementos
+                    .padding(paddingValues),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Fila 1: Alimento y Reservado
+
                 item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    )
+                    {
+                        MostrarMapaUnPunto(reserva.ubicacionDonante)
+                    }
+                }
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ){
+                        AsyncImage(
+                            model = reserva.imagenURL,
+                            contentDescription = "Imagen de reserva",
+                            modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    // fila 1: nombre de alimento, peso reservado y rango de reserva
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -215,7 +229,7 @@ class ReservasActivity : ComponentActivity(){
                     }
                 }
 
-                // Fila 2: Distancia, inicio de la donación y donante
+                // fila 2: distancia, fecha inicio de la donacion y donante
                 item {
                     Row(
                         modifier = Modifier
@@ -238,7 +252,7 @@ class ReservasActivity : ComponentActivity(){
                     }
                 }
 
-                // Fila 3: Descripción
+                // fila 3: descripcion
                 item {
                     Row(
                         modifier = Modifier
@@ -252,7 +266,7 @@ class ReservasActivity : ComponentActivity(){
                     }
                 }
 
-                // Fila 5: Palabra clave
+                // fila 5: palabra(s) clave
                 item {
                     Row(
                         modifier = Modifier
@@ -266,7 +280,16 @@ class ReservasActivity : ComponentActivity(){
                     }
                 }
 
-                // Fila 6: Botón de Cancelar Reserva
+                // boton de modificar reserva
+                item {
+                    BotonModificarReserva(
+                        onModifyClick = {
+                            showModifyDialog = true // Mostrar el diálogo de modificar reserva
+                        }
+                    )
+                }
+
+                // boton de cancelar reserva
                 item {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Button(
@@ -279,41 +302,32 @@ class ReservasActivity : ComponentActivity(){
                         }
                     }
                 }
-
-                // Fila 7: Botón de Modificar Reserva
-                item {
-                    BotonModificarReserva(
-                        onModifyClick = {
-                            showModifyDialog = true // Mostrar el diálogo de modificar reserva
-                        }
-                    )
-                }
             }
 
-            // Mostrar el diálogo de confirmación si showDialog es true
+            // mostrar el dialogo de confirmacion si showDialog es true
             if (showDialog) {
                 ConfirmacionCancelarReservaDialog(
                     onConfirm = {
-                        // Lógica para cancelar la reserva
+                        // logica para cancelar la reserva
                         ReservasRepository.cancelarReserva(reserva.id)
 
-                        // Mostrar el Snackbar
+                        // mostrar el snackbar
                         showSnackbar = true
 
-                        // Regresar a la pantalla anterior
+                        // volver a la pantalla anterior
                         navController.navigate("list") {
                             popUpTo("detail/{itemId}") { inclusive = true }
                         }
 
-                        showDialog = false // Cerrar el diálogo después de la confirmación
+                        showDialog = false // cerrar dialogo despues de confirmacion
                     },
                     onDismiss = {
-                        showDialog = false // Cerrar el diálogo si el usuario presiona "No"
+                        showDialog = false // cerrar dialogo si el usuario presiona no
                     }
                 )
             }
 
-            // Mostrar el diálogo para modificar reserva
+            // mostrar el dialogo para modificar reserva
             if (showModifyDialog) {
                 AlertDialog(
                     onDismissRequest = { showModifyDialog = false },
@@ -334,7 +348,7 @@ class ReservasActivity : ComponentActivity(){
                             onClick = {
                                 val newValue = newReservaValue.toLongOrNull()
                                 if (newValue != null && newValue in 1..reserva.rangoReserva) {
-                                    // Si el valor es válido, modificar la reserva
+                                    // si el valor es valido, modificar la reserva
                                     reserva.pesoReservado.toLongOrNull()?.let {
                                         ReservasRepository.modificarReserva(
                                             reserva.id,
@@ -347,7 +361,7 @@ class ReservasActivity : ComponentActivity(){
                                         popUpTo("detail/{itemId}") { inclusive = true }
                                     }
                                 } else {
-                                    // Si el valor es inválido, mostrar un mensaje
+                                    // si el valor no es valido, mostrar un mensaje
                                     showSnackbarModif = true
                                     showModifyDialog = false
                                 }
@@ -371,7 +385,7 @@ class ReservasActivity : ComponentActivity(){
         AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text("Confirmación") },
-            text = { Text("¿Estás seguro de que deseas cancelar la reserva?") },
+            text = { Text("¿Estás seguro de que deseás cancelar la reserva?") },
             confirmButton = {
                 TextButton(onClick = onConfirm) {
                     Text("Sí")
@@ -407,7 +421,7 @@ class ReservasActivity : ComponentActivity(){
         }
 
         GoogleMap(
-            modifier = Modifier.height(250.dp).padding(16.dp),
+            modifier = Modifier.height(250.dp),
             cameraPositionState = cameraPositionState,
             uiSettings = uiSettings,
         ) {
@@ -440,12 +454,12 @@ class ReservasActivity : ComponentActivity(){
         Log.d("GeoPointsInfo", "Contenido de initialLatLng: Lat: ${initialLatLng.latitude}, Lng: ${initialLatLng.longitude}")
         val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
 
-        // Inicializar la cámara
+        // Inicializar la camara
         val cameraPositionState = rememberCameraPositionState {
             position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
         }
 
-        // Usar LaunchedEffect para actualizar la posición de la cámara cuando initialLatLng cambie
+        // Usar LaunchedEffect para actualizar la posicion de la cámara cuando initialLatLng cambie
         LaunchedEffect(initialLatLng) {
             cameraPositionState.position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
         }
@@ -465,6 +479,4 @@ class ReservasActivity : ComponentActivity(){
             }
         }
     }
-
-
 }
