@@ -18,7 +18,17 @@ import java.io.File
 import java.io.FileOutputStream
 import okhttp3.MultipartBody
 import android.content.Context
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mano_solidaria.app.donadores.SolicitantesPropuestasRepository.toDonacion
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.internal.wait
 import java.util.Date
 
 data class DonacionRoko(
@@ -41,42 +51,63 @@ data class ReservaRoko(
     val estado: String
 )
 
+data class UsuarioRoko(
+    val usuarioDireccion: String? = null,
+    val usuarioMail: String? = null,
+    val usuarioNombre: String? = null,
+    val usuarioUbicacion: String? = null,
+)
+
 object SolicitantesPropuestasRepository {
+
+    private val _donaciones: MutableStateFlow<List<DonacionRoko>> = MutableStateFlow(emptyList())
+    val donaciones: StateFlow<List<DonacionRoko>> = _donaciones
+
+    private var _usuario: MutableStateFlow<UsuarioRoko> = MutableStateFlow(UsuarioRoko())
+    val usuario : StateFlow<UsuarioRoko> = _usuario
+
     private val db = FirebaseFirestore.getInstance()
 
-    fun currentUser(): String? = FirebaseAuth.getInstance().currentUser?.uid
+    fun currentUser(): String = FirebaseAuth.getInstance().currentUser!!.uid
 
-    suspend fun getDonaciones(): List<DonacionRoko> {
-        return try {
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
-            val snapshots = db.collection("donaciones")
-                .whereEqualTo("donanteId", db.collection("users").document(userId))
-                .get()
-                .await()
-            snapshots.documents.map { it.toDonacion() }
-        } catch (e: Exception) {
-            emptyList()
+    init {
+        donaciones()
+        user(currentUser())
+    }
+
+    fun donaciones(){
+        CoroutineScope(Dispatchers.IO).launch{
+            getAllDonaciones()
         }
     }
 
     suspend fun getAllDonaciones(): List<DonacionRoko> {
-        return try {
-            val snapshots = db.collection("donaciones")
-                .get()
-                .await()
-            snapshots.documents.map { it.toDonacion() }
+         return try {
+             val snapshots = db.collection("donaciones").get().await()
+             _donaciones.value = snapshots.documents.map { it.toDonacion() }
+             snapshots.documents.map { it.toDonacion()}
         } catch (e: Exception) {
-            emptyList()
+             emptyList<DonacionRoko>()
         }
     }
 
-    suspend fun getDonacionById(id: String): DonacionRoko? {
-        return try {
-            val document = db.collection("donaciones").document(id).get().await()
-            document.toDonacion()
-        } catch (e: Exception) {
-            null
+    fun user(id: String){
+        CoroutineScope(Dispatchers.IO).launch{
+            getUserById(id)
         }
+    }
+
+    suspend fun getUserById(documentId: String){
+        try {
+            val snapshots = db.collection("users").document(documentId).get().await()
+            _usuario.value = snapshots.ToUser()
+        } catch (e: Exception) {
+            emptyList<DonacionRoko>()
+        }
+    }
+
+    fun getDonacionById(id: String) : DonacionRoko? {
+         return donaciones.value.find { it.id == id}
     }
 
     fun obtenerReservasPorDonacion(donacionId: String, onResult: (List<Reserva>) -> Unit) {
@@ -204,5 +235,14 @@ object SolicitantesPropuestasRepository {
         val fechaFin = this.getTimestamp("fechaFin")?.toDate()
         val duracion = calcularDuracion(fechaInicio, fechaFin)
         return DonacionRoko(id, "$pesoTotal kg de $alimento", duracion, imagenURL, descripcion, pesoReservado, pesoEntregado, pesoTotal)
+    }
+
+    private fun DocumentSnapshot.ToUser(): UsuarioRoko{
+        return UsuarioRoko(
+            this.id,
+            this.getString("UsuarioMail") ?: "Desconocido",
+            this.getString("UsuarioNombre") ?: "Nombre desconocido",
+            this.getString("UsuarioDireccion") ?: "Ubicacion desconocida",
+        )
     }
 }
