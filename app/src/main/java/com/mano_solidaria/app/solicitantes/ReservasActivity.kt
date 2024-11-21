@@ -158,126 +158,213 @@ class ReservasActivity : ComponentActivity(){
     @Composable
     fun ReservaDetails(reserva: Reserva, navController: NavController) {
         var showDialog by remember { mutableStateOf(false) } // Estado para mostrar el diálogo
-        var resultadoCancelacion by remember { mutableStateOf("") } // Mensaje de cancelación
+        var showSnackbar by remember { mutableStateOf(false) } // Estado para mostrar el Snackbar
+        var showSnackbarModif by remember { mutableStateOf(false) } // Estado para mostrar el Snackbar de modificacion
+        val snackbarHostState = remember { SnackbarHostState() } // Host para el Snackbar
+        var showModifyDialog by remember { mutableStateOf(false) } // Estado para mostrar el diálogo de modificar reserva
+        var newReservaValue by remember { mutableStateOf("") } // Estado para manejar el nuevo valor de la reserva
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp) // Espaciado entre los elementos
-        ) {
-            // Fila 1: Alimento y Reservado
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, color = Color.Black),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Alimento: ${reserva.alimento}", modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp))
-                    Text("Peso reservado: ${reserva.pesoReservado}", modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp))
-                    Text("", modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp))
-                }
+
+        LaunchedEffect(showSnackbar) {
+            if (showSnackbar) {
+                snackbarHostState.showSnackbar(
+                    message = "Operación cancelada",
+                    duration = SnackbarDuration.Short // Duración extendida
+                )
+                showSnackbar = false // Restablecer el estado después de mostrar el mensaje
             }
+        }
 
-            // Fila 2: Distancia, inicio de la donación y donante
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, color = Color.Black),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Distancia: ${reserva.distancia}", modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp))
-                    Text("Inicio de donación: ${reserva.tiempoInicial}", modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp))
-                    Text("Donante: ${reserva.nombreDonante}", modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp))
-                }
+        LaunchedEffect(showSnackbarModif) {
+            if (showSnackbarModif) {
+                snackbarHostState.showSnackbar(
+                    message = "Número no válido",
+                    duration = SnackbarDuration.Short
+                )
+                showSnackbar = false // Restablecer el estado después de mostrar el mensaje
             }
+        }
 
-            // Fila 3: Descripción
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, color = Color.Black)
-                ) {
-                    Text("Descripción: ${reserva.descripcion}", modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp))
-                }
-            }
-
-            // Fila 5: Palabra clave
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, color = Color.Black)
-                ) {
-                    Text("Palabra clave: ${reserva.palabraClave}", modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp))
-                }
-            }
-
-            // Fila 6: Botón de Cancelar Reserva
-            item {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Button(
-                        onClick = {
-                            showDialog = true // Mostrar el diálogo cuando se presiona el botón
-                        },
-                        modifier = Modifier.fillMaxWidth()
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { paddingValues ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp) // Espaciado entre los elementos
+            ) {
+                // Fila 1: Alimento y Reservado
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, color = Color.Black),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Cancelar reserva")
+                        Text(
+                            "Alimento: ${reserva.alimento}",
+                            modifier = Modifier.weight(1f).padding(8.dp)
+                        )
+                        Text(
+                            "Peso reservado: ${reserva.pesoReservado}",
+                            modifier = Modifier.weight(1f).padding(8.dp)
+                        )
+                        Text("Rango reserva: ${reserva.rangoReserva}", modifier = Modifier.weight(1f).padding(8.dp))
                     }
                 }
-            }
 
-            // Mostrar el mensaje de resultado de la cancelación
-            if (resultadoCancelacion.isNotEmpty()) {
+                // Fila 2: Distancia, inicio de la donación y donante
                 item {
-                    Text(
-                        resultadoCancelacion,
-                        modifier = Modifier.padding(16.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, color = Color.Black),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            "Distancia: ${reserva.distancia}",
+                            modifier = Modifier.weight(1f).padding(8.dp)
+                        )
+                        Text(
+                            "Inicio de donación: ${reserva.tiempoInicial}",
+                            modifier = Modifier.weight(1f).padding(8.dp)
+                        )
+                        Text(
+                            "Donante: ${reserva.nombreDonante}",
+                            modifier = Modifier.weight(1f).padding(8.dp)
+                        )
+                    }
+                }
+
+                // Fila 3: Descripción
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, color = Color.Black)
+                    ) {
+                        Text(
+                            "Descripción: ${reserva.descripcion}",
+                            modifier = Modifier.weight(1f).padding(8.dp)
+                        )
+                    }
+                }
+
+                // Fila 5: Palabra clave
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, color = Color.Black)
+                    ) {
+                        Text(
+                            "Palabra clave: ${reserva.palabraClave}",
+                            modifier = Modifier.weight(1f).padding(8.dp)
+                        )
+                    }
+                }
+
+                // Fila 6: Botón de Cancelar Reserva
+                item {
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Button(
+                            onClick = {
+                                showDialog = true // Mostrar el diálogo cuando se presiona el botón
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Cancelar reserva")
+                        }
+                    }
+                }
+
+                // Fila 7: Botón de Modificar Reserva
+                item {
+                    BotonModificarReserva(
+                        onModifyClick = {
+                            showModifyDialog = true // Mostrar el diálogo de modificar reserva
+                        }
                     )
                 }
             }
-        }
 
-        // Mostrar el diálogo de confirmación si showDialog es true
-        if (showDialog) {
-            ConfirmacionCancelarReservaDialog(
-                onConfirm = {
-                    // Lógica para cancelar la reserva
-                    ReservasRepository.cancelarReserva(reserva.id)
+            // Mostrar el diálogo de confirmación si showDialog es true
+            if (showDialog) {
+                ConfirmacionCancelarReservaDialog(
+                    onConfirm = {
+                        // Lógica para cancelar la reserva
+                        ReservasRepository.cancelarReserva(reserva.id)
 
-                    // Regresar a la pantalla anterior
-                    navController.navigate("list") {
-                        popUpTo("detail/{itemId}") { inclusive = true }
+                        // Mostrar el Snackbar
+                        showSnackbar = true
+
+                        // Regresar a la pantalla anterior
+                        navController.navigate("list") {
+                            popUpTo("detail/{itemId}") { inclusive = true }
+                        }
+
+                        showDialog = false // Cerrar el diálogo después de la confirmación
+                    },
+                    onDismiss = {
+                        showDialog = false // Cerrar el diálogo si el usuario presiona "No"
                     }
+                )
+            }
 
-                    showDialog = false // Cerrar el diálogo después de la confirmación
-                },
-                onDismiss = {
-                    showDialog = false // Cerrar el diálogo si el usuario presiona "No"
-                }
-            )
+            // Mostrar el diálogo para modificar reserva
+            if (showModifyDialog) {
+                AlertDialog(
+                    onDismissRequest = { showModifyDialog = false },
+                    title = { Text("Modificar reserva") },
+                    text = {
+                        Column {
+                            Text("Rango de reserva: ${reserva.rangoReserva} kg")
+                            TextField(
+                                value = newReservaValue,
+                                onValueChange = { newReservaValue = it },
+                                label = { Text("Nuevo peso reservado") },
+                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                val newValue = newReservaValue.toLongOrNull()
+                                if (newValue != null && newValue in 1..reserva.rangoReserva) {
+                                    // Si el valor es válido, modificar la reserva
+                                    reserva.pesoReservado.toLongOrNull()?.let {
+                                        ReservasRepository.modificarReserva(
+                                            reserva.id,
+                                            it,
+                                            newValue
+                                        )
+                                    }
+                                    showModifyDialog = false
+                                    navController.navigate("list") {
+                                        popUpTo("detail/{itemId}") { inclusive = true }
+                                    }
+                                } else {
+                                    // Si el valor es inválido, mostrar un mensaje
+                                    showSnackbarModif = true
+                                    showModifyDialog = false
+                                }
+                            }
+                        ) {
+                            Text("Confirmar")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showModifyDialog = false }) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
+            }
         }
     }
-
 
     @Composable
     fun ConfirmacionCancelarReservaDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
@@ -299,28 +386,14 @@ class ReservasActivity : ComponentActivity(){
     }
 
     @Composable
-    fun MyGoogleMaps() {
-        val address = LatLng(0.0, 0.0)
-        val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
-
-        val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-        val mapHeight = screenHeight / 3
-
-        val cameraPositionState = rememberCameraPositionState {
-            position = CameraPosition.fromLatLngZoom(address, 15f)
-        }
-        GoogleMap(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp).padding(16.dp),
-            cameraPositionState = cameraPositionState,
-            uiSettings = uiSettings,
-        ) {
-            Marker(
-                state = MarkerState(position = address),
-                title = "Singapore",
-                snippet = "Marker in Singapore"
-            )
+    fun BotonModificarReserva(onModifyClick: () -> Unit) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = onModifyClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Modificar reserva")
+            }
         }
     }
 

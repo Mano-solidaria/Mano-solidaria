@@ -41,7 +41,9 @@ data class Reserva(
     val tiempoInicial: String,
     val alimento: String,
     val descripcion: String,
-    val ubicacionDonante: GeoPoint
+    val ubicacionDonante: GeoPoint,
+    val rangoReserva: Long
+
 )
 
 object ReservasRepository {
@@ -54,7 +56,7 @@ object ReservasRepository {
             val snapshots = db.collection("reservas")
                 .whereEqualTo("usuarioReservador", db.collection("users").document(userId))
                 //.whereNotEqualTo("estado", "cancelada") // Filtro para que el estado no sea "cancelada" (no esta funcionando)
-                .whereIn("estado", listOf("entregado", "retirado", "reservado")) // este funciona bien
+                .whereIn("estado", listOf("reservado")) // este funciona bien, no traemos ni retirado ni entregado, solo reservado
                 .get()
                 .await()
 
@@ -113,6 +115,43 @@ object ReservasRepository {
             }
     }
 
+    fun modificarReserva(id: String, anteriorPesoReservado: Long, nuevoPesoReservado: Long) {
+        // Primero, obtener la referencia de la reserva
+        val reservaRef = db.collection("reservas").document(id)
+
+        // Obtener la reserva
+        reservaRef.get()
+            .addOnSuccessListener { reserva ->
+                // Obtener el id de la donacion desde la reserva
+                val donacionRef = reserva.getDocumentReference("donacionId")
+
+                // Verificar que la referencia de la donacion no sea nula
+                if (donacionRef != null) {
+                    // Actualizar el campo pesoReservado en el documento de la donacion
+                    donacionRef.update("pesoReservado", FieldValue.increment(-anteriorPesoReservado + nuevoPesoReservado))
+                        .addOnSuccessListener {
+                            Log.d("Reserva", "Peso actualizado correctamente en la donación.")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.d("Reserva", "Error al actualizar el peso en la donación: ${e.message}")
+                        }
+                } else {
+                    Log.d("Reserva", "No se encontró la referencia de la donación.")
+                }
+
+                // Actualizar la reserva para marcarla como cancelada
+                reservaRef.update("pesoReservado", nuevoPesoReservado)
+                    .addOnSuccessListener {
+                        Log.d("Reserva", "Reserva cancelada con éxito.")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.d("Reserva", "Error al cancelar la reserva: ${e.message}")
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.d("Reserva", "Error al obtener la reserva: ${e.message}")
+            }
+    }
 
     private suspend fun getUserNameById(userId: String): String {
         val userSnapshot = db.collection("users").document(userId).get().await()
@@ -177,7 +216,7 @@ object ReservasRepository {
         val id = this.id
         val donacionId = this.getDocumentReference("donacionId")?.id ?: ""  // Obtener el ID de la donación
         val palabraClave = this.getString("palabraClave") ?: ""  // Obtener la palabra clave
-        val pesoReservado = (this.get("pesoReservado") as? Long ?: 0).toString()  // Obtener el peso reservado (por ahora string)
+        val pesoReservado = this.get("pesoReservado") as? Long ?: 0  // Obtener el peso reservado (por ahora string)
         val usuarioReservadorId = this.getDocumentReference("usuarioReservador")?.id ?: ""  // Obtener el ID del reservador
         val estado = this.getString("estado") ?: "pendiente"  // Obtener el estado (si está pendiente o no)
         val donacionIdRef = this.getDocumentReference("donacionId") // Referencia al documento de la colección "donaciones"
@@ -209,6 +248,14 @@ object ReservasRepository {
 
         // Obtener la descripcion desde el documento de la donación
         val descripcion = donacionSnapshot?.getString("descripcion") ?: "Sin descripcion"
+
+        // obtener pesos de la donacion
+        val pesoTotalDonacion = donacionSnapshot?.getLong("pesoTotal") ?: 0
+        val pesoReservadoDonacion = donacionSnapshot?.getLong("pesoReservado") ?: 0
+        val pesoEntregadoDonacion = donacionSnapshot?.getLong("pesoEntregado") ?: 0
+        // ver hasta cuando se puede modificar la reserva
+        val rangoDeReserva = pesoTotalDonacion - pesoEntregadoDonacion - pesoReservadoDonacion + pesoReservado
+
 
         // Mdistancia
         //val distancia = "mock distancia"
@@ -244,8 +291,8 @@ object ReservasRepository {
         val tiempoRestante = "mock tiempo restante"
 
         // Crear y retornar un objeto de tipo "Reserva"
-        return Reserva(id, donacionId, palabraClave, pesoReservado,
+        return Reserva(id, donacionId, palabraClave, pesoReservado.toString(),
             usuarioReservadorId, estado, nombreDonante, imagenURL,
-            distancia.toString(), donacionFechaFormateada, alimento, descripcion, stringToGeoPoint(geoPointDonante))
+            distancia.toString(), donacionFechaFormateada, alimento, descripcion, stringToGeoPoint(geoPointDonante), rangoDeReserva)
     }
 }
