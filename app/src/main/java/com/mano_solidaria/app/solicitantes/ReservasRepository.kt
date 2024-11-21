@@ -25,6 +25,8 @@ import java.util.Date
 import android.util.Log
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.GeoPoint
+import android.location.Location
+import kotlin.math.round
 
 data class Reserva(
     val id: String,
@@ -36,9 +38,10 @@ data class Reserva(
     val nombreDonante: String,
     val imagenURL: String,
     val distancia: String,
-    val tiempoRestante: String,
+    val tiempoInicial: String,
     val alimento: String,
-    val descripcion: String
+    val descripcion: String,
+    val ubicacionDonante: GeoPoint
 )
 
 object ReservasRepository {
@@ -132,6 +135,44 @@ object ReservasRepository {
         return nombreDonador
     }
 
+    fun calcularDistanciaEnKm(geoPoint1: GeoPoint, geoPoint2: GeoPoint): Float {
+        val location1 = Location("").apply {
+            latitude = geoPoint1.latitude
+            longitude = geoPoint1.longitude
+        }
+
+        val location2 = Location("").apply {
+            latitude = geoPoint2.latitude
+            longitude = geoPoint2.longitude
+        }
+
+        // Distancia en metros
+        val distanciaEnMetros = location1.distanceTo(location2)
+
+        // Convertir a kilómetros y redondear a 1 decimal
+        return round((distanciaEnMetros / 1000) * 10) / 10
+    }
+
+    // Método para convertir el string con formato "lat/lng: (latitud,longitud)" a un GeoPoint
+    fun stringToGeoPoint(ubicacion: String): GeoPoint {
+        if (ubicacion.startsWith("lat/lng: (") && ubicacion.endsWith(")")) {
+            val coordenadas = ubicacion
+                .removePrefix("lat/lng: (")
+                .removeSuffix(")")
+                .split(",")
+
+            if (coordenadas.size == 2) {
+                val latitud = coordenadas[0].toDoubleOrNull()
+                val longitud = coordenadas[1].toDoubleOrNull()
+
+                if (latitud != null && longitud != null) {
+                    return GeoPoint(latitud, longitud)
+                }
+            }
+        }
+        return GeoPoint(0.0,0.0)
+    }
+
     private suspend fun DocumentSnapshot.toReserva(): Reserva {
         val id = this.id
         val donacionId = this.getDocumentReference("donacionId")?.id ?: ""  // Obtener el ID de la donación
@@ -139,13 +180,17 @@ object ReservasRepository {
         val pesoReservado = (this.get("pesoReservado") as? Long ?: 0).toString()  // Obtener el peso reservado (por ahora string)
         val usuarioReservadorId = this.getDocumentReference("usuarioReservador")?.id ?: ""  // Obtener el ID del reservador
         val estado = this.getString("estado") ?: "pendiente"  // Obtener el estado (si está pendiente o no)
-
         val donacionIdRef = this.getDocumentReference("donacionId") // Referencia al documento de la colección "donaciones"
 
-        // Obtener el documento de la donación
+        // Obtener el documento de la donacion
         val donacionSnapshot = donacionIdRef?.get()?.await()
 
-        // Obtener el donanteId de la donación
+        // obtener la fecha de inicio de la donacion
+        val donacionFechaHorarioInicio = donacionSnapshot?.getTimestamp("fechaInicio")
+        val donacionFecha = donacionFechaHorarioInicio?.toDate()
+        val donacionFechaFormateada = java.text.SimpleDateFormat("dd/MM/yyyy").format(donacionFecha)
+
+        // Obtener el donanteId de la donacion
         val donanteId = donacionSnapshot?.getDocumentReference("donanteId")?.id ?: ""
 
         // Obtener el nombre del donante usando el donanteId
@@ -165,8 +210,35 @@ object ReservasRepository {
         // Obtener la descripcion desde el documento de la donación
         val descripcion = donacionSnapshot?.getString("descripcion") ?: "Sin descripcion"
 
-        // Mock distancia
-        val distancia = "mock distancia"
+        // Mdistancia
+        //val distancia = "mock distancia"
+
+        val geoPointSolicitante = if (usuarioReservadorId.isNotEmpty()) {
+            val userSnapshot = db.collection("users").document(usuarioReservadorId).get().await()
+            userSnapshot.getString("Usuarioubicacion") ?: "lat/lng: (0,0)"
+        } else {
+            "lat/lng: (0,0)"
+        }
+        Log.d("GeoPointLog", "GeoPoint obtenido: ${geoPointSolicitante}")
+
+        // obtener el GeoPoint del donante usando el donanteId
+        val geoPointDonante = if (donanteId.isNotEmpty()) {
+            val userSnapshot = db.collection("users").document(donanteId).get().await()
+            userSnapshot.getString("Usuarioubicacion") ?: "lat/lng: (0,0)"
+        } else {
+            "lat/lng: (0,0)"
+        }
+        Log.d("GeoPointLog", "GeoPoint obtenido: ${geoPointDonante}")
+
+        val distancia =
+            stringToGeoPoint(geoPointSolicitante)?.let {
+                stringToGeoPoint(geoPointDonante)?.let { it1 ->
+                    calcularDistanciaEnKm(
+                        it,
+                        it1
+                    )
+                }
+            }
 
         // Mock tiempo restante
         val tiempoRestante = "mock tiempo restante"
@@ -174,6 +246,6 @@ object ReservasRepository {
         // Crear y retornar un objeto de tipo "Reserva"
         return Reserva(id, donacionId, palabraClave, pesoReservado,
             usuarioReservadorId, estado, nombreDonante, imagenURL,
-            distancia, tiempoRestante, alimento, descripcion)
+            distancia.toString(), donacionFechaFormateada, alimento, descripcion, stringToGeoPoint(geoPointDonante))
     }
 }

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.border
@@ -24,9 +25,19 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.platform.LocalContext
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.GeoPoint
 import com.mano_solidaria.app.solicitantes.ReservasRepository
+
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 
 class ReservasActivity : ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +61,7 @@ class ReservasActivity : ComponentActivity(){
     @Composable
     fun ReservasListScreen(navController: NavController) {
         val reservas = remember { mutableStateListOf<Reserva>() }
+        val geoPointsAMostrar = remember { mutableStateListOf<GeoPoint>() } // Estado para los GeoPoints
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(true) {
@@ -57,6 +69,12 @@ class ReservasActivity : ComponentActivity(){
                 val reservasList = ReservasRepository.getReservas()
                 reservas.clear()
                 reservas.addAll(reservasList)
+
+                // Extraer los GeoPoints desde la lista de reservas
+                geoPointsAMostrar.clear()
+                geoPointsAMostrar.addAll(reservasList.mapNotNull { reserva ->
+                    reserva.ubicacionDonante // Suponiendo que es de tipo GeoPoint
+                })
             }
         }
 
@@ -64,7 +82,7 @@ class ReservasActivity : ComponentActivity(){
             topBar = { TopAppBar(title = { Text("Reservas activas") }) }
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-
+                MostrarMapaMultiplesPuntos(geoPointsAMostrar) // Ahora es accesible
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(reservas.size) { index ->
                         ReservaItem(reservas[index]) {
@@ -94,11 +112,10 @@ class ReservasActivity : ComponentActivity(){
             Column(modifier = Modifier.weight(1f).padding(8.dp)) {
                 Text("Peso reservado: ${reserva.pesoReservado}")
                 Text("Distancia: ${reserva.distancia}")
-//               Text(reserva.id)
             }
             Column(modifier = Modifier.weight(1f).padding(8.dp)) {
                 Text("Donante: ${reserva.nombreDonante}")
-                Text("Tiempo restante: ${reserva.tiempoRestante}")
+                Text("Inicio de donación: ${reserva.tiempoInicial}")
             }
         }
         //Divider()
@@ -122,10 +139,11 @@ class ReservasActivity : ComponentActivity(){
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 reserva?.let {
                     Column {
+                        MostrarMapaUnPunto(reserva!!.ubicacionDonante)
                         AsyncImage(
                             model = it.imagenURL,
                             contentDescription = "Imagen de reserva",
-                            modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp),
+                            modifier = Modifier.fillMaxWidth().height(250.dp).padding(16.dp),
                             contentScale = ContentScale.Crop
                         )
                         ReservaDetails(reserva!!, navController)
@@ -141,84 +159,101 @@ class ReservasActivity : ComponentActivity(){
     fun ReservaDetails(reserva: Reserva, navController: NavController) {
         var showDialog by remember { mutableStateOf(false) } // Estado para mostrar el diálogo
         var resultadoCancelacion by remember { mutableStateOf("") } // Mensaje de cancelación
-        var navController = navController
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Fila 1: Alimento y Reservado
-            Row(
-                modifier = Modifier.fillMaxWidth().border(1.dp, color = Color.Black),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Alimento: ${reserva.alimento}", modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp))
-                Text("Peso reservado: ${reserva.pesoReservado}", modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp))
-                Text("", modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp))
-            }
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // Fila 2: Distancia, Duración y Donante
-            Row(
-                modifier = Modifier.fillMaxWidth().border(1.dp, color = Color.Black),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Distancia: ${reserva.distancia}", modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp))
-                Text("Duración: ${reserva.tiempoRestante}", modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp))
-                Text("Donante: ${reserva.nombreDonante}", modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp))
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp) // Espaciado entre los elementos
+        ) {
+            // Fila 1: Alimento y Reservado
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, color = Color.Black),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Alimento: ${reserva.alimento}", modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp))
+                    Text("Peso reservado: ${reserva.pesoReservado}", modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp))
+                    Text("", modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp))
+                }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+
+            // Fila 2: Distancia, inicio de la donación y donante
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, color = Color.Black),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Distancia: ${reserva.distancia}", modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp))
+                    Text("Inicio de donación: ${reserva.tiempoInicial}", modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp))
+                    Text("Donante: ${reserva.nombreDonante}", modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp))
+                }
+            }
 
             // Fila 3: Descripción
-            Row(modifier = Modifier.fillMaxWidth().border(1.dp, color = Color.Black)) {
-                Text("Descripción: ${reserva.descripcion}", modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp))
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, color = Color.Black)
+                ) {
+                    Text("Descripción: ${reserva.descripcion}", modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp))
+                }
             }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Fila 4: Tiempo restante
-            Row(modifier = Modifier.fillMaxWidth().border(1.dp, color = Color.Black)) {
-                Text("Tiempo restante para retirar: ${reserva.tiempoRestante}", modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp))
-            }
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Fila 5: Palabra clave
-            Row(modifier = Modifier.fillMaxWidth().border(1.dp, color = Color.Black)) {
-                Text("Palabra clave: ${reserva.palabraClave}", modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp))
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, color = Color.Black)
+                ) {
+                    Text("Palabra clave: ${reserva.palabraClave}", modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp))
+                }
             }
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Fila 6: Botón de Cancelar Reserva
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Button(
-                    onClick = {
-                        showDialog = true // Mostrar el diálogo cuando se presiona el botón
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Cancelar reserva")
+            item {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Button(
+                        onClick = {
+                            showDialog = true // Mostrar el diálogo cuando se presiona el botón
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Cancelar reserva")
+                    }
                 }
             }
 
             // Mostrar el mensaje de resultado de la cancelación
             if (resultadoCancelacion.isNotEmpty()) {
-                Text(
-                    resultadoCancelacion,
-                    modifier = Modifier.padding(16.dp)
-                )
+                item {
+                    Text(
+                        resultadoCancelacion,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         }
 
@@ -229,14 +264,10 @@ class ReservasActivity : ComponentActivity(){
                     // Lógica para cancelar la reserva
                     ReservasRepository.cancelarReserva(reserva.id)
 
-                    // Mostrar el mensaje de "Reserva cancelada"
-                    //Toast.makeText(LocalContext.current, "Reserva cancelada", Toast.LENGTH_SHORT).show()
-
-                    // Regresar a la pantalla anterior (listado de reservas)
+                    // Regresar a la pantalla anterior
                     navController.navigate("list") {
-                        // Aquí se asegura de que no agregue "detail/{itemId}" al back stack
                         popUpTo("detail/{itemId}") { inclusive = true }
-                    } // Regresa a la pantalla anterior
+                    }
 
                     showDialog = false // Cerrar el diálogo después de la confirmación
                 },
@@ -246,6 +277,7 @@ class ReservasActivity : ComponentActivity(){
             )
         }
     }
+
 
     @Composable
     fun ConfirmacionCancelarReservaDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
@@ -265,5 +297,101 @@ class ReservasActivity : ComponentActivity(){
             }
         )
     }
+
+    @Composable
+    fun MyGoogleMaps() {
+        val address = LatLng(0.0, 0.0)
+        val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
+
+        val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+        val mapHeight = screenHeight / 3
+
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(address, 15f)
+        }
+        GoogleMap(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp).padding(16.dp),
+            cameraPositionState = cameraPositionState,
+            uiSettings = uiSettings,
+        ) {
+            Marker(
+                state = MarkerState(position = address),
+                title = "Singapore",
+                snippet = "Marker in Singapore"
+            )
+        }
+    }
+
+    @Composable
+    fun MostrarMapaUnPunto(geoPoint: GeoPoint) {
+        val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+        val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
+
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(latLng, 15f)
+        }
+
+        GoogleMap(
+            modifier = Modifier.height(250.dp).padding(16.dp),
+            cameraPositionState = cameraPositionState,
+            uiSettings = uiSettings,
+        ) {
+            Marker(
+                state = MarkerState(position = latLng),
+                title = "Marker",
+                snippet = "Lat: ${geoPoint.latitude}, Lng: ${geoPoint.longitude}"
+            )
+        }
+    }
+
+    @Composable
+    fun MostrarMapaMultiplesPuntos(geoPoints: List<GeoPoint>) {
+        val centroide = if (geoPoints.isNotEmpty()) {
+            val latitudPromedio = geoPoints.map { it.latitude }.average()
+            val longitudPromedio = geoPoints.map { it.longitude }.average()
+
+            Log.d("GeoPointsInfo", "Cantidad de elementos en geoPoints: ${geoPoints.size}")
+            Log.d("GeoPointsInfo", "Latitud promedio: $latitudPromedio")
+            Log.d("GeoPointsInfo", "Longitud promedio: $longitudPromedio")
+
+
+            GeoPoint(latitudPromedio, longitudPromedio)
+        } else {
+            Log.d("GeoPointsInfo", "geoPoints está vacío, usando valor predeterminado.")
+            GeoPoint(0.0, 0.0) // Valor predeterminado si no hay puntos
+        }
+        val initialLatLng = LatLng(centroide.latitude, centroide.longitude)
+
+        Log.d("GeoPointsInfo", "Contenido de initialLatLng: Lat: ${initialLatLng.latitude}, Lng: ${initialLatLng.longitude}")
+        val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
+
+        // Inicializar la cámara
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
+        }
+
+        // Usar LaunchedEffect para actualizar la posición de la cámara cuando initialLatLng cambie
+        LaunchedEffect(initialLatLng) {
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
+        }
+
+        GoogleMap(
+            modifier = Modifier.height(250.dp),
+            cameraPositionState = cameraPositionState,
+            uiSettings = uiSettings,
+        ) {
+            geoPoints.forEach { geoPoint ->
+                val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+                Marker(
+                    state = MarkerState(position = latLng),
+                    title = "Marker",
+                    snippet = "Lat: ${geoPoint.latitude}, Lng: ${geoPoint.longitude}"
+                )
+            }
+        }
+    }
+
 
 }
