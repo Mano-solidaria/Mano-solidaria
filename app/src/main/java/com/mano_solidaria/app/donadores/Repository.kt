@@ -18,6 +18,7 @@ import java.io.File
 import java.io.FileOutputStream
 import okhttp3.MultipartBody
 import android.content.Context
+import android.util.Log
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.util.Date
 
@@ -62,12 +63,25 @@ object Repository {
 
     suspend fun getDonacionById(id: String): Donacion? {
         return try {
+            Log.d("Repository", "Iniciando consulta para obtener donación con ID: $id")
             val document = db.collection("donaciones").document(id).get().await()
-            document.toDonacion()
+
+            // Log para inspeccionar el documento obtenido
+            Log.d("Repository", "Documento obtenido: ${document.data}")
+
+            val donacion = document.toDonacion()
+
+            // Log para verificar el objeto Donacion convertido
+            Log.d("Repository", "Donación convertida: $donacion")
+
+            donacion
         } catch (e: Exception) {
+            // Log para capturar excepciones
+            Log.e("Repository", "Error al obtener donación con ID: $id", e)
             null
         }
     }
+
 
     fun obtenerReservasPorDonacion(donacionId: String, onResult: (List<Reserva>) -> Unit) {
         val donacionRef = db.collection("donaciones").document(donacionId)
@@ -84,14 +98,84 @@ object Repository {
             }
     }
 
-    suspend fun confirmarEntrega(reservaId: String) {
+    // Función para modificar los campos pesoEntregado y pesoReservado de una donación
+    suspend fun modificarPesoDonacion(donacionId: String, pesoReservado: Int) {
         try {
-            val reservaRef = db.collection("reservas").document(reservaId)
-            reservaRef.update("estado", "entregado").await()
+            val donacionRef = db.collection("donaciones").document(donacionId)
+
+            // Actualizar los valores en la donación
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(donacionRef)
+                val pesoEntregadoActual = snapshot.getLong("pesoEntregado")?.toInt() ?: 0
+                val pesoReservadoActual = snapshot.getLong("pesoReservado")?.toInt() ?: 0
+                val pesoTotal = snapshot.getLong("pesoTotal")?.toInt() ?: 0
+
+                // Validar si el peso reservado es suficiente
+                if (pesoReservado > pesoReservadoActual) {
+                    throw IllegalStateException("El peso reservado excede el disponible en la donación.")
+                }
+
+                // Calcular los nuevos valores
+                val nuevoPesoEntregado = pesoEntregadoActual + pesoReservado
+                val nuevoPesoReservado = pesoReservadoActual - pesoReservado
+
+                // Preparar actualizaciones
+                val actualizaciones = mutableMapOf<String, Any>(
+                    "pesoEntregado" to nuevoPesoEntregado,
+                    "pesoReservado" to nuevoPesoReservado
+                )
+
+                // Cambiar el estado si el peso entregado alcanza el total
+                if (nuevoPesoEntregado == pesoTotal) {
+                    actualizaciones["estado"] = "finalizada"
+                }
+
+                // Realizar las actualizaciones
+                transaction.update(donacionRef, actualizaciones)
+            }.await()
+
+            Log.d("modificarPesoDonacion", "Donación actualizada correctamente.")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("modificarPesoDonacion", "Error al modificar la donación.", e)
+            throw e
         }
     }
+
+
+    // Función para confirmar la entrega
+    // Función para confirmar la entrega
+    suspend fun confirmarEntrega(reservaId: String) {
+        try {
+            // Obtener referencia a la reserva
+            val reservaRef = db.collection("reservas").document(reservaId)
+
+            // Obtener datos de la reserva
+            val reservaSnapshot = reservaRef.get().await()
+
+            // Obtener el campo 'donacionId' como un DocumentReference
+            val donacionRef = reservaSnapshot.getDocumentReference("donacionId")
+                ?: throw IllegalStateException("Donación ID no encontrada en la reserva.")
+
+            // Obtener el ID del documento de la donación
+            val donacionId = donacionRef.id
+
+            // Obtener el peso reservado de la reserva
+            val pesoReservado = reservaSnapshot.getLong("pesoReservado")?.toInt()
+                ?: throw IllegalStateException("Peso reservado no encontrado en la reserva.")
+
+            // Actualizar el estado de la reserva
+            reservaRef.update("estado", "entregado").await()
+
+            // Modificar la donación asociada
+            modificarPesoDonacion(donacionId, pesoReservado)
+
+            Log.d("confirmarEntrega", "Entrega confirmada para la reserva $reservaId.")
+        } catch (e: Exception) {
+            Log.e("confirmarEntrega", "Error al confirmar entrega para la reserva $reservaId.", e)
+            throw e
+        }
+    }
+
 
     suspend fun actualizarFechaFin(donacionId: String, numeroDias: Int) {
         try {
@@ -185,15 +269,27 @@ object Repository {
     private fun DocumentSnapshot.toDonacion(): Donacion {
         val id = this.id
         val alimento = this.getString("alimento") ?: "Desconocido"
-        val pesoTotal = (this.get("pesoTotal") as? Double ?: 0.0).toInt()
-        val pesoReservado = (this.get("pesoReservado") as? Double ?: 0.0).toInt()
-        val pesoEntregado = (this.get("pesoEntregado") as? Double ?: 0.0).toInt()
+        val pesoTotal = (this.get("pesoTotal") as? Number)?.toInt() ?: 0
+        val pesoReservado = (this.get("pesoReservado") as? Number)?.toInt() ?: 0
+        val pesoEntregado = (this.get("pesoEntregado") as? Number)?.toInt() ?: 0
         val descripcion = this.getString("descripcion") ?: "No disponible"
         val imagenURL = this.getString("imagenURL") ?: ""
         val fechaInicio = this.getTimestamp("fechaInicio")?.toDate()
         val fechaFin = this.getTimestamp("fechaFin")?.toDate()
         val duracion = calcularDuracion(fechaInicio, fechaFin)
-        val estado = this.getString("estado") ?: ""
-        return Donacion(id, "$pesoTotal kg de $alimento", duracion, imagenURL, descripcion, pesoReservado, pesoEntregado, pesoTotal, estado)
+        val estado = this.getString("estado") ?: "Desconocido"
+
+        return Donacion(
+            id,
+            "$pesoTotal kg de $alimento",
+            duracion,
+            imagenURL,
+            descripcion,
+            pesoReservado,
+            pesoEntregado,
+            pesoTotal,
+            estado
+        )
     }
+
 }

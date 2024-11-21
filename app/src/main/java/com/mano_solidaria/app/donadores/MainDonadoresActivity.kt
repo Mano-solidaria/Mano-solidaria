@@ -3,6 +3,7 @@ package com.mano_solidaria.app.donadores
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -116,9 +117,16 @@ class MainDonadoresActivity : ComponentActivity() {
         var diasRestantes by remember { mutableIntStateOf(1) }
         val context = LocalContext.current
 
+        // Limpiar los datos anteriores cada vez que el itemId cambie
         LaunchedEffect(itemId) {
+            // Limpiar los datos antiguos para asegurar que se cargue desde el servidor
+            donacion = null
+            reservas = emptyList()
+
             itemId?.let {
+                // Solicitar nuevamente los datos del servidor
                 donacion = Repository.getDonacionById(it)
+                Log.d("Donacion", "Donación recibida: $donacion")
                 Repository.obtenerReservasPorDonacion(it) { reservasList ->
                     reservas = reservasList
                 }
@@ -162,10 +170,11 @@ class MainDonadoresActivity : ComponentActivity() {
 
     @Composable
     fun DonacionDetails(donacion: Donacion) {
+        var pesoDisponible= donacion.pesoTotal - donacion.pesoReservado - donacion.pesoEntregado
         Column {
             Text("Alimento: ${donacion.pesoAlimento}")
             Text("Duración Restante: ${donacion.tiempoRestante}")
-            Text("Disponible: ${donacion.pesoTotal} kg")
+            Text("Disponible: $pesoDisponible kg")
             Text("Reservado: ${donacion.pesoReservado} kg")
             Text("Estado: ${donacion.estado}")
             Text("Entregado: ${donacion.pesoEntregado} kg")
@@ -229,7 +238,7 @@ class MainDonadoresActivity : ComponentActivity() {
                 Text("Estado: ${updatedReserva.estado}")
             }
 
-            if (updatedReserva.estado == "pendiente") {
+            if (updatedReserva.estado == "pendiente" || updatedReserva.estado == "reservado") {
                 Button(onClick = {
                     scope.launch {
                         Repository.confirmarEntrega(updatedReserva.id)
