@@ -1,68 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
     android:padding="8dp"
-    android:background="#FFFFFF">
+    android:background="@android:color/transparent">
 
     <ImageView
         android:id="@+id/iconoApp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="63dp"
+        android:layout_height="87dp"
+        android:backgroundTint="@color/black"
         android:src="@drawable/ic_launcher_foreground" />
 
-    <!-- Contenedor de texto -->
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:id="@+id/notification_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
         android:orientation="vertical"
+        android:layout_weight="1"
         android:paddingStart="8dp">
 
-        <!-- Título -->
         <TextView
             android:id="@+id/tituloNotificacion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Nueva Reserva de Donación"
-            app:layout_constraintStart_toStartOf="@+id/notification_container"
-            app:layout_constraintEnd_toEndOf="@+id/notification_container"
-            app:layout_constraintTop_toTopOf="@+id/notification_container"
-            android:layout_marginTop="10dp"
             android:textColor="#000000"
             android:textStyle="bold"
-            android:textSize="20sp"
-            tools:ignore="MissingConstraints" />
+            android:textSize="10sp"
+            android:layout_marginTop="10dp"/>
 
-        <!-- Detalle (ejemplo: peso y tipo de donación) -->
-        <TextView
-            android:id="@+id/detalleNotificacion"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="@+id/notification_container"
-            app:layout_constraintStart_toStartOf="@+id/notification_container"
-            android:layout_marginBottom="15dp"
-            android:hint="20 kg Pollo"
-            android:layout_marginLeft="20dp"
-            android:textColor="#000000"
-            android:textSize="15sp"
-            tools:ignore="MissingConstraints" />
+            android:orientation="horizontal"
+            android:layout_marginTop="10dp"
+            android:gravity="bottom">
 
-        <TextView
-            android:id="@+id/reservaNotificacion"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="@+id/notification_container"
-            app:layout_constraintEnd_toEndOf="@+id/notification_container"
-            android:layout_marginBottom="15dp"
-            android:hint="20 kg Pollo"
-            android:layout_marginRight="20dp"
-            android:textColor="#000000"
-            android:textSize="15sp"
-            tools:ignore="MissingConstraints" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/detalleNotificacion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="20 kg Pollo"
+                android:textColor="#000000"
+                android:textSize="5sp"
+                android:layout_marginEnd="10dp" />
+
+            <!-- Otra información (Reserva) -->
+            <TextView
+                android:id="@+id/reservaNotificacion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="20 kg Pollo"
+                android:textColor="#000000"
+                android:textSize="5sp"
+                android:layout_marginStart="10dp" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

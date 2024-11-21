@@ -318,10 +318,6 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-//    fun hashPassword(contrasena: String, hash: String): String {
-//        return BCrypt.hashpw(contrasena, hash)
-//    }
-
     private fun validateTime() {
         // Minutos pasados desde la medianoche
         val apertura = horariosUsuario.aperturaHora * 60 + horariosUsuario.aperturaMinuto
@@ -361,13 +357,6 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
             user["HorarioAtencionInicio"] = horarioAtencionInicio
             user["HorarioAtencionFin"] = horarioAtencionCierre
         }
-
-//        if (!LogByGoogle){ //Ver que dice cuando es con mail y password
-//            val hash = BCrypt.gensalt()
-//            userPassword = hashPassword(userPassword , hash)
-//            user["UsuarioContraseña"] = userPassword
-//            user["Hash"] = hash
-//        }
 
         return user
     }

@@ -11,11 +11,16 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.mano_solidaria.app.R
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class NotificationService : Service() {
 
@@ -57,11 +62,11 @@ class NotificationService : Service() {
                     pesoReser = reservaSnapshot.getLong("pesoReservado") ?: 0L
 
                     when (change.type) {
-                        DocumentChange.Type.ADDED -> showNotification("Propuesta total: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Tiene una nueva reserva")
+                        DocumentChange.Type.ADDED -> showNotification("Propuesta: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Tiene una nueva reserva")
 
-                        DocumentChange.Type.MODIFIED -> showNotification("Propuesta total: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Se ha modificado una reserva")
+                        DocumentChange.Type.MODIFIED -> showNotification("Propuesta: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Se ha modificado una reserva")
 
-                        DocumentChange.Type.REMOVED -> showNotification("Propuesta total: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Se ha eliminado una reserva")
+                        DocumentChange.Type.REMOVED -> showNotification("Propuesta: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Se ha eliminado una reserva")
                     }
 
                 }?.addOnFailureListener { e ->
@@ -81,23 +86,26 @@ class NotificationService : Service() {
         listenerRegistration?.remove() // Detener el listener cuando el servicio se destruya
     }
 
-    @SuppressLint("ServiceCast", "RemoteViewLayout")
+    @SuppressLint("RemoteViewLayout", "MissingPermission")
     private fun showNotification(alimentoPropuesto: String, alimentoReservado: String, tipoNotificacion: String) {
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val channelId = "reserva"
+        val MY_CHANNEL_ID = "Reservas"
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                channelId,
-                "Notificaciones predeterminadas",
+                MY_CHANNEL_ID,
+                "Canal de reservas",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Canal para notificaciones de reserva"
+                description = "Canal de notificaciones de reservas"
             }
+
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
             notificationManager.createNotificationChannel(channel)
         }
 
-        // Configuración del diseño personalizado
         val customView = RemoteViews(packageName, R.layout.notification).apply {
             setTextViewText(R.id.tituloNotificacion, tipoNotificacion)
             setTextViewText(R.id.detalleNotificacion, alimentoPropuesto)
@@ -105,17 +113,25 @@ class NotificationService : Service() {
             setImageViewResource(R.id.iconoApp, R.drawable.ic_launcher_foreground)
         }
 
-        // Crear la notificación
-        val notification = NotificationCompat.Builder(this, channelId)
+        val calendar = Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("d 'de' MMMM 'de' yyyy", Locale("es", "ES"))
+        val currentDate: String = dateFormat.format(calendar.time)
+
+        val builder = NotificationCompat.Builder(this, MY_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .setCustomContentView(customView)
+            .setContentTitle(tipoNotificacion)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setStyle(
+                NotificationCompat.InboxStyle()
+                    .addLine(currentDate)
+                    .addLine("-------------------------------")
+                    .addLine(alimentoPropuesto)
+                    .addLine(alimentoReservado)
+            )
             .setAutoCancel(true)
             .build()
 
-        // Enviar la notificación
-        //val notificationId = System.currentTimeMillis().toInt()
-        notificationManager.notify(1, notification)
+        NotificationManagerCompat.from(this).notify(1, builder)
     }
+
 }

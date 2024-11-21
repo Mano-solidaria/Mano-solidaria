@@ -155,10 +155,6 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-//    fun validatePassword(contrasena: String, hash: String): Boolean {
-//        return BCrypt.checkpw(contrasena, hash)
-//    }
-
     private fun startGoogle(){
         //configuración
         val signInRequest = BeginSignInRequest.builder()
