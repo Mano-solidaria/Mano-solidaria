@@ -9,25 +9,24 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.mano_solidaria.app.R
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
 
 class NotificationService : Service() {
 
     private var listenerRegistration: ListenerRegistration? = null
-    var alimento = "Sin alimento"
+    var alimento = ""
     var pesoTotal :Long = 0
     var pesoReser:Long = 0
+    var nombre = ""
+    var notiRecibida = false
+    var dispararNoti = true
+    val db = FirebaseFirestore.getInstance()
 
     override fun onCreate() {
         super.onCreate()
@@ -35,7 +34,7 @@ class NotificationService : Service() {
     }
 
     private fun startFirestoreListener() {
-        val db = FirebaseFirestore.getInstance()
+
         val currentUser = FirebaseAuth.getInstance().currentUser
         val userId = currentUser?.uid
 
@@ -55,18 +54,37 @@ class NotificationService : Service() {
 
             for (change in snapshots?.documentChanges ?: emptyList()) {
                 val reservaSnapshot = change.document
+                val id = reservaSnapshot.id
                 val docRefDonacion = reservaSnapshot.getDocumentReference("donacionId")
                 docRefDonacion?.get()?.addOnSuccessListener { snapshot ->
                     pesoTotal = snapshot.getLong("pesoTotal") ?: 0L
                     alimento = snapshot.getString("alimento") ?: "Sin alimento"
                     pesoReser = reservaSnapshot.getLong("pesoReservado") ?: 0L
-
+                    nombre = snapshot.getString("nombre") ?: "UserContento"
+                    notiRecibida = reservaSnapshot.getBoolean("notiRecibida") ?: false
+                    dispararNoti = reservaSnapshot.getBoolean("dispararNoti") ?: true
                     when (change.type) {
-                        DocumentChange.Type.ADDED -> showNotification("Propuesta: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Tiene una nueva reserva")
+                        DocumentChange.Type.ADDED ->
+                            if (!notiRecibida){
+                                actualizarEstadoNoti(id)
+                                showNotification(nombre!!,
+                                    "Propuesta: $pesoTotal KG $alimento",
+                                    "Reserva: $pesoReser KG",
+                                    "Tiene una nueva reserva")
+                                dispararNoti = reservaSnapshot.getBoolean("dispararNoti") ?: false
+                            }
 
-                        DocumentChange.Type.MODIFIED -> showNotification("Propuesta: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Se ha modificado una reserva")
+                        DocumentChange.Type.MODIFIED ->
+                            if (dispararNoti) {
+                                showNotification(
+                                    nombre!!,
+                                    "Propuesta: $pesoTotal KG $alimento",
+                                    "Reserva: $pesoReser KG",
+                                    "Se ha modificado una reserva"
+                                )
+                            }
 
-                        DocumentChange.Type.REMOVED -> showNotification("Propuesta: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Se ha eliminado una reserva")
+                        DocumentChange.Type.REMOVED -> showNotification(nombre!!,"Propuesta: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Se ha eliminado una reserva")
                     }
 
                 }?.addOnFailureListener { e ->
@@ -87,7 +105,7 @@ class NotificationService : Service() {
     }
 
     @SuppressLint("RemoteViewLayout", "MissingPermission")
-    private fun showNotification(alimentoPropuesto: String, alimentoReservado: String, tipoNotificacion: String) {
+    private fun showNotification(nombre: String, alimentoPropuesto: String, alimentoReservado: String, tipoNotificacion: String) {
 
         val MY_CHANNEL_ID = "Reservas"
 
@@ -106,24 +124,13 @@ class NotificationService : Service() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        val customView = RemoteViews(packageName, R.layout.notification).apply {
-            setTextViewText(R.id.tituloNotificacion, tipoNotificacion)
-            setTextViewText(R.id.detalleNotificacion, alimentoPropuesto)
-            setTextViewText(R.id.reservaNotificacion, alimentoReservado)
-            setImageViewResource(R.id.iconoApp, R.drawable.ic_launcher_foreground)
-        }
-
-        val calendar = Calendar.getInstance()
-        val dateFormat = SimpleDateFormat("d 'de' MMMM 'de' yyyy", Locale("es", "ES"))
-        val currentDate: String = dateFormat.format(calendar.time)
-
         val builder = NotificationCompat.Builder(this, MY_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(tipoNotificacion)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setStyle(
                 NotificationCompat.InboxStyle()
-                    .addLine(currentDate)
+                    .addLine("Usuario $nombre")
                     .addLine("-------------------------------")
                     .addLine(alimentoPropuesto)
                     .addLine(alimentoReservado)
@@ -131,7 +138,20 @@ class NotificationService : Service() {
             .setAutoCancel(true)
             .build()
 
-        NotificationManagerCompat.from(this).notify(1, builder)
+        NotificationManagerCompat.from(this).notify(System.currentTimeMillis().toInt(), builder)
+    }
+
+    private fun actualizarEstadoNoti(id: String) {
+        db.collection("reservas").document(id)
+            .update(
+                "notiRecibida", true, "dispararNoti", false
+            )
+            .addOnSuccessListener {
+                Log.d("Firestore", "Campo actualizado correctamente")
+            }
+            .addOnFailureListener { e ->
+                Log.w("Firestore", "Error al actualizar el campo", e)
+            }
     }
 
 }
