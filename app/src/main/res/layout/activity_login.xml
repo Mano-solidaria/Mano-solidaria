@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/login_template"
     android:layout_width="match_parent"
@@ -11,19 +12,25 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:text="@string/bienvenido">
+        android:gravity="center_horizontal">
 
         <TextView
-            android:textColor="@color/black"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mano solidaria"
+            android:textSize="40sp"
+            android:layout_marginTop="60dp"/>
+
+        <ImageView
+            android:id="@+id/miImagen"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@mipmap/ic_launcher_foreground"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ingresa tu correo y contraseña"
+            android:text="@string/ingrese_sus_datos"
             android:textSize="20sp"
             android:layout_marginTop="20dp"/>
 

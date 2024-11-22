@@ -36,7 +36,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import org.mindrot.jbcrypt.BCrypt
 
-
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var registro : TextView
