@@ -55,5 +55,10 @@
     <!-- strings de home activity -->
 
     <string name="bienvenido">Welcome</string>
+    <string name="email">Email</string>
+    <string name="tipo_logueo">Login Type</string>
+    <string name="contraseña">Password</string>
+    <string name="cerrar_sesion">Log out</string>
+    <string name="siguiente">Next</string>
 
 </resources>

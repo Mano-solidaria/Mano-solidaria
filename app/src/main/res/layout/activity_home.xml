@@ -28,7 +28,7 @@
       app:layout_constraintBottom_toTopOf="@+id/emailTextView"
       android:layout_marginBottom="15dp"
       android:textSize="20sp"
-      android:text="Email">
+      android:text="@string/email">
   </TextView>
 
   <!-- Contenido del CardView -->
@@ -44,7 +44,7 @@
       android:layout_marginTop="200dp"
       android:layout_marginHorizontal="60dp"
       android:inputType="text"
-      tools:hint="Email" />
+      tools:hint="@string/email" />
 
   <TextView
       android:id="@+id/password_label"
@@ -55,7 +55,7 @@
       app:layout_constraintTop_toBottomOf="@+id/emailTextView"
       android:layout_marginTop="20dp"
       android:textSize="20sp"
-      android:text="Tipo Logueo">
+      android:text="@string/tipo_logueo">
   </TextView>
 
   <TextView
@@ -71,7 +71,7 @@
       android:layout_marginTop="15dp"
       android:inputType="text"
       android:textColor="#000"
-      tools:hint="Contraseña" />
+      tools:hint="@string/contraseña"/>
 
   <LinearLayout
       android:layout_width="match_parent"
@@ -85,7 +85,7 @@
         android:id="@+id/logOutButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Cerrar sesión" />
+        android:text="@string/cerrar_sesion" />
   </LinearLayout>
 
   <!-- Botón Donadores al final del layout -->
@@ -94,7 +94,7 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_marginTop="20dp"
-      android:text="Siguiente"
+      android:text="@string/siguiente"
       android:layout_marginHorizontal="80dp"
       app:layout_constraintTop_toBottomOf="@+id/logOutButton"
       app:layout_constraintStart_toStartOf="parent"

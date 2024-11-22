@@ -55,4 +55,9 @@
     <!-- strings de home activity -->
 
     <string name="bienvenido">Bienvenido</string>
+    <string name="email">Email</string>
+    <string name="tipo_logueo">Tipo Logueo</string>
+    <string name="contraseña">Contraseña</string>
+    <string name="cerrar_sesion">Cerrar sesión</string>
+    <string name="siguiente">Siguiente</string>
 </resources>
