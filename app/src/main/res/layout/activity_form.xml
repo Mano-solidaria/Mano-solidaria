@@ -129,6 +129,22 @@
             android:layout_marginBottom="10dp"
             android:hint="Ingrese su dirección" />
 
+        <!-- Botón Elegir Foto para el usuario -->
+        <Button
+            android:id="@+id/btnElegirFoto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Elegir Foto" />
+
+        <!-- Espacio para mostrar la foto -->
+        <ImageView
+            android:id="@+id/imgFoto"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:src="@android:drawable/ic_menu_camera"
+            android:contentDescription="Espacio para mostrar la foto" />
 
         <androidx.cardview.widget.CardView
             app:cardBackgroundColor="@color/black"
