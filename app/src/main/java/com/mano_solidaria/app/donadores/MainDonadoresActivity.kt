@@ -3,6 +3,7 @@ package com.mano_solidaria.app.donadores
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,6 +25,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.platform.LocalContext
+import com.mano_solidaria.app.AppBarWithDrawer
 
 
 class MainDonadoresActivity : ComponentActivity() {
@@ -39,13 +41,29 @@ class MainDonadoresActivity : ComponentActivity() {
     @Composable
     fun MainDonadoresApp() {
         val navController = rememberNavController()
-        NavHost(navController, startDestination = "list") {
-            composable("list") { DonadoresListScreen(navController) }
-            composable("detail/{itemId}") { backStackEntry ->
-                DonadorDetailScreen(backStackEntry.arguments?.getString("itemId"))
+        val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
+        val coroutineScope = rememberCoroutineScope()
+
+
+        AppBarWithDrawer(
+            title = "Mis donaciones activas",
+            scaffoldState = scaffoldState,
+            coroutineScope = coroutineScope
+        ) { paddingValues ->
+            NavHost(
+                navController,
+                startDestination = "list",
+                modifier = Modifier.padding(paddingValues)
+            ) {
+                composable("list") { DonadoresListScreen(navController) }
+                composable("detail/{itemId}") { backStackEntry ->
+                    DonadorDetailScreen(backStackEntry.arguments?.getString("itemId"))
+                }
             }
         }
     }
+
+
 
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     @Composable
@@ -61,9 +79,7 @@ class MainDonadoresActivity : ComponentActivity() {
             }
         }
 
-        Scaffold(
-            topBar = { TopAppBar(title = { Text("Donaciones Activas") }) }
-        ) {
+        Scaffold() {
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 Button(
                     onClick = {
@@ -116,16 +132,23 @@ class MainDonadoresActivity : ComponentActivity() {
         var diasRestantes by remember { mutableIntStateOf(1) }
         val context = LocalContext.current
 
+        // Limpiar los datos anteriores cada vez que el itemId cambie
         LaunchedEffect(itemId) {
+            // Limpiar los datos antiguos para asegurar que se cargue desde el servidor
+            donacion = null
+            reservas = emptyList()
+
             itemId?.let {
+                // Solicitar nuevamente los datos del servidor
                 donacion = Repository.getDonacionById(it)
+                Log.d("Donacion", "Donación recibida: $donacion")
                 Repository.obtenerReservasPorDonacion(it) { reservasList ->
                     reservas = reservasList
                 }
             }
         }
 
-        Scaffold(topBar = { TopAppBar(title = { Text("Detalle de la donación") }) }) {
+        Scaffold() {
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 donacion?.let {
                     Column {
@@ -162,10 +185,11 @@ class MainDonadoresActivity : ComponentActivity() {
 
     @Composable
     fun DonacionDetails(donacion: Donacion) {
+        var pesoDisponible= donacion.pesoTotal - donacion.pesoReservado - donacion.pesoEntregado
         Column {
             Text("Alimento: ${donacion.pesoAlimento}")
             Text("Duración Restante: ${donacion.tiempoRestante}")
-            Text("Disponible: ${donacion.pesoTotal} kg")
+            Text("Disponible: $pesoDisponible kg")
             Text("Reservado: ${donacion.pesoReservado} kg")
             Text("Estado: ${donacion.estado}")
             Text("Entregado: ${donacion.pesoEntregado} kg")
@@ -229,7 +253,7 @@ class MainDonadoresActivity : ComponentActivity() {
                 Text("Estado: ${updatedReserva.estado}")
             }
 
-            if (updatedReserva.estado == "pendiente") {
+            if (updatedReserva.estado == "pendiente" || updatedReserva.estado == "reservado") {
                 Button(onClick = {
                     scope.launch {
                         Repository.confirmarEntrega(updatedReserva.id)
