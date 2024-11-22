@@ -89,6 +89,12 @@
     <string name="espacio_para_mostrar_foto">Space to display the photo</string>
     <string name="registrarme">Sign up</string>
 
+    <string name="registro_completar_nombre">Please complete the name</string>
+    <string name="registro_completar_email">Please complete the email</string>
+    <string name="registro_completar_contrasena">Please complete the password</string>
+    <string name="registro_completar_direccion">Please complete the address</string>
+
+
 
     <!-- strings de registrar donacion activity -->
 

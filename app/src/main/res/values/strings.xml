@@ -90,6 +90,12 @@
     <string name="espacio_para_mostrar_foto">Espacio para mostrar la foto</string>
     <string name="registrarme">Registrarme</string>
 
+    <string name="registro_completar_nombre">Por favor, complete el nombre</string>
+    <string name="registro_completar_email">Por favor, complete el email</string>
+    <string name="registro_completar_contrasena">Por favor, complete la contraseña</string>
+    <string name="registro_completar_direccion">Por favor, complete la dirección</string>
+
+
     <!-- strings de registrar donacion -->
 
     <string name="alimento">Alimento:</string>
