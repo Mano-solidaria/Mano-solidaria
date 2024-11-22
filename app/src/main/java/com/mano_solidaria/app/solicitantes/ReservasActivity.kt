@@ -3,9 +3,6 @@ package com.mano_solidaria.app.solicitantes
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import android.annotation.SuppressLint
-import android.content.Intent
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,21 +20,20 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.GeoPoint
-import com.mano_solidaria.app.solicitantes.ReservasRepository
 
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.mano_solidaria.app.AppBarWithDrawer
 
 class ReservasActivity : ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,7 +44,9 @@ class ReservasActivity : ComponentActivity(){
     @Composable
     fun VerReservasApp() {
         val navController = rememberNavController()
-        val reservas = remember { mutableStateListOf<Reserva>() } // Asegúrate de que 'reservas' esté disponible
+        val reservas = remember { mutableStateListOf<Reserva>() }
+        val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
+        val coroutineScope = rememberCoroutineScope()
 
         // Cargar las reservas antes de navegar, o usar un estado de cargado
         LaunchedEffect(true) {
@@ -57,21 +55,30 @@ class ReservasActivity : ComponentActivity(){
             reservas.addAll(reservasList)
         }
 
-        NavHost(navController, startDestination = "list") {
-            composable("list") { ReservasListScreen(navController) }
-            composable("detail/{itemId}") { backStackEntry ->
-                val itemId = backStackEntry.arguments?.getString("itemId")
-                val reserva = reservas.find { it.id == itemId } // Comparar correctamente
+        AppBarWithDrawer(
+            title = "Mis reservas",
+            scaffoldState = scaffoldState,
+            coroutineScope = coroutineScope
+        ) { paddingValues ->
+            // Asegúrate de que el contenido tenga padding para evitar que quede cubierto por el drawer
+            Box(modifier = Modifier.padding(paddingValues)) {
+                NavHost(navController, startDestination = "list") {
+                    composable("list") { ReservasListScreen(navController) }
+                    composable("detail/{itemId}") { backStackEntry ->
+                        val itemId = backStackEntry.arguments?.getString("itemId")
+                        val reserva = reservas.find { it.id == itemId }
 
-                if (reserva != null) {
-                    ReservaDetailScreen(reserva = reserva, navController = navController)
-                } else {
-                    // Manejo de error si no se encuentra la reserva (opcional)
-                    Text("Reserva no encontrada")
+                        if (reserva != null) {
+                            ReservaDetailScreen(reserva = reserva, navController = navController)
+                        } else {
+                            Text("Reserva no encontrada")
+                        }
+                    }
                 }
             }
         }
     }
+
 
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     @Composable
@@ -94,7 +101,7 @@ class ReservasActivity : ComponentActivity(){
         }
 
         Scaffold(
-            topBar = { TopAppBar(title = { Text("Reservas activas") }) }
+            //topBar = { TopAppBar(title = { Text("Reservas activas") }) }
         ) {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 item {
@@ -117,22 +124,73 @@ class ReservasActivity : ComponentActivity(){
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = { onClick(reserva) })
-                .padding(vertical = 8.dp)
-                .border(1.dp, color = Color.Black)
+                .padding(vertical = 8.dp) // Relleno horizontal y vertical
+                .border(1.dp, color = MaterialTheme.colors.onBackground) // Bordes
+                //.background(Color.White) // Fondo blanco
         ) {
-            AsyncImage(
-                model = reserva.imagenURL,
-                contentDescription = "Imagen de reserva",
-                modifier = Modifier.size(80.dp).padding(end = 8.dp),
-                contentScale = ContentScale.Crop
-            )
-            Column(modifier = Modifier.weight(1f).padding(8.dp)) {
-                Text("Peso reservado: ${reserva.pesoReservado} kg")
-                Text("Distancia: ${reserva.distancia} km")
+            // Columna para la imagen
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(1.dp),
+                verticalArrangement = Arrangement.Center, // Centrado verticalmente
+                //horizontalAlignment = Alignment.CenterHorizontally // Centrado horizontalmente
+            ) {
+                AsyncImage(
+                    model = reserva.imagenURL,
+                    contentDescription = "Imagen de reserva",
+                    modifier = Modifier.size(80.dp),
+                    contentScale = ContentScale.Crop
+                )
             }
-            Column(modifier = Modifier.weight(1f).padding(8.dp)) {
-                Text("Donante: ${reserva.nombreDonante}")
-                Text("Fecha de publicación de donación: ${reserva.tiempoInicial}")
+
+            // Columna para la información de la reserva (peso, distancia, estado)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(1.dp)
+            ) {
+                Text(
+                    text = "Peso reservado: ${reserva.pesoReservado} kg",
+                    style = MaterialTheme.typography.body2,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Distancia: ${reserva.distancia} km",
+                    style = MaterialTheme.typography.body2,
+                    fontWeight = FontWeight.Normal
+                )
+                Text(
+                    text = "Estado: ${reserva.estado}",
+                    style = MaterialTheme.typography.body2,
+                    fontWeight = FontWeight.Normal,
+                    color = when (reserva.estado) {
+                        "entregado" -> Color.Green
+                        "cancelada" -> Color.Red
+                        else -> MaterialTheme.colors.onBackground
+                    }
+                )
+            }
+
+            // Columna para la información del donante y la fecha de publicación
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(1.dp)
+            ) {
+                Text(
+                    text = "Donante: ${reserva.nombreDonante}",
+                    style = MaterialTheme.typography.body2,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1, // Limitar a 1 línea
+                    overflow = TextOverflow.Ellipsis // Puntos suspensivos si excede
+                )
+                Text(
+                    text = "Fecha de publicación: ${reserva.tiempoInicial}",
+                    style = MaterialTheme.typography.body2,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.Gray
+                )
             }
         }
     }
@@ -142,7 +200,6 @@ class ReservasActivity : ComponentActivity(){
     fun ReservaDetailScreen(reserva: Reserva, navController: NavController) {
         Scaffold(topBar = { TopAppBar(title = { Text("Detalle de la reserva") }) }) {
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                // Ahora ya tienes la reserva completa directamente
                 Column {
                     ReservaDetails(reserva = reserva, navController = navController)
                 }
@@ -217,7 +274,7 @@ class ReservasActivity : ComponentActivity(){
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, color = Color.Black),
+                            .border(1.dp, color = MaterialTheme.colors.onBackground),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
@@ -237,7 +294,7 @@ class ReservasActivity : ComponentActivity(){
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, color = Color.Black),
+                            .border(1.dp, color = MaterialTheme.colors.onBackground),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
@@ -260,11 +317,30 @@ class ReservasActivity : ComponentActivity(){
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, color = Color.Black)
+                            .border(1.dp, color = MaterialTheme.colors.onBackground)
                     ) {
                         Text(
                             "Descripción: ${reserva.descripcion}",
                             modifier = Modifier.weight(1f).padding(8.dp)
+                        )
+                    }
+                }
+
+                // fila estado
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, color = MaterialTheme.colors.onBackground)
+                    ) {
+                        Text(
+                            "Estado: ${reserva.estado}",
+                            modifier = Modifier.weight(1f).padding(8.dp),
+                            color = when (reserva.estado) {
+                                "entregado" -> Color.Green
+                                "cancelada" -> Color.Red
+                                else -> MaterialTheme.colors.onBackground
+                            }
                         )
                     }
                 }
@@ -274,7 +350,7 @@ class ReservasActivity : ComponentActivity(){
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, color = Color.Black)
+                            .border(1.dp, color = MaterialTheme.colors.onBackground)
                     ) {
                         Text(
                             "Palabra(s) clave: ${reserva.palabraClave}",
@@ -283,25 +359,27 @@ class ReservasActivity : ComponentActivity(){
                     }
                 }
 
-                // boton de modificar reserva
-                item {
-                    BotonModificarReserva(
-                        onModifyClick = {
-                            showModifyDialog = true // mostrar el dialogo de modificar reserva
-                        }
-                    )
-                }
+                // Botón de modificar reserva
+                if (reserva.estado == "reservado") {
+                    item {
+                        BotonModificarReserva(
+                            onModifyClick = {
+                                showModifyDialog = true // mostrar el diálogo de modificar reserva
+                            }
+                        )
+                    }
 
-                // boton de cancelar reserva
-                item {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        Button(
-                            onClick = {
-                                showDialog = true // Mostrar el dialogo cuando se presiona el botón
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Cancelar reserva")
+                    // Botón de cancelar reserva
+                    item {
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Button(
+                                onClick = {
+                                    showDialog = true // Mostrar el diálogo cuando se presiona el botón
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Cancelar reserva")
+                            }
                         }
                     }
                 }
@@ -440,40 +518,48 @@ class ReservasActivity : ComponentActivity(){
 
     @Composable
     fun MostrarMapaMultiplesPuntos(geoPoints: List<GeoPoint>) {
-        val centroide = if (geoPoints.isNotEmpty()) {
-            val latitudPromedio = geoPoints.map { it.latitude }.average()
-            val longitudPromedio = geoPoints.map { it.longitude }.average()
-
-            Log.d("GeoPointsInfo", "Cantidad de elementos en geoPoints: ${geoPoints.size}")
-            Log.d("GeoPointsInfo", "Latitud promedio: $latitudPromedio")
-            Log.d("GeoPointsInfo", "Longitud promedio: $longitudPromedio")
-
-
-            GeoPoint(latitudPromedio, longitudPromedio)
-        } else {
-            Log.d("GeoPointsInfo", "geoPoints está vacío, usando valor predeterminado.")
-            GeoPoint(0.0, 0.0) // Valor predeterminado si no hay puntos
+        // Si geoPoints esta vacio, utilizar un valor predeterminado
+        if (geoPoints.isEmpty()) {
+            return
         }
+
+        // Calcular latitudes y longitudes maximas y minimas
+        val minLat = geoPoints.minOf { it.latitude }
+        val maxLat = geoPoints.maxOf { it.latitude }
+        val minLng = geoPoints.minOf { it.longitude }
+        val maxLng = geoPoints.maxOf { it.longitude }
+
+        // Calcular el centroide (promedio de las latitudes y longitudes)
+        val latitudPromedio = geoPoints.map { it.latitude }.average()
+        val longitudPromedio = geoPoints.map { it.longitude }.average()
+        val centroide = GeoPoint(latitudPromedio, longitudPromedio)
+
+        // Calcular el nivel de zoom basado en la distancia
+        val latitudDiff = maxLat - minLat
+        val longitudDiff = maxLng - minLng
+
+        // Usamos una firmula simple para estimar el zoom segun la distancia
+        val maxDiff = maxOf(latitudDiff, longitudDiff)
+        val zoomLevel = calculateZoomLevel(maxDiff)
+
+        // Inicializar el LatLng para la camara
         val initialLatLng = LatLng(centroide.latitude, centroide.longitude)
 
-        Log.d("GeoPointsInfo", "Contenido de initialLatLng: Lat: ${initialLatLng.latitude}, Lng: ${initialLatLng.longitude}")
-        val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
-
-        // Inicializar la camara
+        // Configuracion de la cámara
         val cameraPositionState = rememberCameraPositionState {
-            position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
+            position = CameraPosition.fromLatLngZoom(initialLatLng, zoomLevel)
         }
 
-        // Usar LaunchedEffect para actualizar la posicion de la cámara cuando initialLatLng cambie
+        // Usar LaunchedEffect para actualizar la camara cuando se cambien los puntos
         LaunchedEffect(initialLatLng) {
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(initialLatLng, zoomLevel)
         }
 
         GoogleMap(
             modifier = Modifier.height(250.dp),
             cameraPositionState = cameraPositionState,
-            uiSettings = uiSettings,
         ) {
+            // Agregar los marcadores al mapa
             geoPoints.forEach { geoPoint ->
                 val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
                 Marker(
@@ -484,4 +570,15 @@ class ReservasActivity : ComponentActivity(){
             }
         }
     }
+
+    // Funcion para calcular el nivel de zoom basado en la diferencia maxima de latitud o longitud
+    fun calculateZoomLevel(diff: Double): Float {
+        return when {
+            diff < 0.01 -> 16f // Muy cerca
+            diff < 0.05 -> 14f // Distancia media
+            diff < 0.1 -> 12f  // Distancia mas lejana
+            else -> 10f      // Muy distante
+        }
+    }
+
 }

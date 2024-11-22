@@ -20,7 +20,7 @@ data class Reserva(
     val estado: String,
     val nombreDonante: String,
     val imagenURL: String,
-    val distancia: String,
+    val distancia: Float?,
     val tiempoInicial: String,
     val alimento: String,
     val descripcion: String,
@@ -37,13 +37,25 @@ object ReservasRepository {
             val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
             val snapshots = db.collection("reservas")
                 .whereEqualTo("usuarioReservador", db.collection("users").document(userId))
-                //.whereNotEqualTo("estado", "cancelada") // Filtro para que el estado no sea "cancelada" (no esta funcionando)
-                .whereIn("estado", listOf("reservado")) // este funciona bien, no traemos ni retirado ni entregado, solo reservado
+                .whereIn("estado", listOf("reservado", "entregado", "cancelada"))
                 .get()
                 .await()
 
             Log.d("getReservas", "Snapshots de reservas: ${snapshots.documents.size}")
-            snapshots.documents.map { it.toReserva() }
+
+            snapshots.documents
+                .map { it.toReserva() }
+                .sortedWith(
+                    compareBy<Reserva> { reserva ->
+                        when (reserva.estado) {
+                            "reservado" -> 1
+                            "entregado" -> 2
+                            "cancelada" -> 3
+                            else -> Int.MAX_VALUE
+                        }
+                    }
+                        .thenBy { reserva -> reserva.distancia } // Ordena por distancia después del estado
+                )
         } catch (e: Exception) {
             emptyList()
         }
@@ -238,6 +250,6 @@ object ReservasRepository {
         // crear y retornar un objeto de tipo Reserva
         return Reserva(id, donacionId, palabraClave, pesoReservado.toString(),
             usuarioReservadorId, estado, nombreDonante, imagenURL,
-            distancia.toString(), donacionFechaFormateada, alimento, descripcion, stringToGeoPoint(geoPointDonante), rangoDeReserva)
+            distancia, donacionFechaFormateada, alimento, descripcion, stringToGeoPoint(geoPointDonante), rangoDeReserva)
     }
 }
