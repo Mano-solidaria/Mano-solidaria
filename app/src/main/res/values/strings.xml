@@ -60,6 +60,11 @@
     <string name="contraseña">Contraseña</string>
     <string name="cerrar_sesion">Cerrar sesión</string>
     <string name="siguiente">Siguiente</string>
+    <string name="rol_usuario_no_reconocido">Rol de usuario no reconocido.</string>
+    <string name="rol_usuario_no_encontrado">No se encontró el rol del usuario.</string>
+    <string name="error_obtener_rol_usuario">Error al obtener el rol de usuario.</string>
+    <string name="usuario_no_autenticado">Usuario no autenticado.</string>
+
 
     <!-- strings de login activity -->
 

@@ -67,6 +67,11 @@
     <string name="ingrese_su_contraseña">Enter your password</string>
     <string name="log_in">Log in</string>
     <string name="sign_in">Sign In (non basic)</string>
+    <string name="rol_usuario_no_reconocido">Unrecognized user role.</string>
+    <string name="rol_usuario_no_encontrado">User role not found.</string>
+    <string name="error_obtener_rol_usuario">Error obtaining user role.</string>
+    <string name="usuario_no_autenticado">User not authenticated.</string>
+
 
 
 
