@@ -67,7 +67,7 @@ class RegistrarDonacionActivity : AppCompatActivity() {
         try {
             validateString(donacionData)
 
-            if (regex.containsMatchIn(alimentoEditText.text.toString())){
+            if (regex.containsMatchIn(alimentoEditText.text.toString()) || descripcion.length > 500){
                 throw IllegalArgumentException("")
             }
 
@@ -121,7 +121,7 @@ class RegistrarDonacionActivity : AppCompatActivity() {
 
         if (pesoEditText.text.toString().trim().isEmpty()) {
             pesoEditText.setError("Por favor, ingrese la cantidad de peso a donar")
-        } else {
+        }else {
             pesoEditText.setError(null)
         }
 
@@ -133,6 +133,8 @@ class RegistrarDonacionActivity : AppCompatActivity() {
 
         if (infoAdicionalEditText.text.toString().trim().isEmpty()) {
             infoAdicionalEditText.setError("Por favor, ingrese informacion adicional del alimento")
+        } else if (infoAdicionalEditText.text.toString().trim().length > 500) {
+            infoAdicionalEditText.setError("Por favor, ingrese menos de 500 caracteres")
         } else {
             infoAdicionalEditText.setError(null)
         }
