@@ -128,7 +128,7 @@ class MainDonadoresActivity : ComponentActivity() {
     @Composable
     fun DonadorDetailScreen(itemId: String?) {
         var donacion by remember { mutableStateOf<Donacion?>(null) }
-        var reservas by remember { mutableStateOf<List<Reserva>>(emptyList()) }
+        val reservas = remember { mutableStateListOf<Reserva>() }
         var diasRestantes by remember { mutableIntStateOf(1) }
         val context = LocalContext.current
 
@@ -136,26 +136,29 @@ class MainDonadoresActivity : ComponentActivity() {
         LaunchedEffect(itemId) {
             // Limpiar los datos antiguos para asegurar que se cargue desde el servidor
             donacion = null
-            reservas = emptyList()
+            reservas.clear()
 
             itemId?.let {
                 // Solicitar nuevamente los datos del servidor
                 donacion = Repository.getDonacionById(it)
                 Log.d("Donacion", "Donación recibida: $donacion")
                 Repository.obtenerReservasPorDonacion(it) { reservasList ->
-                    reservas = reservasList
+                    reservas.addAll(reservasList)
                 }
             }
         }
 
-        Scaffold() {
+        Scaffold {
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 donacion?.let {
                     Column {
                         AsyncImage(
                             model = it.imagenUrl,
                             contentDescription = "Imagen de donación",
-                            modifier = Modifier.fillMaxWidth().height(250.dp).padding(bottom = 16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(250.dp)
+                                .padding(bottom = 16.dp),
                             contentScale = ContentScale.Crop
                         )
                         DonacionDetails(donacion!!)
@@ -170,7 +173,18 @@ class MainDonadoresActivity : ComponentActivity() {
 
                         if (reservas.isNotEmpty()) {
                             LazyColumn(modifier = Modifier.weight(1f)) {
-                                items(reservas.size) { index -> ReservaItem(reservas[index]) }
+                                items(
+                                    count = reservas.size, // Número de elementos en la lista
+                                    key = { index -> reservas[index].id } // Clave única basada en `id`
+                                ) { index ->
+                                    val reserva = reservas[index]
+                                    ReservaItem(
+                                        reserva = reserva,
+                                        onEstadoChange = { updatedReserva ->
+                                            reservas[index] = updatedReserva
+                                        }
+                                    )
+                                }
                             }
                         } else {
                             Text("No hay reservas para esta donación.")
@@ -182,6 +196,7 @@ class MainDonadoresActivity : ComponentActivity() {
             }
         }
     }
+
 
     @Composable
     fun DonacionDetails(donacion: Donacion) {
@@ -236,7 +251,10 @@ class MainDonadoresActivity : ComponentActivity() {
     }
 
     @Composable
-    fun ReservaItem(reserva: Reserva) {
+    fun ReservaItem(
+        reserva: Reserva,
+        onEstadoChange: (Reserva) -> Unit
+    ) {
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         var updatedReserva by remember { mutableStateOf(reserva) }
@@ -258,6 +276,7 @@ class MainDonadoresActivity : ComponentActivity() {
                     scope.launch {
                         Repository.confirmarEntrega(updatedReserva.id)
                         updatedReserva = updatedReserva.copy(estado = "entregada")
+                        onEstadoChange(updatedReserva)
                         Toast.makeText(context, "Entrega confirmada", Toast.LENGTH_SHORT).show()
                     }
                 }) {
@@ -267,4 +286,5 @@ class MainDonadoresActivity : ComponentActivity() {
         }
         Divider()
     }
+
 }
