@@ -101,6 +101,12 @@
     <string name="ingrese_mas_informacion">Ingrese más información</string>
     <string name="registrar">Registrar</string>
 
+    <string name="donador_completar_campos">Por favor, complete todos los campos correctamente.</string>
+    <string name="donador_seleccionar_imagen">Por favor seleccione una imagen.</string>
+    <string name="donador_error_registrar_donacion">Error al registrar donación.</string>
+
+
+
     <!-- strings de main donadores -->
 
     <string name="active_donations">Mis donaciones activas</string>

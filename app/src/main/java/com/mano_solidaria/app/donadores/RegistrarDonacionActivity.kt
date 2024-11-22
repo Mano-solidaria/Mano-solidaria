@@ -58,12 +58,12 @@ class RegistrarDonacionActivity : AppCompatActivity() {
 
 
         if (alimento.isEmpty() || pesoTotal == null || duracionDias == null || descripcion.isEmpty()) {
-            Toast.makeText(this, "Por favor, complete todos los campos correctamente.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.donador_completar_campos, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (imageUri == null) {
-            Toast.makeText(this, "Por favor seleccione una imagen.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.donador_seleccionar_imagen, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -84,7 +84,7 @@ class RegistrarDonacionActivity : AppCompatActivity() {
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK //PRIMERA SOLUCION HASTA QUE SE VUELVA A HABLAR
                     startActivity(intent)
                 }
-                else Toast.makeText(this@RegistrarDonacionActivity, "Error al registrar donación: $resultado", Toast.LENGTH_SHORT).show()
+                else Toast.makeText(this@RegistrarDonacionActivity, R.string.donador_error_registrar_donacion, Toast.LENGTH_SHORT).show()
             }
         }
     }

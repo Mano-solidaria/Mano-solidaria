@@ -281,7 +281,7 @@ object Repository {
 
         return Donacion(
             id,
-            "$pesoTotal kg de $alimento",
+            "$pesoTotal kg: $alimento",
             duracion,
             imagenURL,
             descripcion,
