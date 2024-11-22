@@ -71,7 +71,26 @@
     <string name="ingrese_su_email">Ingrese su email</string>
     <string name="ingrese_su_contraseña">Ingrese su contraseña</string>
     <string name="log_in">Iniciar sesión</string>
-    <string name="sign_in">Iniciar sesión (no básico) </string>
+    <string name="sign_in">Registrarme</string>
+
+    <!-- strings de form activity -->
+
+    <string name="rol_usuario">Rol de Usuario</string>
+    <string name="solicitante">Solicitante</string>
+    <string name="donador_registro">Donador</string>
+    <string name="nombre">Nombre</string>
+    <string name="nombre_usuario">Nombre de usuario</string>
+    <string name="ingrese_email">Ingrese su email</string>
+    <string name="ingrese_contraseña">Ingrese una contraseña</string>
+    <string name="horario_atencion_inicio">Horario de Atención (Inicio)</string>
+    <string name="horario_atencion_fin">Horario de Atención (Fin)</string>
+    <string name="direccion">Dirección</string>
+    <string name="ingrese_direccion">Ingrese su dirección</string>
+    <string name="elegir_foto">Elegir Foto</string>
+    <string name="espacio_para_mostrar_foto">Espacio para mostrar la foto</string>
+    <string name="registrarme">Registrarme</string>
+
+
 
 
 </resources>
