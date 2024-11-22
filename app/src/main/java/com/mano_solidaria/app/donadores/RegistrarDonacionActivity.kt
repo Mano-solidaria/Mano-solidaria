@@ -25,6 +25,7 @@ class RegistrarDonacionActivity : AppCompatActivity() {
     private lateinit var btnRegistrar: Button
     private lateinit var btnElegirFoto: Button
     private var imageUri: Uri? = null
+    val regex = Regex(".*\\d.*")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,36 +57,84 @@ class RegistrarDonacionActivity : AppCompatActivity() {
         val descripcion = infoAdicionalEditText.text.toString().trim()
         val donanteId = Repository.currentUser() ?: ""
 
+        val donacionData = mutableMapOf(
+            "Alimento" to alimento,
+            "Peso" to pesoEditText.text.toString(),
+            "Duración" to duracionEditText.text.toString(),
+            "Informacion adicional" to descripcion,
+        )
 
-        if (alimento.isEmpty() || pesoTotal == null || duracionDias == null || descripcion.isEmpty()) {
-            Toast.makeText(this, "Por favor, complete todos los campos correctamente.", Toast.LENGTH_SHORT).show()
-            return
-        }
+        try {
+            validateString(donacionData)
 
-        if (imageUri == null) {
-            Toast.makeText(this, "Por favor seleccione una imagen.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        imageUri?.let { uri ->
-            lifecycleScope.launch {
-                val resultado = Repository.registrarDonacion(
-                    donanteId,
-                    alimento,
-                    pesoTotal,
-                    duracionDias,
-                    descripcion,
-                    uri,
-                    this@RegistrarDonacionActivity
-                )
-                Toast.makeText(this@RegistrarDonacionActivity, resultado, Toast.LENGTH_SHORT).show()
-                if (resultado == "Donación registrada exitosamente.") { //finish()
-                    val intent = Intent(this@RegistrarDonacionActivity, MainDonadoresActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK //PRIMERA SOLUCION HASTA QUE SE VUELVA A HABLAR
-                    startActivity(intent)
-                }
-                else Toast.makeText(this@RegistrarDonacionActivity, "Error al registrar donación: $resultado", Toast.LENGTH_SHORT).show()
+            if (regex.containsMatchIn(alimentoEditText.text.toString())){
+                throw IllegalArgumentException("")
             }
+
+            if (imageUri == null) {
+                Toast.makeText(this, "Por favor seleccione una imagen.", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            imageUri?.let { uri ->
+                lifecycleScope.launch {
+                    val resultado = Repository.registrarDonacion(
+                        donanteId,
+                        alimento,
+                        pesoTotal!!,
+                        duracionDias!!,
+                        descripcion,
+                        uri,
+                        this@RegistrarDonacionActivity
+                    )
+                    Toast.makeText(this@RegistrarDonacionActivity, resultado, Toast.LENGTH_SHORT).show()
+                    if (resultado == "Donación registrada exitosamente.") { //finish()
+                        val intent = Intent(this@RegistrarDonacionActivity, MainDonadoresActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK //PRIMERA SOLUCION HASTA QUE SE VUELVA A HABLAR
+                        startActivity(intent)
+                    }
+                    else Toast.makeText(this@RegistrarDonacionActivity, "Error al registrar donación: $resultado", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: IllegalArgumentException){
+                validateFields()
+        }
+    }
+
+    private fun validateString(data: MutableMap<String, String>) {
+        for ((key, value) in data) {
+            if (value.isEmpty()) {
+                throw IllegalArgumentException("El campo ${key} está vacío.")
+            }
+        }
+    }
+
+    private fun validateFields() {
+
+        if (alimentoEditText.text.toString().trim().isEmpty()) {
+            alimentoEditText.setError("Por favor, ingrese el nombre del alimento")
+        }else if (regex.containsMatchIn(alimentoEditText.text.toString())){
+            alimentoEditText.setError("El nombre del alimento no debe contener números")
+        } else {
+            alimentoEditText.setError(null)
+        }
+
+        if (pesoEditText.text.toString().trim().isEmpty()) {
+            pesoEditText.setError("Por favor, ingrese la cantidad de peso a donar")
+        } else {
+            pesoEditText.setError(null)
+        }
+
+        if (duracionEditText.text.toString().trim().isEmpty()) {
+            duracionEditText.setError("Por favor, ingrese la duracion de la donación")
+        } else {
+            duracionEditText.setError(null)
+        }
+
+        if (infoAdicionalEditText.text.toString().trim().isEmpty()) {
+            infoAdicionalEditText.setError("Por favor, ingrese informacion adicional del alimento")
+        } else {
+            infoAdicionalEditText.setError(null)
         }
     }
 

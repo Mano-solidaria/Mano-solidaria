@@ -34,7 +34,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.mano_solidaria.app.BuildConfig
 import com.mano_solidaria.app.R
-import org.mindrot.jbcrypt.BCrypt
 
 
 class FormActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -136,7 +135,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         text_horaFinal = findViewById(R.id.horario_atencion_fin_text)
 
         horarioApertura = findViewById(R.id.horario_atencion_inicio)
-        horarioApertura.setIs24HourView(true) //Si quieren que se vea el AM/PM modifiquenlo ustedes, me da paja jajajaja (Solo tienen que sacar esto y corregir la cuenta en la funcion que verifica que fin>inicio)
+        horarioApertura.setIs24HourView(true)
 
         horarioCierre = findViewById(R.id.horario_atencion_fin)
         horarioCierre.setIs24HourView(true)
@@ -285,7 +284,6 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun validateString(data: MutableMap<String, String>) {
         for ((key, value) in data) {
             if (value.isEmpty()) {
-                // Informar al usuario sobre el campo vacío
                 throw IllegalArgumentException("El campo ${key} está vacío.")
             }
         }
@@ -390,13 +388,11 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         dialog.show()
     }
 
-    private fun validateFields(): Boolean {
-        var isValid = true
+    private fun validateFields() {
 
         // Validación para el nombre
         if (userName.isEmpty()) {
             user.setError("Por favor, complete el nombre")
-            isValid = false
         } else {
             user.setError(null) // Limpia el mensaje de error si está completo
         }
@@ -404,7 +400,6 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         // Validación para el email
         if (userEmail.isEmpty()) {
             email.setError("Por favor, complete el email")
-            isValid = false
         } else {
             email.setError(null) // Limpia el mensaje de error si está completo
         }
@@ -412,19 +407,15 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         // Validación para otros campos de texto...
         if (userPassword.isEmpty()) {
             password.setError("Por favor, complete la contraseña")
-            isValid = false
         } else {
             password.setError(null)
         }
 
         if (userAddress.isEmpty()) {
             address.setError("Por favor, complete la dirección")
-            isValid = false
         } else {
             address.setError(null)
         }
-
-        return isValid
     }
 
     private fun zoomOnMap(latLng: LatLng){

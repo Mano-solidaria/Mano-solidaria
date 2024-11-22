@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.auth.FirebaseAuth
@@ -19,14 +20,12 @@ import com.mano_solidaria.app.R
 
 class NotificationService : Service() {
 
-    private var listenerRegistration: ListenerRegistration? = null
-    var alimento = ""
-    var pesoTotal :Long = 0
-    var pesoReser:Long = 0
-    var nombre = ""
-    var notiRecibida = false
+    private var listenerRegistrationReservas: ListenerRegistration? = null
+    private var listenerRegistrationDonaciones: ListenerRegistration? = null
     var dispararNoti = true
     val db = FirebaseFirestore.getInstance()
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val userId = currentUser?.uid
 
     override fun onCreate() {
         super.onCreate()
@@ -34,9 +33,11 @@ class NotificationService : Service() {
     }
 
     private fun startFirestoreListener() {
+        reservasListener()
+        donacionesListener()
+    }
 
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        val userId = currentUser?.uid
+    private fun reservasListener(){
 
         if (userId == null) {
             Log.w("NotificationService", "Usuario no autenticado, no se puede escuchar Firestore")
@@ -46,7 +47,7 @@ class NotificationService : Service() {
 
         val collectionRef = db.collection("reservas").whereEqualTo("donadorId", db.collection("users").document(userId))
 
-        listenerRegistration = collectionRef.addSnapshotListener { snapshots, error ->
+        listenerRegistrationReservas = collectionRef.addSnapshotListener { snapshots, error ->
             if (error != null) {
                 Log.w("FirestoreListener", "Error al escuchar cambios", error)
                 return@addSnapshotListener
@@ -57,16 +58,16 @@ class NotificationService : Service() {
                 val id = reservaSnapshot.id
                 val docRefDonacion = reservaSnapshot.getDocumentReference("donacionId")
                 docRefDonacion?.get()?.addOnSuccessListener { snapshot ->
-                    pesoTotal = snapshot.getLong("pesoTotal") ?: 0L
-                    alimento = snapshot.getString("alimento") ?: "Sin alimento"
-                    pesoReser = reservaSnapshot.getLong("pesoReservado") ?: 0L
-                    nombre = snapshot.getString("nombre") ?: "UserContento"
-                    notiRecibida = reservaSnapshot.getBoolean("notiRecibida") ?: false
+                    var pesoTotal = snapshot.getLong("pesoTotal") ?: 0L
+                    var alimento = snapshot.getString("alimento") ?: "Sin alimento"
+                    var pesoReser = reservaSnapshot.getLong("pesoReservado") ?: 0L
+                    var nombre = snapshot.getString("nombre") ?: "UserContento"
+                    var notiRecibida = reservaSnapshot.getBoolean("notiRecibida") ?: false
                     dispararNoti = reservaSnapshot.getBoolean("dispararNoti") ?: true
                     when (change.type) {
                         DocumentChange.Type.ADDED ->
                             if (!notiRecibida){
-                                actualizarEstadoNoti(id)
+                                actualizarEstadoNotiRese(id)
                                 showNotification(nombre!!,
                                     "Propuesta: $pesoTotal KG $alimento",
                                     "Reserva: $pesoReser KG",
@@ -94,6 +95,61 @@ class NotificationService : Service() {
         }
     }
 
+    private fun donacionesListener() {
+
+        if (userId == null) {
+            Log.w("NotificationService", "Usuario no autenticado, no se puede escuchar Firestore")
+            stopSelf()
+            return
+        }
+
+        val collectionRefDonaciones = db.collection("donaciones").whereEqualTo("donanteId", db.collection("users").document(userId))
+
+        listenerRegistrationDonaciones = collectionRefDonaciones.addSnapshotListener { snapshots, error ->
+            if (error != null) {
+                Log.w("FirestoreListener", "Error al escuchar cambios en donaciones", error)
+                return@addSnapshotListener
+            }
+
+            for (change in snapshots?.documentChanges ?: emptyList()) {
+                val donacionSnapshot = change.document
+                val id = donacionSnapshot.id
+                val alimento = donacionSnapshot.getString("alimento") ?: "Desconocido"
+                val pesoTotal = donacionSnapshot.getLong("pesoTotal") ?: 0L
+                val pesoEntregado = donacionSnapshot.getLong("pesoEntregado") ?: 0L
+                val notiRecibida = donacionSnapshot.getBoolean("notiRecibida") ?: false
+                when (change.type) {
+                    DocumentChange.Type.ADDED -> {
+                        if (donacionSnapshot.metadata.hasPendingWrites()) {
+                            Toast.makeText(
+                                this,
+                                "Donacion agregada correctamente",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+
+                    DocumentChange.Type.MODIFIED -> {
+                        val estado = donacionSnapshot.getString("estado") ?: "activo"
+                        if(!notiRecibida && (estado.lowercase() == "finalizado" || pesoEntregado == pesoTotal)){
+                            actualizarEstadoNotiDona(id)
+                            showNotification(
+                                "Estado: Finalizado",
+                                "Propuesta: $pesoTotal KG $alimento",
+                                "",
+                                "Se ha finalizado una reserva"
+                            )
+                        }
+                    }
+
+                    DocumentChange.Type.REMOVED -> {
+                        Toast.makeText(this, "Donacion eliminada correctamente", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -101,7 +157,8 @@ class NotificationService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        listenerRegistration?.remove() // Detener el listener cuando el servicio se destruya
+        listenerRegistrationReservas?.remove() // Detener el listener cuando el servicio se destruya
+        listenerRegistrationDonaciones?.remove()
     }
 
     @SuppressLint("RemoteViewLayout", "MissingPermission")
@@ -130,7 +187,7 @@ class NotificationService : Service() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setStyle(
                 NotificationCompat.InboxStyle()
-                    .addLine("Usuario $nombre")
+                    .addLine(nombre)
                     .addLine("-------------------------------")
                     .addLine(alimentoPropuesto)
                     .addLine(alimentoReservado)
@@ -141,10 +198,24 @@ class NotificationService : Service() {
         NotificationManagerCompat.from(this).notify(System.currentTimeMillis().toInt(), builder)
     }
 
-    private fun actualizarEstadoNoti(id: String) {
+    private fun actualizarEstadoNotiRese(id: String) {
         db.collection("reservas").document(id)
             .update(
-                "notiRecibida", true, "dispararNoti", false
+                "notiRecibida", true,
+                "dispararNoti", false,
+            )
+            .addOnSuccessListener {
+                Log.d("Firestore", "Campo actualizado correctamente")
+            }
+            .addOnFailureListener { e ->
+                Log.w("Firestore", "Error al actualizar el campo", e)
+            }
+    }
+
+    private fun actualizarEstadoNotiDona(id: String) {
+        db.collection("donaciones").document(id)
+            .update(
+                "notiRecibida", true,
             )
             .addOnSuccessListener {
                 Log.d("Firestore", "Campo actualizado correctamente")
