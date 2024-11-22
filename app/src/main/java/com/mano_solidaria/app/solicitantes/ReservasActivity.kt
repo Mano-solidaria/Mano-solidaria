@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.GeoPoint
@@ -55,12 +56,17 @@ class ReservasActivity : ComponentActivity(){
             reservas.addAll(reservasList)
         }
 
+        val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+
         AppBarWithDrawer(
-            title = "Mis reservas",
+            title = when (currentRoute) {
+                "list" -> "Mis reservas"
+                "detail/{itemId}" -> "Detalle de la reserva"
+                else -> "Mis reservas"
+            },
             scaffoldState = scaffoldState,
             coroutineScope = coroutineScope
         ) { paddingValues ->
-            // Asegúrate de que el contenido tenga padding para evitar que quede cubierto por el drawer
             Box(modifier = Modifier.padding(paddingValues)) {
                 NavHost(navController, startDestination = "list") {
                     composable("list") { ReservasListScreen(navController) }
@@ -126,7 +132,6 @@ class ReservasActivity : ComponentActivity(){
                 .clickable(onClick = { onClick(reserva) })
                 .padding(vertical = 8.dp) // Relleno horizontal y vertical
                 .border(1.dp, color = MaterialTheme.colors.onBackground) // Bordes
-                //.background(Color.White) // Fondo blanco
         ) {
             // Columna para la imagen
             Column(
@@ -134,7 +139,6 @@ class ReservasActivity : ComponentActivity(){
                     .weight(1f)
                     .padding(1.dp),
                 verticalArrangement = Arrangement.Center, // Centrado verticalmente
-                //horizontalAlignment = Alignment.CenterHorizontally // Centrado horizontalmente
             ) {
                 AsyncImage(
                     model = reserva.imagenURL,
@@ -198,7 +202,7 @@ class ReservasActivity : ComponentActivity(){
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     @Composable
     fun ReservaDetailScreen(reserva: Reserva, navController: NavController) {
-        Scaffold(topBar = { TopAppBar(title = { Text("Detalle de la reserva") }) }) {
+        Scaffold {
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 Column {
                     ReservaDetails(reserva = reserva, navController = navController)
