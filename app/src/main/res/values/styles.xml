@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Tema Oscuro -->
+    <style name="AppTheme_Dark" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <!-- Barra de acción -->
+        <item name="android:colorPrimary">@color/colorPrimaryDark</item>
+        <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
+
+        <!-- Fondo principal -->
+        <item name="android:windowBackground">@color/colorBackgroundDark</item>
+
+        <!-- Estilos de botones -->
+        <item name="buttonStyle">@style/CustomButtonDark</item>
+
+        <!-- Estilo de texto -->
+        <item name="android:textColorPrimary">@color/colorTextPrimaryDark</item>
+        <item name="android:textColorSecondary">@color/colorTextSecondaryDark</item>
+
+        <!-- Estilo para los títulos de los TextViews -->
+        <item name="android:textColorHint">@color/colorTextOnDarkFormLabel</item> <!-- Color para los hints -->
+        <item name="android:textColor">@color/colorTextOnDarkFormLabel</item> <!-- Color para los TextViews -->
+
+        <!-- Color del texto en la barra de navegación -->
+        <item name="android:textColorPrimary">@color/colorTextOnDarkActionBar</item>
+    </style>
+
+
+    <!-- Tema Claro -->
+    <style name="AppTheme_Light" parent="ThemeOverlay.AppCompat.DayNight.ActionBar">
+        <!-- Barra de acción -->
+        <item name="android:colorPrimary">@color/colorPrimaryLight</item>
+        <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
+
+        <!-- Fondo principal -->
+        <item name="android:windowBackground">@color/colorBackgroundLight</item>
+
+        <!-- Estilos de botones -->
+        <item name="buttonStyle">@style/CustomButtonLight</item>
+
+        <!-- Estilo de texto -->
+        <item name="android:textColorPrimary">@color/colorTextPrimaryLight</item>
+        <item name="android:textColorSecondary">@color/colorTextSecondaryLight</item>
+
+        <!-- Color del texto en la barra de navegación -->
+        <item name="android:textColorPrimary">@color/colorTextOnLightActionBar</item>
+    </style>
+
+    <!-- Estilo para los botones en tema oscuro -->
+    <style name="CustomButtonDark">
+        <item name="android:background">@drawable/button_background_dark</item>  <!-- Puede ser un shape o un color -->
+        <item name="android:textColor">@color/colorTextOnDarkButton</item>
+    </style>
+
+    <!-- Estilo para los botones en tema claro -->
+    <style name="CustomButtonLight">
+        <item name="android:background">@drawable/button_background_light</item>  <!-- Puede ser un shape o un color -->
+        <item name="android:textColor">@color/colorTextOnLightButton</item>
+    </style>
+
+</resources>

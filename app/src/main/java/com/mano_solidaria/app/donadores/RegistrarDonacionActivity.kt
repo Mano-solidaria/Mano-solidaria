@@ -14,6 +14,7 @@ import android.app.Activity
 import android.content.Intent
 import android.provider.MediaStore
 import androidx.activity.result.contract.ActivityResultContracts
+import com.mano_solidaria.app.Utils.applySavedTheme
 
 class RegistrarDonacionActivity : AppCompatActivity() {
     private lateinit var alimentoEditText: EditText
@@ -27,6 +28,7 @@ class RegistrarDonacionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applySavedTheme(this)
         setContentView(R.layout.activity_registrar_donacion)
         initUI()
 

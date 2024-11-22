@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.platform.LocalContext
+import com.mano_solidaria.app.AppBarWithDrawer
 
 
 class MainDonadoresActivity : ComponentActivity() {
@@ -40,13 +41,29 @@ class MainDonadoresActivity : ComponentActivity() {
     @Composable
     fun MainDonadoresApp() {
         val navController = rememberNavController()
-        NavHost(navController, startDestination = "list") {
-            composable("list") { DonadoresListScreen(navController) }
-            composable("detail/{itemId}") { backStackEntry ->
-                DonadorDetailScreen(backStackEntry.arguments?.getString("itemId"))
+        val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
+        val coroutineScope = rememberCoroutineScope()
+
+
+        AppBarWithDrawer(
+            title = "Mis donaciones activas",
+            scaffoldState = scaffoldState,
+            coroutineScope = coroutineScope
+        ) { paddingValues ->
+            NavHost(
+                navController,
+                startDestination = "list",
+                modifier = Modifier.padding(paddingValues)
+            ) {
+                composable("list") { DonadoresListScreen(navController) }
+                composable("detail/{itemId}") { backStackEntry ->
+                    DonadorDetailScreen(backStackEntry.arguments?.getString("itemId"))
+                }
             }
         }
     }
+
+
 
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     @Composable
@@ -62,9 +79,7 @@ class MainDonadoresActivity : ComponentActivity() {
             }
         }
 
-        Scaffold(
-            topBar = { TopAppBar(title = { Text("Donaciones Activas") }) }
-        ) {
+        Scaffold() {
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 Button(
                     onClick = {
@@ -133,7 +148,7 @@ class MainDonadoresActivity : ComponentActivity() {
             }
         }
 
-        Scaffold(topBar = { TopAppBar(title = { Text("Detalle de la donación") }) }) {
+        Scaffold() {
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 donacion?.let {
                     Column {
