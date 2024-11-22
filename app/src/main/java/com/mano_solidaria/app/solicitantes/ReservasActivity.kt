@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,6 +36,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.mano_solidaria.app.AppBarWithDrawer
+import com.mano_solidaria.app.R
 
 class ReservasActivity : ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,9 +62,9 @@ class ReservasActivity : ComponentActivity(){
 
         AppBarWithDrawer(
             title = when (currentRoute) {
-                "list" -> "Mis reservas"
-                "detail/{itemId}" -> "Detalle de la reserva"
-                else -> "Mis reservas"
+                "list" -> stringResource(id = R.string.mis_reservas)
+                "detail/{itemId}" -> stringResource(id = R.string.detalle_reserva)
+                else -> stringResource(id = R.string.mis_reservas)
             },
             scaffoldState = scaffoldState,
             coroutineScope = coroutineScope
@@ -77,7 +79,7 @@ class ReservasActivity : ComponentActivity(){
                         if (reserva != null) {
                             ReservaDetailScreen(reserva = reserva, navController = navController)
                         } else {
-                            Text("Reserva no encontrada")
+                            Text(stringResource(id = R.string.reserva_no_encontrada))
                         }
                     }
                 }
@@ -155,17 +157,17 @@ class ReservasActivity : ComponentActivity(){
                     .padding(1.dp)
             ) {
                 Text(
-                    text = "Peso reservado: ${reserva.pesoReservado} kg",
+                    stringResource(id = R.string.peso_reservado, reserva.pesoReservado),
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Distancia: ${reserva.distancia} km",
+                    text = stringResource(id = R.string.distancia, String.format("%.2f", reserva.distancia)),
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Normal
                 )
                 Text(
-                    text = "Estado: ${reserva.estado}",
+                    stringResource(id = R.string.estado, reserva.estado),
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Normal,
                     color = when (reserva.estado) {
@@ -183,14 +185,14 @@ class ReservasActivity : ComponentActivity(){
                     .padding(1.dp)
             ) {
                 Text(
-                    text = "Donante: ${reserva.nombreDonante}",
+                    stringResource(id = R.string.donante, reserva.nombreDonante),
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1, // Limitar a 1 línea
                     overflow = TextOverflow.Ellipsis // Puntos suspensivos si excede
                 )
                 Text(
-                    text = "Fecha de publicación: ${reserva.tiempoInicial}",
+                    stringResource(id = R.string.fecha_publicacion, reserva.tiempoInicial),
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Normal,
                     color = Color.Gray
@@ -221,10 +223,13 @@ class ReservasActivity : ComponentActivity(){
         var newReservaValue by remember { mutableStateOf("") } // estado para manejar el nuevo valor de la reserva
 
 
+        val operacionCanceladaMessage = stringResource(id = R.string.operacion_cancelada)
+        val numeroNoValidoMessage = stringResource(id = R.string.numero_no_valido)
+
         LaunchedEffect(showSnackbar) {
             if (showSnackbar) {
                 snackbarHostState.showSnackbar(
-                    message = "Operación cancelada",
+                    message = operacionCanceladaMessage,
                     duration = SnackbarDuration.Short
                 )
                 showSnackbar = false // restablecer el estado despues de mostrar el mensaje
@@ -234,10 +239,10 @@ class ReservasActivity : ComponentActivity(){
         LaunchedEffect(showSnackbarModif) {
             if (showSnackbarModif) {
                 snackbarHostState.showSnackbar(
-                    message = "Número no válido",
+                    message = numeroNoValidoMessage,
                     duration = SnackbarDuration.Short
                 )
-                showSnackbar = false
+                showSnackbarModif = false // restablecer el estado despues de mostrar el mensaje
             }
         }
 
@@ -282,14 +287,16 @@ class ReservasActivity : ComponentActivity(){
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            "Nombre de alimento: ${reserva.alimento}",
+                            stringResource(id = R.string.nombre_alimento, reserva.alimento),
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
                         Text(
-                            "Peso reservado: ${reserva.pesoReservado} kg",
+                            stringResource(id = R.string.peso_reservado, reserva.pesoReservado),
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
-                        Text("Máxima reserva posible: ${reserva.rangoReserva} kg", modifier = Modifier.weight(1f).padding(8.dp))
+                        Text(
+                            stringResource(id = R.string.maxima_reserva, reserva.rangoReserva),
+                            modifier = Modifier.weight(1f).padding(8.dp))
                     }
                 }
 
@@ -302,15 +309,15 @@ class ReservasActivity : ComponentActivity(){
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            "Distancia: ${reserva.distancia} km",
+                            text = stringResource(id = R.string.distancia, String.format("%.2f", reserva.distancia)),
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
                         Text(
-                            "Fecha de publicación de donación: ${reserva.tiempoInicial}",
+                            stringResource(id = R.string.fecha_publicacion_donacion, reserva.tiempoInicial),
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
                         Text(
-                            "Donante: ${reserva.nombreDonante}",
+                            stringResource(id = R.string.donante, reserva.nombreDonante),
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
                     }
@@ -324,7 +331,7 @@ class ReservasActivity : ComponentActivity(){
                             .border(1.dp, color = MaterialTheme.colors.onBackground)
                     ) {
                         Text(
-                            "Descripción: ${reserva.descripcion}",
+                            stringResource(id = R.string.descripcion, reserva.descripcion),
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
                     }
@@ -338,7 +345,7 @@ class ReservasActivity : ComponentActivity(){
                             .border(1.dp, color = MaterialTheme.colors.onBackground)
                     ) {
                         Text(
-                            "Estado: ${reserva.estado}",
+                            stringResource(id = R.string.estado, reserva.estado),
                             modifier = Modifier.weight(1f).padding(8.dp),
                             color = when (reserva.estado) {
                                 "entregado" -> Color.Green
@@ -357,7 +364,7 @@ class ReservasActivity : ComponentActivity(){
                             .border(1.dp, color = MaterialTheme.colors.onBackground)
                     ) {
                         Text(
-                            "Palabra(s) clave: ${reserva.palabraClave}",
+                            stringResource(id = R.string.palabra_clave, reserva.palabraClave),
                             modifier = Modifier.weight(1f).padding(8.dp)
                         )
                     }
@@ -382,7 +389,7 @@ class ReservasActivity : ComponentActivity(){
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("Cancelar reserva")
+                                Text(stringResource(id = R.string.cancelar_reserva))
                             }
                         }
                     }
@@ -416,14 +423,16 @@ class ReservasActivity : ComponentActivity(){
             if (showModifyDialog) {
                 AlertDialog(
                     onDismissRequest = { showModifyDialog = false },
-                    title = { Text("Modificar reserva") },
+                    title = { Text(stringResource(id = R.string.modificar_reserva)) },
                     text = {
                         Column {
-                            Text("Máxima reserva posible: mínimo 1 kg, máximo ${reserva.rangoReserva} kg")
+                            Text(
+                                text = stringResource(id = R.string.max_reserva_posible, reserva.rangoReserva)
+                            )
                             TextField(
                                 value = newReservaValue,
                                 onValueChange = { newReservaValue = it },
-                                label = { Text("Nuevo peso reservado") },
+                                label = { Text(stringResource(id = R.string.nuevo_peso_reservado)) },
                                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
                             )
                         }
@@ -454,12 +463,12 @@ class ReservasActivity : ComponentActivity(){
                                 }
                             }
                         ) {
-                            Text("Confirmar")
+                            Text(stringResource(id = R.string.confirmar))
                         }
                     },
                     dismissButton = {
                         Button(onClick = { showModifyDialog = false }) {
-                            Text("Cancelar")
+                            Text(stringResource(id = R.string.cancelar))
                         }
                     }
                 )
@@ -471,16 +480,16 @@ class ReservasActivity : ComponentActivity(){
     fun ConfirmacionCancelarReservaDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Confirmación") },
-            text = { Text("¿Estás seguro de que deseás cancelar la reserva?") },
+            title = { Text(stringResource(id = R.string.confirmacion)) },
+            text = { Text(stringResource(id = R.string.confirmacion_cancelacion) )},
             confirmButton = {
                 TextButton(onClick = onConfirm) {
-                    Text("Sí")
+                    Text(stringResource(id = R.string.si))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("No")
+                    Text(stringResource(id = R.string.no))
                 }
             }
         )
@@ -493,7 +502,7 @@ class ReservasActivity : ComponentActivity(){
                 onClick = onModifyClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Modificar reserva")
+                Text(stringResource(id = R.string.modificar_reserva))
             }
         }
     }

@@ -7,4 +7,52 @@
     <string name="title_activity_maps">MapsActivity</string>
     <string name="title_activity_solicitantes_propuestas">SolicitantesPropuestasActivity</string>
 
+    <!-- strings de nav bar -->
+    <string name="home">Inicio</string>
+    <string name="settings">Configuración</string>
+    <string name="profile">Perfil</string>
+    <string name="menu">Abrir menú</string>
+    <string name="drawer_option_1">Opción 1</string>
+    <string name="drawer_option_2">Opción 2</string>
+    <string name="drawer_option_3">Opción 3</string>
+    <string name="logout">Cerrar sesión</string>
+    <string name="dark_mode">Modo Claro</string>
+    <string name="light_mode">Modo Oscuro</string>
+    <string name="change_language">Cambiar Idioma</string>
+
+    <!-- strings de ver reservas -->
+    <string name="mis_reservas">Mis Reservas</string>
+    <string name="detalle_reserva">Detalle de la Reserva</string>
+    <string name="reserva_no_encontrada">Reserva no encontrada</string>
+    <string name="peso_reservado">Peso reservado: %1$s</string>
+    <string name="distancia">Distancia: %1$s km</string>
+    <string name="estado">Estado: %1$s</string>
+    <string name="imagen_reserva">Imagen de la reserva</string>
+    <string name="nombre_alimento">Alimento: %1$s</string>
+    <string name="maxima_reserva">Reserva máxima: %1$s kg</string>
+    <string name="rango_reserva">Rango de reserva: %1$s kg</string>
+    <string name="fecha_publicacion">Fecha de publicación: %1$s</string>
+    <string name="fecha_publicacion_donacion">Fecha de publicación: %1$s</string>
+    <string name="numero_no_valido">Número no válido</string>
+    <string name="operacion_cancelada">Operación cancelada</string>
+    <string name="distancia_km">Distancia en km</string>
+    <string name="donante">Donante: %1$s</string>
+    <string name="descripcion">Descripción: %1$s</string>
+    <string name="palabra_clave">Palabras clave: %1$s</string>
+    <string name="cancelar_reserva">Cancelar reserva</string>
+    <string name="max_reserva_posible">Máxima reserva posible: mínimo 1 kg, máximo %1$s kg</string>
+    <string name="nuevo_peso_reservado">Nuevo peso reservado</string>
+    <string name="confirmar">Confirmar</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="confirmacion">Confirmación</string>
+    <string name="confirmacion_cancelacion">¿Seguro?</string>
+    <string name="si">Sí</string>
+    <string name="no">No</string>
+    <string name="modificar_reserva">Modificar reserva</string>
+
+
+
+    <!-- strings de home activity -->
+
+    <string name="bienvenido">Bienvenido</string>
 </resources>

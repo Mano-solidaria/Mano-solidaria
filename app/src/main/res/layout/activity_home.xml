@@ -16,7 +16,7 @@
       app:layout_constraintBottom_toTopOf="@+id/email_label"
       android:gravity="center"
       android:textSize="50sp"
-      android:text="Bienvenido">
+      android:text="@string/bienvenido">
   </TextView>
 
   <TextView
