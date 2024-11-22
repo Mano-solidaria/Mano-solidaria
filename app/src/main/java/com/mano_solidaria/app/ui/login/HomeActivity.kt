@@ -6,9 +6,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.mano_solidaria.app.R
+import com.mano_solidaria.app.Utils.applySavedTheme
 import com.mano_solidaria.app.databinding.ActivityHomeBinding
 import com.mano_solidaria.app.donadores.MainDonadoresActivity
 import com.mano_solidaria.app.solicitantes.MainSolicitantesActivity  // Importa la actividad para solicitantes
@@ -23,6 +25,7 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applySavedTheme(this)
         enableEdgeToEdge()
 
         binding = ActivityHomeBinding.inflate(layoutInflater)
@@ -31,7 +34,6 @@ class HomeActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(getString(R.string.prefs_file), Context.MODE_PRIVATE)
         val email = prefs.getString("email", null)
         val provider = prefs.getString("provider", null)
-
         setup(email ?: "", provider ?: "")
     }
 

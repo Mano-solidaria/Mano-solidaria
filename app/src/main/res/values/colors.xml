@@ -7,4 +7,22 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Tema oscuro -->
+    <color name="colorPrimaryDark">#121212</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="colorBackgroundDark">#121212</color>
+    <color name="colorTextPrimaryDark">#FFFFFF</color>
+    <color name="colorTextSecondaryDark">#B0B0B0</color>
+    <color name="colorTextOnDarkActionBar">#FFFFFF</color>
+    <color name="colorTextOnDarkButton">#FFFFFF</color>
+    <color name="colorTextOnDarkFormLabel">#E0E0E0</color> <!-- Color claro para los títulos de los campos -->
+
+    <!-- Tema claro -->
+    <color name="colorPrimaryLight">#3F51B5</color>
+    <color name="colorBackgroundLight">#FFFFFF</color>
+    <color name="colorTextPrimaryLight">#000000</color>
+    <color name="colorTextSecondaryLight">#757575</color>
+    <color name="colorTextOnLightActionBar">#000000</color>
+    <color name="colorTextOnLightButton">#FFFFFF</color>
 </resources>
