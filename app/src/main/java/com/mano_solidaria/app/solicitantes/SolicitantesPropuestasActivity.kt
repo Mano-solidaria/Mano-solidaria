@@ -29,6 +29,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,6 +67,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.mano_solidaria.app.AppBarWithDrawer
 import com.mano_solidaria.app.donadores.DonacionRoko
 import com.mano_solidaria.app.donadores.SolicitantesPropuestasRepository
 import kotlinx.coroutines.launch
@@ -120,13 +122,17 @@ fun ViewContainer(navController: NavHostController, viewModel: SolicitantesPropu
     }
 
     val usuarioActual = stateUsuarioActual.value
+    val scaffoldState = rememberScaffoldState()  // Agregar ScaffoldState
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {ToolBar()}
-    ){innerPadding ->
-        Content(innerPadding, donadores, navController)
-    }
+    // Usamos AppBarWithDrawer en lugar de Scaffold directamente
+    AppBarWithDrawer(
+        scaffoldState = scaffoldState,
+        coroutineScope = scope,
+        title = "Solicitantes Propuestas",
+        content = { innerPadding ->
+            Content(innerPadding, donadores, navController)
+        }
+    )
 }
 
 
@@ -314,7 +320,15 @@ fun DetalleReservaScreen(id: String, viewModel: SolicitantesPropuestasRepository
     val duracionRestante = ""
     val donante = ""
 
+    val scaffoldState = rememberScaffoldState()  // Agregar ScaffoldState
+    val coroutineScope = rememberCoroutineScope()  // Crear un scope para el Drawer
+
     ToolBar()
+    AppBarWithDrawer(
+        scaffoldState = scaffoldState,
+        coroutineScope = coroutineScope,
+        title = "Detalle de Reserva",
+        content = { innerPadding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -494,7 +508,7 @@ fun DetalleReservaScreen(id: String, viewModel: SolicitantesPropuestasRepository
             Text("Reservar")
         }
     }
-}
+})}
 
 
 
