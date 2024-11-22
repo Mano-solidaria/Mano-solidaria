@@ -25,7 +25,9 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.mano_solidaria.app.AppBarWithDrawer
+import com.mano_solidaria.app.R
 
 
 class MainDonadoresActivity : ComponentActivity() {
@@ -46,7 +48,7 @@ class MainDonadoresActivity : ComponentActivity() {
 
 
         AppBarWithDrawer(
-            title = "Mis donaciones activas",
+            title = stringResource(id = R.string.active_donations),
             scaffoldState = scaffoldState,
             coroutineScope = coroutineScope
         ) { paddingValues ->
@@ -88,7 +90,7 @@ class MainDonadoresActivity : ComponentActivity() {
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Registrar Donación")
+                    Text(stringResource(id = R.string.register_donation))
                 }
 
                 LazyColumn(modifier = Modifier.weight(1f)) {
@@ -164,7 +166,7 @@ class MainDonadoresActivity : ComponentActivity() {
                             diasRestantes = diasRestantes,
                             onDiasRestantesChange = { diasRestantes = it },
                             onDurationExtended = {
-                                Toast.makeText(context, "Duración extendida", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, R.string.extended_duration, Toast.LENGTH_SHORT).show()
                             }
                         )
 
@@ -173,11 +175,13 @@ class MainDonadoresActivity : ComponentActivity() {
                                 items(reservas.size) { index -> ReservaItem(reservas[index]) }
                             }
                         } else {
-                            Text("No hay reservas para esta donación.")
+                            Text(stringResource(id = R.string.no_reservations_for_donation)
+                            )
                         }
                     }
                 } ?: run {
-                    Text("Cargando detalles...")
+                    Text(stringResource(id = R.string.loading_details)
+                    )
                 }
             }
         }
@@ -187,14 +191,21 @@ class MainDonadoresActivity : ComponentActivity() {
     fun DonacionDetails(donacion: Donacion) {
         var pesoDisponible= donacion.pesoTotal - donacion.pesoReservado - donacion.pesoEntregado
         Column {
-            Text("Alimento: ${donacion.pesoAlimento}")
-            Text("Duración Restante: ${donacion.tiempoRestante}")
-            Text("Disponible: $pesoDisponible kg")
-            Text("Reservado: ${donacion.pesoReservado} kg")
-            Text("Estado: ${donacion.estado}")
-            Text("Entregado: ${donacion.pesoEntregado} kg")
+            Text(stringResource(id = R.string.donador_alimento, donacion.pesoAlimento)
+            )
+            Text(stringResource(id = R.string.donador_duracion_restante, donacion.tiempoRestante)
+            )
+            Text(stringResource(id = R.string.donador_disponible, pesoDisponible)
+            )
+            Text(stringResource(id = R.string.donador_reservado, donacion.pesoReservado)
+            )
+            Text(stringResource(id = R.string.donador_estado, donacion.estado)
+            )
+            Text(stringResource(id = R.string.donador_entregado, donacion.pesoEntregado)
+            )
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Descripción: ${donacion.descripcion}")
+            Text(stringResource(id = R.string.donador_descripcion, donacion.descripcion)
+            )
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -222,13 +233,15 @@ class MainDonadoresActivity : ComponentActivity() {
                 },
                 modifier = Modifier.weight(1f).height(56.dp)
             ) {
-                Text("Extender duración")
+                Text(stringResource(id = R.string.donador_extender_duracion)
+                )
             }
 
             TextField(
                 value = diasRestantes.toString(),
                 onValueChange = { newValue -> onDiasRestantesChange(newValue.toIntOrNull() ?: 0) },
-                label = { Text("Días") },
+                label = { Text(stringResource(id = R.string.donador_dias)
+                ) },
                 modifier = Modifier.width(80.dp).padding(start = 8.dp).height(56.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
             )
@@ -248,9 +261,12 @@ class MainDonadoresActivity : ComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Palabra clave: ${updatedReserva.palabraClave}")
-                Text("Kg reservados: ${updatedReserva.pesoReservado}")
-                Text("Estado: ${updatedReserva.estado}")
+                Text(stringResource(id = R.string.donador_palabra_clave, updatedReserva.palabraClave)
+                )
+                Text(stringResource(id = R.string.donador_kg_reservados, updatedReserva.pesoReservado)
+                )
+                Text(stringResource(id = R.string.donador_estado_reserva, updatedReserva.estado)
+                )
             }
 
             if (updatedReserva.estado == "pendiente" || updatedReserva.estado == "reservado") {
@@ -258,10 +274,11 @@ class MainDonadoresActivity : ComponentActivity() {
                     scope.launch {
                         Repository.confirmarEntrega(updatedReserva.id)
                         updatedReserva = updatedReserva.copy(estado = "entregada")
-                        Toast.makeText(context, "Entrega confirmada", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.donador_entrega_confirmada, Toast.LENGTH_SHORT).show()
                     }
                 }) {
-                    Text("Confirmar entrega")
+                    Text(stringResource(id = R.string.donador_confirmar_entrega)
+                    )
                 }
             }
         }

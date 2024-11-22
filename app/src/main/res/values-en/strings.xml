@@ -101,6 +101,30 @@
     <string name="ingrese_mas_informacion">Enter more information</string>
     <string name="registrar">Register</string>
 
+    <!-- strings de main donadores -->
+
+    <string name="active_donations">My active donations</string>
+    <string name="register_donation">Register Donation</string>
+    <string name="extended_duration">Extended Duration</string>
+    <string name="no_reservations_for_donation">There are no reservations for this donation.</string>
+    <string name="loading_details">Loading details...</string>
+    <string name="donador_alimento">Food: %1$s</string>
+    <string name="donador_duracion_restante">Remaining Duration: %1$s</string>
+    <string name="donador_disponible">Available: %1$s kg</string>
+    <string name="donador_reservado">Reserved: %1$s kg</string>
+    <string name="donador_estado">Status: %1$s</string>
+    <string name="donador_entregado">Delivered: %1$s kg</string>
+    <string name="donador_descripcion">Description: %1$s</string>
+    <string name="donador_extender_duracion">Extend duration</string>
+    <string name="donador_dias">Days</string>
+    <string name="donador_palabra_clave">Keyword: %1$s</string>
+    <string name="donador_kg_reservados">Reserved kg: %1$s</string>
+    <string name="donador_estado_reserva">Status: %1$s</string>
+    <string name="donador_entrega_confirmada">Delivery confirmed</string>
+    <string name="donador_confirmar_entrega">Confirm delivery</string>
+
+
+
 
 
 
