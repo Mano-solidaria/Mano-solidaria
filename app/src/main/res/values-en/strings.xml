@@ -1,0 +1,142 @@
+<resources>
+    <string name="app_name">Mano-solidaria</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="title_activity_home">HomeActivity</string>
+    <string name="prefs_file">com.mano_solidaria.PREFERENCE_FILE_KEY</string>
+    <string name="default_web_client_id">963251373970-ufcki0g7c35fq7ci4g465p197kl2tp2m.apps.googleusercontent.com</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="title_activity_solicitantes_propuestas">SolicitantesPropuestasActivity</string>
+
+    <!-- strings de nav bar -->
+
+    <string name="home">Home</string>
+    <string name="settings">Settings</string>
+    <string name="profile">Profile</string>
+    <string name="menu">Open menu</string>
+    <string name="drawer_option_1">Option 1</string>
+    <string name="drawer_option_2">Option 2</string>
+    <string name="drawer_option_3">Option 3</string>
+    <string name="logout">Log out</string>
+    <string name="dark_mode">Light mode</string>
+    <string name="light_mode">Dark mode</string>
+    <string name="change_language">Change Language</string>
+
+    <!-- strings de ver reservas -->
+
+    <string name="mis_reservas">My Reservations</string>
+    <string name="detalle_reserva">Reservation Details</string>
+    <string name="reserva_no_encontrada">Reservation not found</string>
+    <string name="peso_reservado">Reserved weight: %1$s</string>
+    <string name="distancia">Distance: %1$s km</string>
+    <string name="estado">Status: %1$s</string>
+    <string name="imagen_reserva">Reservation image</string>
+    <string name="nombre_alimento">Food: %1$s</string>
+    <string name="maxima_reserva">Maximum reservation: %1$s kg</string>
+    <string name="rango_reserva">Reservation range: %1$s kg</string>
+    <string name="fecha_publicacion">Published on: %1$s</string>
+    <string name="fecha_publicacion_donacion">Published on: %1$s</string>
+    <string name="numero_no_valido">Invalid number</string>
+    <string name="operacion_cancelada">Operation canceled</string>
+    <string name="distancia_km">Distance in km</string>
+    <string name="donante">Donor: %1$s</string>
+    <string name="descripcion">Description: %1$s</string>
+    <string name="palabra_clave">Key words: %1$s</string>
+    <string name="cancelar_reserva">Cancel reservation</string>
+    <string name="max_reserva_posible">Maximum possible reservation: minimum 1 kg, maximum %1$s kg</string>
+    <string name="nuevo_peso_reservado">New reserved weight</string>
+    <string name="confirmar">Confirm</string>
+    <string name="cancelar">Cancel</string>
+    <string name="confirmacion">Confirmation</string>
+    <string name="confirmacion_cancelacion">Sure?</string>
+    <string name="si">Yes</string>
+    <string name="no">No</string>
+    <string name="modificar_reserva">Modify reservation</string>
+
+    <!-- strings de home activity -->
+
+    <string name="bienvenido">Welcome</string>
+    <string name="email">Email</string>
+    <string name="tipo_logueo">Login Type</string>
+    <string name="contraseña">Password</string>
+    <string name="cerrar_sesion">Log out</string>
+    <string name="siguiente">Next</string>
+
+    <!-- strings de login activity -->
+
+    <string name="ingrese_su_email">Enter your email</string>
+    <string name="ingrese_su_contraseña">Enter your password</string>
+    <string name="log_in">Log in</string>
+    <string name="sign_in">Register</string>
+    <string name="rol_usuario_no_reconocido">Unrecognized user role.</string>
+    <string name="rol_usuario_no_encontrado">User role not found.</string>
+    <string name="error_obtener_rol_usuario">Error obtaining user role.</string>
+    <string name="usuario_no_autenticado">User not authenticated.</string>
+
+    <!-- strings de form activity -->
+
+    <string name="rol_usuario">User Role</string>
+    <string name="solicitante">Requester</string>
+    <string name="donador_registro">Donor</string>
+    <string name="nombre">Name</string>
+    <string name="nombre_usuario">Username</string>
+    <string name="ingrese_email">Enter your email</string>
+    <string name="ingrese_contraseña">Enter a password</string>
+    <string name="horario_atencion_inicio">Business Hours (Start)</string>
+    <string name="horario_atencion_fin">Business Hours (End)</string>
+    <string name="direccion">Address</string>
+    <string name="ingrese_direccion">Enter your address</string>
+    <string name="elegir_foto">Choose Photo</string>
+    <string name="espacio_para_mostrar_foto">Space to display the photo</string>
+    <string name="registrarme">Sign up</string>
+
+    <string name="registro_completar_nombre">Please complete the name</string>
+    <string name="registro_completar_email">Please complete the email</string>
+    <string name="registro_completar_contrasena">Please complete the password</string>
+    <string name="registro_completar_direccion">Please complete the address</string>
+
+
+
+    <!-- strings de registrar donacion activity -->
+
+    <string name="alimento">Food:</string>
+    <string name="ingrese_el_alimento">Enter the food</string>
+    <string name="peso_kg">Weight (Kg):</string>
+    <string name="ingrese_peso">Enter the weight</string>
+    <string name="ingrese_duracion">Enter the duration</string>
+    <string name="informacion_adicional">Additional information:</string>
+    <string name="ingrese_mas_informacion">Enter more information</string>
+    <string name="registrar">Register</string>
+
+    <string name="donador_completar_campos">Please fill out all fields correctly.</string>
+    <string name="donador_seleccionar_imagen">Please select an image.</string>
+    <string name="donador_error_registrar_donacion">Error registering donation.</string>
+
+
+    <!-- strings de main donadores -->
+
+    <string name="active_donations">My active donations</string>
+    <string name="register_donation">Register Donation</string>
+    <string name="extended_duration">Extended Duration</string>
+    <string name="no_reservations_for_donation">There are no reservations for this donation.</string>
+    <string name="loading_details">Loading details...</string>
+    <string name="donador_alimento">Food: %1$s</string>
+    <string name="donador_duracion_restante">Remaining Duration: %1$s</string>
+    <string name="donador_disponible">Available: %1$s kg</string>
+    <string name="donador_reservado">Reserved: %1$s kg</string>
+    <string name="donador_estado">Status: %1$s</string>
+    <string name="donador_entregado">Delivered: %1$s kg</string>
+    <string name="donador_descripcion">Description: %1$s</string>
+    <string name="donador_extender_duracion">Extend duration</string>
+    <string name="donador_dias">Days</string>
+    <string name="donador_palabra_clave">Keyword: %1$s</string>
+    <string name="donador_kg_reservados">Reserved kg: %1$s</string>
+    <string name="donador_estado_reserva">Status: %1$s</string>
+    <string name="donador_entrega_confirmada">Delivery confirmed</string>
+    <string name="donador_confirmar_entrega">Confirm delivery</string>
+
+
+
+
+
+
+</resources>

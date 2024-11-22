@@ -73,16 +73,16 @@ class HomeActivity : AppCompatActivity() {
                             val intent = Intent(this, SolicitantesPropuestasActivity::class.java)
                             startActivity(intent)
                         } else {
-                            Toast.makeText(this, "Rol de usuario no reconocido.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, getString(R.string.rol_usuario_no_reconocido), Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        Toast.makeText(this, "No se encontró el rol del usuario.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.rol_usuario_no_encontrado), Toast.LENGTH_SHORT).show()
                     }
                 }.addOnFailureListener {
-                    Toast.makeText(this, "Error al obtener el rol de usuario.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.error_obtener_rol_usuario), Toast.LENGTH_SHORT).show()
                 }
             } else {
-                Toast.makeText(this, "Usuario no autenticado.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.usuario_no_autenticado), Toast.LENGTH_SHORT).show()
             }
         }
     }

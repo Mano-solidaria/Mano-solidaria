@@ -11,18 +11,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:text="@string/bienvenido">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Mano solidaria"
-            android:textSize="40sp"
-            android:layout_marginTop="60dp"/>
-
-        <ImageView
-            android:id="@+id/miImagen"
-            android:layout_width="wrap_content"
+            android:textColor="@color/black"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:src="@mipmap/ic_launcher_foreground"/>
 
@@ -37,7 +31,7 @@
             android:id="@+id/email"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:hint="Correo Electrónico"
+            android:hint="@string/ingrese_su_email"
             android:textSize="20sp"
             android:inputType="textEmailAddress"
             android:layout_marginTop="20dp"
@@ -48,7 +42,7 @@
             android:id="@+id/password"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:hint="Contraseña"
+            android:hint="@string/ingrese_su_contraseña"
             android:textSize="20sp"
             android:inputType="textPassword"
             android:layout_marginTop="20dp"
@@ -83,7 +77,7 @@
                 android:id="@+id/login"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Iniciar Sesion"
+                android:text="@string/log_in"
                 android:layout_marginRight="25dp"
                 android:layout_marginLeft="25dp"
                 android:backgroundTint="@color/black"/>
@@ -92,7 +86,7 @@
                 android:id="@+id/sign_in"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="¿No tienes una cuenta?"
+                android:text="@string/sign_in"
                 android:layout_marginTop="25dp"
                 android:layout_marginBottom="25dp"/>
         </LinearLayout>

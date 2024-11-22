@@ -1,7 +1,11 @@
 package com.mano_solidaria.app
 
+import android.app.Activity
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -11,12 +15,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.mano_solidaria.app.ui.login.LoginActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import com.mano_solidaria.app.Utils.saveThemePreference
+import java.util.Locale
+
 
 // Función para obtener el modo del tema desde SharedPreferences
 fun getThemePreference(context: Context): Boolean {
@@ -40,13 +47,16 @@ fun AppBarWithDrawer(
     // Obtención del tema (modo oscuro o claro)
     var isDarkMode by remember { mutableStateOf(getThemePreference(context)) }
 
+    // Variable para gestionar el idioma actual
+    var currentLanguage by remember {
+        mutableStateOf(getSavedLanguagePreference(context))
+    }
+
     // Cambio de tema
     val colors = if (isDarkMode) {
-        darkColors(
-        )
+        darkColors()
     } else {
-        lightColors(
-        )
+        lightColors()
     }
 
     // ModalDrawer con el contenido del Drawer
@@ -66,13 +76,11 @@ fun AppBarWithDrawer(
                         .padding(16.dp)
                         .width(LocalConfiguration.current.screenWidthDp.dp * drawerWidthFraction) // Ancho del drawer
                 ) {
-                    Text("Contenido del Drawer", style = MaterialTheme.typography.h6)
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Text("Opción 1", style = MaterialTheme.typography.body1)
+                    Text(stringResource(id = R.string.drawer_option_1), style = MaterialTheme.typography.body1)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Opción 2", style = MaterialTheme.typography.body1)
+                    Text(stringResource(id = R.string.drawer_option_2), style = MaterialTheme.typography.body1)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Opción 3", style = MaterialTheme.typography.body1)
+                    Text(stringResource(id = R.string.drawer_option_3), style = MaterialTheme.typography.body1)
                     Spacer(modifier = Modifier.height(20.dp))
 
                     // Botón para cambiar entre modo claro y oscuro
@@ -83,7 +91,7 @@ fun AppBarWithDrawer(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (isDarkMode) "Modo Claro" else "Modo Oscuro")
+                        Text(if (isDarkMode) stringResource(id = R.string.light_mode) else stringResource(id = R.string.dark_mode))
                     }
 
                     // Botón para cerrar sesión
@@ -93,7 +101,24 @@ fun AppBarWithDrawer(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Cerrar sesión")
+                        Text(stringResource(id = R.string.logout))
+                    }
+
+                    // Botón para cambiar el idioma
+                    Button(
+                        onClick = {
+                            val newLanguage = if (currentLanguage == "en") "es" else "en"
+                            currentLanguage = newLanguage
+                            saveLanguagePreference(context, newLanguage) // Guardar la preferencia
+                            changeLanguage(context, newLanguage)
+                            // Recargar la actividad
+                            val intent = (context as Activity).intent
+                            context.finish()
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(id = R.string.change_language)) // Usa el recurso traducido
                     }
                 }
             }
@@ -112,7 +137,7 @@ fun AppBarWithDrawer(
                                         scaffoldState.drawerState.open()
                                     }
                                 }) {
-                                    Icon(Icons.Filled.Menu, contentDescription = "Abrir menú")
+                                    Icon(Icons.Filled.Menu, contentDescription = stringResource(id = R.string.menu))
                                 }
                             }
                         )
@@ -126,6 +151,35 @@ fun AppBarWithDrawer(
             }
         }
     )
+}
+
+/**
+ * Función para guardar la preferencia de idioma.
+ */
+fun saveLanguagePreference(context: Context, languageCode: String) {
+    val sharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    sharedPreferences.edit().putString("language", languageCode).apply()
+}
+
+/**
+ * Función para obtener el idioma guardado.
+ */
+fun getSavedLanguagePreference(context: Context): String {
+    val sharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    return sharedPreferences.getString("language", Locale.getDefault().language) ?: "en"
+}
+
+/**
+ * Cambiar el idioma de la aplicación.
+ */
+fun changeLanguage(context: Context, languageCode: String) {
+    val locale = Locale(languageCode)
+    Locale.setDefault(locale)
+
+    val config = Configuration()
+    config.setLocale(locale)
+
+    context.resources.updateConfiguration(config, context.resources.displayMetrics)
 }
 
 /**

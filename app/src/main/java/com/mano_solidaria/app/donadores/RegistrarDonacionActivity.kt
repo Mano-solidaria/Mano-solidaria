@@ -72,7 +72,7 @@ class RegistrarDonacionActivity : AppCompatActivity() {
             }
 
             if (imageUri == null) {
-                Toast.makeText(this, "Por favor seleccione una imagen.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.donador_seleccionar_imagen, Toast.LENGTH_SHORT).show()
                 return
             }
 
@@ -93,7 +93,7 @@ class RegistrarDonacionActivity : AppCompatActivity() {
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK //PRIMERA SOLUCION HASTA QUE SE VUELVA A HABLAR
                         startActivity(intent)
                     }
-                    else Toast.makeText(this@RegistrarDonacionActivity, "Error al registrar donación: $resultado", Toast.LENGTH_SHORT).show()
+                    else Toast.makeText(this@RegistrarDonacionActivity, R.string.donador_error_registrar_donacion, Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: IllegalArgumentException){
