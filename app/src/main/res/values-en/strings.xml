@@ -90,6 +90,17 @@
     <string name="registrarme">Sign up</string>
 
 
+    <!-- strings de registrar donacion activity -->
+
+    <string name="alimento">Food:</string>
+    <string name="ingrese_el_alimento">Enter the food</string>
+    <string name="peso_kg">Weight (Kg):</string>
+    <string name="ingrese_peso">Enter the weight</string>
+    <string name="ingrese_duracion">Enter the duration</string>
+    <string name="informacion_adicional">Additional information:</string>
+    <string name="ingrese_mas_informacion">Enter more information</string>
+    <string name="registrar">Register</string>
+
 
 
 

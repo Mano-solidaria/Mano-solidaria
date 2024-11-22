@@ -90,6 +90,19 @@
     <string name="espacio_para_mostrar_foto">Espacio para mostrar la foto</string>
     <string name="registrarme">Registrarme</string>
 
+    <!-- strings de registrar donacion -->
+
+    <string name="alimento">Alimento:</string>
+    <string name="ingrese_el_alimento">Ingrese el alimento</string>
+    <string name="peso_kg">Peso (Kg):</string>
+    <string name="ingrese_peso">Ingrese el peso</string>
+    <string name="ingrese_duracion">Ingrese la duración</string>
+    <string name="informacion_adicional">Información adicional:</string>
+    <string name="ingrese_mas_informacion">Ingrese más información</string>
+    <string name="registrar">Registrar</string>
+
+
+
 
 
 

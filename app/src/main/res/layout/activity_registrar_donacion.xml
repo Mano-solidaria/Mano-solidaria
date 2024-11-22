@@ -20,12 +20,12 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Alimento:" />
+            android:text="@string/alimento" />
         <EditText
             android:id="@+id/alimentoEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Ingrese el alimento"
+            android:hint="@string/ingrese_el_alimento"
             android:minHeight="48dp"
             android:inputType="text" />
 
@@ -33,12 +33,12 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Peso (Kg):" />
+            android:text="@string/peso_kg" />
         <EditText
             android:id="@+id/pesoEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Ingrese el peso"
+            android:hint="@string/ingrese_peso"
             android:minHeight="48dp"
             android:inputType="numberDecimal" />
 
@@ -51,7 +51,7 @@
             android:id="@+id/duracionEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Ingrese la duración"
+            android:hint="@string/ingrese_duracion"
             android:minHeight="48dp"
             android:inputType="number" />
 
@@ -59,12 +59,12 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Información adicional:" />
+            android:text="@string/informacion_adicional" />
         <EditText
             android:id="@+id/infoAdicionalEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Ingrese más información"
+            android:hint="@string/ingrese_mas_informacion"
             android:inputType="textMultiLine"
             android:lines="4" />
 
@@ -75,7 +75,7 @@
         android:id="@+id/btnElegirFoto"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Elegir Foto" />
+        android:text="@string/elegir_foto"/>
 
     <!-- Espacio para mostrar la foto -->
     <ImageView
@@ -85,12 +85,12 @@
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
         android:src="@android:drawable/ic_menu_camera"
-        android:contentDescription="Espacio para mostrar la foto" />
+        android:contentDescription="@string/espacio_para_mostrar_foto" />
 
     <!-- Botón Registrar -->
     <Button
         android:id="@+id/btnRegistrar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Registrar" />
+        android:text="@string/registrar" />
 </LinearLayout>
