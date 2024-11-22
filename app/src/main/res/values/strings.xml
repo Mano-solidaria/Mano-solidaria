@@ -60,4 +60,13 @@
     <string name="contraseña">Contraseña</string>
     <string name="cerrar_sesion">Cerrar sesión</string>
     <string name="siguiente">Siguiente</string>
+
+    <!-- strings de login activity -->
+
+    <string name="ingrese_su_email">Ingrese su email</string>
+    <string name="ingrese_su_contraseña">Ingrese su contraseña</string>
+    <string name="log_in">Iniciar sesión</string>
+    <string name="sign_in">Iniciar sesión (no básico) </string>
+
+
 </resources>

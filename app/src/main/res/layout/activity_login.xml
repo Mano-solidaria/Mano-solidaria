@@ -26,7 +26,7 @@
             android:layout_marginBottom="20dp"
             android:gravity="center"
             android:textSize="50sp"
-            android:text="Bienvenido" />
+            android:text="@string/bienvenido"/>
 
         <TextView
             android:id="@+id/email_label"
@@ -36,7 +36,7 @@
             android:layout_marginHorizontal="60dp"
             android:layout_marginBottom="10dp"
             android:textSize="20sp"
-            android:text="Email" />
+            android:text="@string/email" />
 
         <EditText
             android:id="@+id/email"
@@ -47,7 +47,7 @@
             android:inputType="text"
             android:textColor="@color/black"
             android:textColorHint="@color/black"
-            android:hint="Ingrese su email" />
+            android:hint="@string/ingrese_su_email"/>
 
         <TextView
             android:id="@+id/password_label"
@@ -57,7 +57,7 @@
             android:layout_marginTop="20dp"
             android:textSize="20sp"
             android:textColor="@color/black"
-            android:text="Contraseña" />
+            android:text="@string/contraseña" />
 
         <EditText
             android:id="@+id/password"
@@ -68,7 +68,7 @@
             android:textColor="@color/black"
             android:textColorHint="@color/black"
             android:inputType="textPassword"
-            android:hint="Ingrese su contraseña" />
+            android:hint="@string/ingrese_su_contraseña" />
 
         <LinearLayout
             android:id="@+id/container_login"
@@ -84,14 +84,14 @@
                 android:layout_width="150dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="20dp"
-                android:text="Log in" />
+                android:text="@string/log_in" />
 
             <Button
                 android:id="@+id/sign_in"
                 android:layout_width="150dp"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="20dp"
-                android:text="Sign In" />
+                android:text="@string/sign_in" />
         </LinearLayout>
 
         <Button

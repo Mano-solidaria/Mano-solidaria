@@ -61,4 +61,13 @@
     <string name="cerrar_sesion">Log out</string>
     <string name="siguiente">Next</string>
 
+    <!-- strings de login activity -->
+
+    <string name="ingrese_su_email">Enter your email</string>
+    <string name="ingrese_su_contraseña">Enter your password</string>
+    <string name="log_in">Log in</string>
+    <string name="sign_in">Sign In (non basic)</string>
+
+
+
 </resources>
