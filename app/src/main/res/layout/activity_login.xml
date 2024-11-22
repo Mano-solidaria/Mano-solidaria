@@ -1,109 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/login_template"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/teal_200"
     tools:context="com.mano_solidaria.app.ui.login.LoginActivity">
 
     <LinearLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:gravity="center_horizontal"
-        android:layout_marginTop="50dp"
-        android:layout_marginBottom="50dp">
+        android:gravity="center_horizontal">
 
         <TextView
-            android:textColor="@color/black"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:gravity="center"
-            android:textSize="50sp"
-            android:text="Bienvenido" />
+            android:text="Mano solidaria"
+            android:textSize="40sp"
+            android:layout_marginTop="60dp"/>
+
+        <ImageView
+            android:id="@+id/miImagen"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@mipmap/ic_launcher_foreground"/>
 
         <TextView
-            android:id="@+id/email_label"
-            android:textColor="@color/black"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="60dp"
-            android:layout_marginBottom="10dp"
+            android:text="Ingresa tu correo y contraseña"
             android:textSize="20sp"
-            android:text="Email" />
+            android:layout_marginTop="20dp"/>
 
         <EditText
             android:id="@+id/email"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="60dp"
-            android:layout_marginTop="10dp"
-            android:inputType="text"
-            android:textColor="@color/black"
-            android:textColorHint="@color/black"
-            android:hint="Ingrese su email" />
-
-        <TextView
-            android:id="@+id/password_label"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="60dp"
-            android:layout_marginTop="20dp"
+            android:layout_height="50dp"
+            android:hint="Correo Electrónico"
             android:textSize="20sp"
-            android:textColor="@color/black"
-            android:text="Contraseña" />
+            android:inputType="textEmailAddress"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="25dp"
+            android:layout_marginLeft="25dp" />
 
         <EditText
             android:id="@+id/password"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="60dp"
-            android:layout_marginTop="10dp"
-            android:textColor="@color/black"
-            android:textColorHint="@color/black"
+            android:layout_height="50dp"
+            android:hint="Contraseña"
+            android:textSize="20sp"
             android:inputType="textPassword"
-            android:hint="Ingrese su contraseña" />
-
-        <LinearLayout
-            android:id="@+id/container_login"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="20dp"
-            android:orientation="horizontal"
             android:layout_marginTop="20dp"
-            android:gravity="center">
-
-            <Button
-                android:id="@+id/login"
-                android:layout_width="150dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="20dp"
-                android:text="Log in" />
-
-            <Button
-                android:id="@+id/sign_in"
-                android:layout_width="150dp"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
-                android:text="Sign In" />
-        </LinearLayout>
+            android:layout_marginRight="25dp"
+            android:layout_marginLeft="25dp" />
 
         <Button
             android:id="@+id/login_google"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="35dp"
-            android:layout_marginTop="10dp"
-            android:backgroundTint="@color/white"
-            android:drawableStart="@mipmap/pngwing"
             android:text="Google"
-            android:textColor="@color/black" />
+            android:layout_marginTop="15dp"
+            android:layout_marginRight="25dp"
+            android:layout_marginLeft="25dp"
+            android:layout_marginBottom="50dp"
+            android:backgroundTint="@color/black"
+            android:drawableStart="@mipmap/pngwing"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="bottom"
+            android:gravity="center_horizontal">
+
+            <Button
+                android:id="@+id/login"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Iniciar Sesion"
+                android:layout_marginRight="25dp"
+                android:layout_marginLeft="25dp"
+                android:backgroundTint="@color/black"/>
+
+            <TextView
+                android:id="@+id/sign_in"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="¿No tienes una cuenta?"
+                android:layout_marginTop="25dp"
+                android:layout_marginBottom="25dp"/>
+        </LinearLayout>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

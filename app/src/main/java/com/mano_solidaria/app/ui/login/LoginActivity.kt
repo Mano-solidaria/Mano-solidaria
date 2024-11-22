@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -38,7 +39,7 @@ import org.mindrot.jbcrypt.BCrypt
 
 class LoginActivity : AppCompatActivity() {
 
-    private lateinit var registro : Button
+    private lateinit var registro : TextView
     private lateinit var inicio_sesion : Button
     private lateinit var google_boton : Button
     private lateinit var mail: EditText
@@ -48,7 +49,6 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var oneTapClient: SignInClient
     private lateinit var db: FirebaseFirestore
     private lateinit var usersCollectionRef: CollectionReference
-    private lateinit var alovelaceDocumentRef: DocumentReference
 
     private val oneTapResultLauncher = registerForActivityResult( //Solo se ejecuta cuando se lo llama (Solo inicia sesion)
         ActivityResultContracts.StartIntentSenderForResult()
@@ -63,7 +63,6 @@ class LoginActivity : AppCompatActivity() {
                         .addOnCompleteListener(this) { task ->
                             if (task.isSuccessful) {
                                 loginByGoogle()
-                                //showHome(user!!.email.toString(), ProviderType.Google)
                             } else {
                                 val message= loginFallido(task.exception)
                                 showAlert(message)
@@ -91,19 +90,11 @@ class LoginActivity : AppCompatActivity() {
         }
         db = Firebase.firestore
         usersCollectionRef = db.collection("users")
-        alovelaceDocumentRef = db.collection("users").document("alovelace")
         auth = Firebase.auth
         setup()
         oneTapClient = Identity.getSignInClient(this) //Added by GPT
         session()
     }
-
-//    override fun onStart() { //Se ejecuta luego del oncreate
-//        super.onStart()
-////        container.visibility = View.VISIBLE
-////        val currentUser = auth.currentUser //Obtiene el usuario actualmente autenticado en Firebase
-////        showHome(currentUser!!.email.toString(), ProviderType.Google) //Ver después cuando se inicia la sesion de google que se estaría iniciando 2 veces este método
-//    }
 
     private fun session(){ //Cuando ya se encuentra loggeado un usuario, se cargan los datos.
 
@@ -120,8 +111,6 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun setup(){
-
-        title = "Autenticación"
 
         inicio_sesion = findViewById(R.id.login)
         registro = findViewById(R.id.sign_in)
