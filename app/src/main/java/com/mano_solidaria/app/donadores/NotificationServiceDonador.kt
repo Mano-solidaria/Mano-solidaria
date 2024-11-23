@@ -18,7 +18,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.mano_solidaria.app.R
 
-class NotificationService : Service() {
+class NotificationServiceDonador : Service() {
 
     private var listenerRegistrationReservas: ListenerRegistration? = null
     private var listenerRegistrationDonaciones: ListenerRegistration? = null
@@ -102,8 +102,9 @@ class NotificationService : Service() {
             stopSelf()
             return
         }
-
+        val user = db.collection("users").document(userId)
         val collectionRefDonaciones = db.collection("donaciones").whereEqualTo("donanteId", db.collection("users").document(userId))
+
 
         listenerRegistrationDonaciones = collectionRefDonaciones.addSnapshotListener { snapshots, error ->
             if (error != null) {
@@ -118,6 +119,13 @@ class NotificationService : Service() {
                 val pesoTotal = donacionSnapshot.getLong("pesoTotal") ?: 0L
                 val pesoEntregado = donacionSnapshot.getLong("pesoEntregado") ?: 0L
                 val notiRecibida = donacionSnapshot.getBoolean("notiRecibida") ?: false
+                var suscriptores: List<String> = emptyList()
+                user.get()
+                    .addOnSuccessListener { document ->
+                        if (document.exists()) {
+                            // Extraemos la lista de suscriptores
+                            suscriptores = document.get("suscriptores") as? List<String> ?: emptyList()
+                        }
                 when (change.type) {
                     DocumentChange.Type.ADDED -> {
                         if (donacionSnapshot.metadata.hasPendingWrites()) {
@@ -126,6 +134,11 @@ class NotificationService : Service() {
                                 "Donacion agregada correctamente",
                                 Toast.LENGTH_SHORT
                             ).show()
+
+                            for (suscriptor in suscriptores) {
+                                println(suscriptor) // Aquí puedes trabajar con cada elemento
+                            }
+
                         }
                     }
 
@@ -146,9 +159,10 @@ class NotificationService : Service() {
                         Toast.makeText(this, "Donacion eliminada correctamente", Toast.LENGTH_SHORT).show()
                     }
                 }
-            }
+            }}
         }
     }
+
 
 
     override fun onBind(intent: Intent?): IBinder? {

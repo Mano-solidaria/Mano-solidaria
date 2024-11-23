@@ -69,6 +69,8 @@ import kotlinx.coroutines.async
 class SolicitantesPropuestasActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val intent = Intent(this, NotificationServiceSolicitante::class.java)
+        startService(intent)
         enableEdgeToEdge()
         setContent {
             AppNavigation()

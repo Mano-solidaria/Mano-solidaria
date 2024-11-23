@@ -1,6 +1,5 @@
 package com.mano_solidaria.app.ui.login
 
-import ApiService
 import ApiServiceLogin
 import android.app.Activity
 import android.content.ContentValues.TAG
@@ -36,12 +35,16 @@ import com.google.android.libraries.places.widget.listener.PlaceSelectionListene
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.mano_solidaria.app.BuildConfig
 import com.mano_solidaria.app.R
+import com.mano_solidaria.app.donadores.MainDonadoresActivity
 import com.mano_solidaria.app.donadores.Repository.getFileFromUri
+import com.mano_solidaria.app.solicitantes.SolicitantesPropuestasActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -49,12 +52,8 @@ import kotlinx.coroutines.tasks.await
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Multipart
-import retrofit2.http.POST
-import retrofit2.http.Part
 
 
 class FormActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -168,11 +167,6 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         horariosInicio = Horarios(horarioApertura.hour, horarioApertura.minute, horarioCierre.hour, horarioCierre.minute )
 
         visibility(usuarioRolSwitch.isChecked)
-
-//        horarioApertura.visibility = if (usuarioRolSwitch.isChecked) View.VISIBLE else View.GONE
-//        horarioCierre.visibility = if (usuarioRolSwitch.isChecked) View.VISIBLE else View.GONE
-
-
 
         sendLogin = findViewById(R.id.boton_guardar)
 
@@ -315,7 +309,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
                         provider = ProviderType.Basic.toString()
                         val userData = createUser()  // Ahora podemos llamar a createUser aquí
                         WriteInDB(userFirebase!!.uid, userData)
-                        showHome(userEmail, provider)
+                        showHome()
                     } else {
                         showAlert("Error al registrar el usuario.")
                     }
@@ -331,7 +325,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
                 // Si el usuario ya está autenticado, simplemente lo registramos
                 val userData = createUser()
                 WriteInDB(userFirebase!!.uid, userData)
-                showHome(userEmail, provider)
+                showHome()
             }
         }
     }
@@ -419,9 +413,11 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
 
         if (userType.lowercase() == "donante"){
             val horarioAtencionInicio = String.format("%02d:%02d", horariosUsuario.aperturaHora, horariosUsuario.aperturaMinuto)
-            val horarioAtencionCierre = String.format("%02d:%02d", horariosUsuario.cierreHora, horariosUsuario.cierreMinuto)
+            val horarioAtencionFin = String.format("%02d:%02d", horariosUsuario.cierreHora, horariosUsuario.cierreMinuto)
+            val suscriptores: List<DocumentReference> = emptyList()
             user["HorarioAtencionInicio"] = horarioAtencionInicio
-            user["HorarioAtencionFin"] = horarioAtencionCierre
+            user["HorarioAtencionFin"] = horarioAtencionFin
+            user["suscriptores"] = suscriptores.toString()
         }
 
         return user
@@ -438,13 +434,29 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
             }
     }
 
-    private fun showHome(email:String, provider: String){
-        val prefs = getSharedPreferences(getString(R.string.prefs_file), Context.MODE_PRIVATE).edit()
-        prefs.putString("email", email)
-        prefs.putString("provider", provider)
-        prefs.apply()
-        val homeIntent = Intent(this, HomeActivity::class.java)
-        startActivity(homeIntent)
+    private fun showHome(){
+        val userId = Firebase.auth.currentUser?.uid
+        if (userId != null) {
+            db.collection("users").document(userId).get().addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val userRole = document.getString("UsuarioRol") ?: "Desconocido"
+
+                    if (userRole == "donante") {
+                        val intent = Intent(this, MainDonadoresActivity::class.java)
+                        startActivity(intent)
+                    } else if (userRole == "solicitante") {
+                        val intent = Intent(this, SolicitantesPropuestasActivity::class.java)
+                        startActivity(intent)
+                    } else {
+                        Toast.makeText(this, getString(R.string.rol_usuario_no_reconocido), Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this, getString(R.string.rol_usuario_no_encontrado), Toast.LENGTH_SHORT).show()
+                }
+            }.addOnFailureListener {
+                Toast.makeText(this, getString(R.string.error_obtener_rol_usuario), Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun showAlert(message: String){

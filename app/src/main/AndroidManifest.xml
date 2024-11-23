@@ -72,7 +72,7 @@
             android:name=".ui.login.FormActivity"
             android:exported="false" />
         <service
-            android:name=".donadores.NotificationService"
+            android:name=".donadores.NotificationServiceDonador"
             android:exported="true" />
         <activity
             android:name=".ui.login.LoginActivity"

@@ -35,7 +35,7 @@ class MainDonadoresActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val intent = Intent(this, NotificationService::class.java)
+        val intent = Intent(this, NotificationServiceDonador::class.java)
         startService(intent)
         setContent { MainDonadoresApp() }
     }

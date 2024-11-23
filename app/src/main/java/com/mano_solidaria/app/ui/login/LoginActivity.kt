@@ -11,6 +11,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -34,6 +35,8 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import com.mano_solidaria.app.donadores.MainDonadoresActivity
+import com.mano_solidaria.app.solicitantes.SolicitantesPropuestasActivity
 import org.mindrot.jbcrypt.BCrypt
 
 class LoginActivity : AppCompatActivity() {
@@ -81,31 +84,21 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.login_template)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
         db = Firebase.firestore
-        usersCollectionRef = db.collection("users")
         auth = Firebase.auth
-        setup()
-        oneTapClient = Identity.getSignInClient(this) //Added by GPT
-        session()
-    }
+        if (auth.currentUser != null){
+            showHome()
+        }else {
+            setContentView(R.layout.activity_login)
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.login_template)) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+                insets
+            }
+            usersCollectionRef = db.collection("users")
 
-    private fun session(){ //Cuando ya se encuentra loggeado un usuario, se cargan los datos.
-
-        container = findViewById(R.id.container)
-        val prefs = getSharedPreferences(getString(R.string.prefs_file), Context.MODE_PRIVATE)
-        val email = prefs.getString("email", null)
-        val provider = prefs.getString("provider", null)
-        val currentUser = auth.currentUser //Obtiene el usuario actualmente autenticado en Firebase (Fijate boludo que no lo estas usando xd)
-
-        if (email != null && provider != null){
-            container.visibility = View.INVISIBLE
-            showHome(email, ProviderType.valueOf(provider))
+            setup()
+            oneTapClient = Identity.getSignInClient(this)
         }
     }
 
@@ -127,7 +120,7 @@ class LoginActivity : AppCompatActivity() {
                 FirebaseAuth.getInstance().signInWithEmailAndPassword(
                     mail.text.toString(), contrasena.text.toString()).addOnCompleteListener{
                     if (it.isSuccessful){
-                        showHome(it.result?.user?.email ?: "", ProviderType.Basic)
+                        showHome()
                     }else{
                         val errorMessage = loginFallido(it.exception)
                         showAlert(errorMessage)
@@ -178,15 +171,31 @@ class LoginActivity : AppCompatActivity() {
         builder.setPositiveButton("Aceptar",null)
         val dialog: AlertDialog = builder.create()
         dialog.show()
-    }//Debería hacer una version para el login
+    }
 
-    private fun showHome(email:String, provider: ProviderType){
-        val prefs = getSharedPreferences(getString(R.string.prefs_file), Context.MODE_PRIVATE).edit()
-        prefs.putString("email", email)
-        prefs.putString("provider", provider.name)
-        prefs.apply()
-        val homeIntent = Intent(this, HomeActivity::class.java)
-        startActivity(homeIntent)
+    private fun showHome(){
+        val userId = auth.currentUser?.uid
+        if (userId != null) {
+            db.collection("users").document(userId).get().addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val userRole = document.getString("UsuarioRol") ?: "Desconocido"
+
+                    if (userRole == "donante") {
+                        val intent = Intent(this, MainDonadoresActivity::class.java)
+                        startActivity(intent)
+                    } else if (userRole == "solicitante") {
+                        val intent = Intent(this, SolicitantesPropuestasActivity::class.java)
+                        startActivity(intent)
+                    } else {
+                        Toast.makeText(this, getString(R.string.rol_usuario_no_reconocido), Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this, getString(R.string.rol_usuario_no_encontrado), Toast.LENGTH_SHORT).show()
+                }
+            }.addOnFailureListener {
+                Toast.makeText(this, getString(R.string.error_obtener_rol_usuario), Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun showForm(){
@@ -203,7 +212,7 @@ class LoginActivity : AppCompatActivity() {
             userRef.get().addOnSuccessListener { document ->
                 if (document.exists()) {
                     // Usuario registrado: redirige a la actividad de usuario registrado
-                    showHome(user!!.email.toString(), ProviderType.Google)
+                    showHome()
                 } else {
                     // Usuario no registrado: redirige a la actividad de registro
                     showForm()

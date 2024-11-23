@@ -211,7 +211,8 @@ object Repository {
             "pesoEntregado" to 0,
             "pesoReservado" to 0,
             "pesoTotal" to pesoTotal,
-            "imagenURL" to imagenURL
+            "imagenURL" to imagenURL,
+            "notiRecibida" to false
         )
 
         return try {
