@@ -89,20 +89,19 @@ class LoginActivity : AppCompatActivity() {
         if (auth.currentUser != null){
             showHome()
         }else {
-            setContentView(R.layout.activity_login)
-            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.login_template)) { v, insets ->
-                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-                insets
-            }
-            usersCollectionRef = db.collection("users")
-
             setup()
-            oneTapClient = Identity.getSignInClient(this)
         }
     }
 
     private fun setup(){
+        setContentView(R.layout.activity_login)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.login_template)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+        usersCollectionRef = db.collection("users")
+        oneTapClient = Identity.getSignInClient(this)
 
         inicio_sesion = findViewById(R.id.login)
         registro = findViewById(R.id.sign_in)
@@ -188,12 +187,15 @@ class LoginActivity : AppCompatActivity() {
                         startActivity(intent)
                     } else {
                         Toast.makeText(this, getString(R.string.rol_usuario_no_reconocido), Toast.LENGTH_SHORT).show()
+                        setup()
                     }
                 } else {
                     Toast.makeText(this, getString(R.string.rol_usuario_no_encontrado), Toast.LENGTH_SHORT).show()
+                    setup()
                 }
             }.addOnFailureListener {
                 Toast.makeText(this, getString(R.string.error_obtener_rol_usuario), Toast.LENGTH_SHORT).show()
+                setup()
             }
         }
     }
