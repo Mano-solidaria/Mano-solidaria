@@ -129,23 +129,6 @@
             android:layout_marginBottom="10dp"
             android:hint="@string/ingrese_direccion" />
 
-        <!-- Botón Elegir Foto para el usuario -->
-        <Button
-            android:id="@+id/btnElegirFoto"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/elegir_foto" />
-
-        <!-- Espacio para mostrar la foto -->
-        <ImageView
-            android:id="@+id/imgFoto"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:src="@android:drawable/ic_menu_camera"
-            android:contentDescription="@string/espacio_para_mostrar_foto" />
-
         <androidx.cardview.widget.CardView
             app:cardBackgroundColor="@color/black"
             app:cardCornerRadius="38dp"
@@ -170,6 +153,21 @@
             map:cameraTilt="30"
             map:uiRotateGestures="true"
             map:uiZoomControls="true" />
+
+        <Button
+            android:id="@+id/btnElegirFoto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/elegir_foto" />
+
+        <ImageView
+            android:id="@+id/imgFoto"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:src="@android:drawable/ic_menu_camera"
+            android:contentDescription="@string/espacio_para_mostrar_foto" />
 
         <Button
             android:id="@+id/boton_guardar"

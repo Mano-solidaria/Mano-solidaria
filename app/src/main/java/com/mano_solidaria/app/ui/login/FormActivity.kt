@@ -26,6 +26,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
@@ -518,12 +519,22 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         val place = LatLng(-34.77459095976608, -58.266914119799154)
         val newLatLng = CameraUpdateFactory.newLatLngZoom(place,15f)
 
-        mMap.addMarker(MarkerOptions().position(place).title("Marker in unaj city "))
+        var currentMarker: Marker? = mMap.addMarker(MarkerOptions().position(place).title("Marker in unaj city "))
         mMap.animateCamera(
             newLatLng,
             5000,
             null
         )
+
+        mMap.setOnMapClickListener { latLng ->
+            currentMarker?.remove()
+            currentMarker = mMap.addMarker(
+                MarkerOptions()
+                    .position(LatLng(latLng.latitude, latLng.longitude))
+                    .title("")
+            )
+            Toast.makeText(this, "nueva ubicacion", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun setAddress(add: String, latLng: LatLng) {
@@ -531,6 +542,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         ubicacion = latLng.toString()
         address.setText(add)
     }
+}
 
     suspend fun uploadImage(context: Context, uri: Uri): String {
         return try {
@@ -574,5 +586,4 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-}
 

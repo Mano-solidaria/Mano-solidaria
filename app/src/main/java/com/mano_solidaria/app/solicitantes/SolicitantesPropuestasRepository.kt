@@ -1,186 +1,164 @@
 package com.mano_solidaria.app.donadores
 
-import ApiService
-import android.annotation.SuppressLint
+import android.content.ContentValues.TAG
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.mano_solidaria.app.Utils.calcularDuracion
 import kotlinx.coroutines.tasks.await
-import java.util.Calendar
-import android.net.Uri
-import android.provider.OpenableColumns
-import com.google.firebase.Timestamp
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import retrofit2.*
-import retrofit2.converter.gson.GsonConverterFactory
-import java.io.File
-import java.io.FileOutputStream
-import okhttp3.MultipartBody
-import android.content.Context
-import okhttp3.RequestBody.Companion.asRequestBody
-import java.util.Date
+import android.util.Log
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.GeoPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 data class DonacionRoko(
-    val id: String,
-    val pesoAlimento: String,
+    val id: DocumentReference,
+    val alimentoNombre: String,
+    val donanteId: DocumentReference,
     val tiempoRestante: String,
     val imagenUrl: String,
     val descripcion: String,
     val pesoReservado: Int,
     val pesoEntregado: Int,
-    val pesoTotal: Int
-)
-
-data class ReservaRoko(
-    val id: String,
-    val donacionId: String,
-    val palabraClave: String,
-    val pesoReservado: Int,
-    val usuarioReservadorId: String,
+    val pesoTotal: Int,
     val estado: String
 )
 
+data class ReservaRoko(
+    val dispararNoti: Boolean,
+    val donacionId: DocumentReference,
+    val donanteId: DocumentReference,
+    val estado: String,
+    val notiRecibida: Boolean,
+    val palabraClave: String,
+    val pesoReservado: Int,
+    val usuarioReservador: DocumentReference,
+)
+
+data class UsuarioRoko(
+    val imagenUrl: String? = null,
+    val usuarioDocumentRef: DocumentReference? = null,
+    val usuarioDireccion: String? = null,
+    val usuarioMail: String? = null,
+    val usuarioNombre: String? = null,
+    val usuarioUbicacion: GeoPoint = GeoPoint(0.0, 0.0),
+    val suscriptores: List<DocumentReference> = emptyList()
+)
+
 object SolicitantesPropuestasRepository {
+
+    private val _donaciones: MutableStateFlow<List<DonacionRoko>> = MutableStateFlow(emptyList())
+    val donaciones: StateFlow<List<DonacionRoko>> = _donaciones
+
+    private var _usuario: MutableStateFlow<UsuarioRoko> = MutableStateFlow(UsuarioRoko())
+    val usuario : StateFlow<UsuarioRoko> = _usuario
+
     private val db = FirebaseFirestore.getInstance()
 
-    fun currentUser(): String? = FirebaseAuth.getInstance().currentUser?.uid
+    fun currentUser(): String = FirebaseAuth.getInstance().currentUser!!.uid
 
-    suspend fun getDonaciones(): List<DonacionRoko> {
-        return try {
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
-            val snapshots = db.collection("donaciones")
-                .whereEqualTo("donanteId", db.collection("users").document(userId))
-                .get()
-                .await()
-            snapshots.documents.map { it.toDonacion() }
-        } catch (e: Exception) {
-            emptyList()
+    init {
+        donaciones()
+        user(currentUser())
+    }
+
+    fun donaciones(){
+        CoroutineScope(Dispatchers.IO).launch{
+            getAllDonaciones()
         }
     }
 
     suspend fun getAllDonaciones(): List<DonacionRoko> {
         return try {
             val snapshots = db.collection("donaciones")
+                .whereEqualTo("estado","activo")
                 .get()
                 .await()
-            snapshots.documents.map { it.toDonacion() }
+            _donaciones.value = snapshots.documents.map { it.toDonacion() }
+            snapshots.documents.map { it.toDonacion()}
         } catch (e: Exception) {
-            emptyList()
+            emptyList<DonacionRoko>()
         }
     }
 
-    suspend fun getDonacionById(id: String): DonacionRoko? {
+    fun user(id: String){
+        CoroutineScope(Dispatchers.IO).launch{
+            getUserById(id)
+        }
+    }
+
+    suspend fun getUserById(documentId: String){
+        try {
+            val snapshots = db.collection("users").document(documentId).get().await()
+            _usuario.value = snapshots.ToUser()
+        } catch (e: Exception) {
+            emptyList<DonacionRoko>()
+        }
+    }
+
+    suspend fun getDonadorByRef(ref: DocumentReference): UsuarioRoko? {
         return try {
-            val document = db.collection("donaciones").document(id).get().await()
-            document.toDonacion()
+            val snapshots = db.collection("users").document(ref.id).get().await()
+            snapshots.ToUser()
         } catch (e: Exception) {
-            null
+            Log.d("ERRORRRR", "error al devolver donador por referencia")
+            UsuarioRoko()
         }
     }
 
-    fun obtenerReservasPorDonacion(donacionId: String, onResult: (List<Reserva>) -> Unit) {
-        val donacionRef = db.collection("donaciones").document(donacionId)
-
-        db.collection("reservas")
-            .whereEqualTo("donacionId", donacionRef)
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                val reservas = querySnapshot.documents.map { it.toReserva() }
-                onResult(reservas)
+    fun addReservaInDb(reservaNueva: ReservaRoko) {
+        db.collection("reservas").document()
+            .set(reservaNueva)
+            .addOnSuccessListener {
+                Log.d(TAG, "Documento creado con exito!")
             }
-            .addOnFailureListener {
-                onResult(emptyList())
+            .addOnFailureListener { e ->
+                Log.w(TAG, "Error al crear el documento", e)
             }
     }
 
-    suspend fun confirmarEntrega(reservaId: String) {
-        try {
-            val reservaRef = db.collection("reservas").document(reservaId)
-            reservaRef.update("estado", "entregado").await()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+
+
+    fun updateDonacionAfterReserva(
+        donacionId: DocumentReference,
+        pesoReservadoNuevo: Int,
+        pesoReservadoActual: Int
+    ) {
+        donacionId
+            .update("pesoReservado", pesoReservadoActual - pesoReservadoNuevo)
+            .addOnSuccessListener { Log.d(TAG, "Donacion actualizada correctamente!") }
+            .addOnFailureListener { e -> Log.w(TAG, "Error actualizando donacion", e) }
     }
 
-    suspend fun actualizarFechaFin(donacionId: String, numeroDias: Int) {
-        try {
-            val donacionRef = db.collection("donaciones").document(donacionId)
-            val donacionSnapshot = donacionRef.get().await()
 
-            donacionSnapshot.getTimestamp("fechaFin")?.toDate()?.let {
-                val calendar = Calendar.getInstance().apply {
-                    time = it
-                    add(Calendar.DAY_OF_YEAR, numeroDias)
+    // convertir el string con formato "lat/lng: (latitud,longitud)" a un GeoPoint
+    fun stringToGeoPoint(ubicacion: String): GeoPoint {
+        if (ubicacion.startsWith("lat/lng: (") && ubicacion.endsWith(")")) {
+            val coordenadas = ubicacion
+                .removePrefix("lat/lng: (")
+                .removeSuffix(")")
+                .split(",")
+
+            if (coordenadas.size == 2) {
+                val latitud = coordenadas[0].toDoubleOrNull()
+                val longitud = coordenadas[1].toDoubleOrNull()
+
+                if (latitud != null && longitud != null) {
+                    return GeoPoint(latitud, longitud)
                 }
-                donacionRef.update("fechaFin", calendar.time).await()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
+        return GeoPoint(0.0,0.0)
     }
 
-    suspend fun registrarDonacion(donanteId: String, alimento: String, pesoTotal: Double, duracionDias: Int, descripcion: String, imageUri: Uri, context: Context): String {
-        val fechaInicio = Timestamp.now()
-        val fechaFin = Timestamp(Date(fechaInicio.toDate().time + duracionDias * 86400000L))
 
-        val imagenURL = uploadImage(context, imageUri)
-        if (imagenURL.isEmpty()) return "Error al subir la imagen. Intente de nuevo."
 
-        val donacionData = hashMapOf(
-            "alimento" to alimento,
-            "descripcion" to descripcion,
-            "donanteId" to db.document("users/$donanteId"),
-            "estado" to "activo",
-            "fechaInicio" to fechaInicio,
-            "fechaFin" to fechaFin,
-            "pesoEntregado" to 0,
-            "pesoReservado" to 0,
-            "pesoTotal" to pesoTotal,
-            "imagenURL" to imagenURL
-        )
 
-        return try {
-            db.collection("donaciones").add(donacionData).await()
-            "Donación registrada exitosamente."
-        } catch (e: Exception) {
-            "Error al registrar donación: ${e.message}"
-        }
-    }
-
-    suspend fun uploadImage(context: Context, uri: Uri): String {
-        return try {
-            val file = getFileFromUri(context, uri) ?: return ""
-            val requestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
-            val body = MultipartBody.Part.createFormData("image", file.name, requestBody)
-
-            val retrofit = Retrofit.Builder()
-                .baseUrl("https://marcelomp3.pythonanywhere.com/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-
-            val apiService = retrofit.create(ApiService::class.java)
-
-            val response = apiService.uploadImage(body)
-            if (response.isSuccessful) response.body()?.get("location") ?: "" else ""
-        } catch (e: Exception) {
-            e.printStackTrace()
-            ""
-        }
-    }
-
-    @SuppressLint("Range")
-    fun getFileFromUri(context: Context, uri: Uri): File? {
-        val fileName = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)) else null
-        } ?: return null
-
-        val tempFile = File(context.cacheDir, fileName).apply { createNewFile() }
-        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-            FileOutputStream(tempFile).use { outputStream -> inputStream.copyTo(outputStream) }
-        }
-        return tempFile
-    }
 
     private fun DocumentSnapshot.toReserva(): Reserva {
         val id = this.id
@@ -193,16 +171,59 @@ object SolicitantesPropuestasRepository {
     }
 
     private fun DocumentSnapshot.toDonacion(): DonacionRoko {
-        val id = this.id
-        val alimento = this.getString("alimento") ?: "Desconocido"
         val pesoTotal = (this.get("pesoTotal") as? Double ?: 0.0).toInt()
         val pesoReservado = (this.get("pesoReservado") as? Double ?: 0.0).toInt()
         val pesoEntregado = (this.get("pesoEntregado") as? Double ?: 0.0).toInt()
-        val descripcion = this.getString("descripcion") ?: "No disponible"
-        val imagenURL = this.getString("imagenURL") ?: ""
         val fechaInicio = this.getTimestamp("fechaInicio")?.toDate()
         val fechaFin = this.getTimestamp("fechaFin")?.toDate()
         val duracion = calcularDuracion(fechaInicio, fechaFin)
-        return DonacionRoko(id, "$pesoTotal kg de $alimento", duracion, imagenURL, descripcion, pesoReservado, pesoEntregado, pesoTotal)
+        return DonacionRoko(
+            FirebaseFirestore.getInstance().collection("donaciones").document(this.id),
+            this.getString("alimento") ?: "Alimento desconocido",
+            this.getDocumentReference("donanteId") ?:
+            FirebaseFirestore.getInstance().document("users/desconocido") ,
+            duracion,
+            this.getString("imagenURL") ?: "Imagen no encontrada",
+            this.getString("descripcion") ?: "Descripcion no disponible",
+            pesoReservado,
+            pesoEntregado,
+            pesoTotal,
+            this.getString("estado") ?: "Estado no valido")
+    }
+
+    private fun DocumentSnapshot.ToUser(): UsuarioRoko{
+        val direccionString = this.getString("Usuarioubicacion") ?: "Desconocido"
+
+        // Obtener el array de suscriptores como lista de cadenas
+        val suscriptoresPaths = this.get("suscriptores") as? List<String> ?: emptyList()
+
+        // Convertir las rutas de documentos en objetos DocumentReference
+        val suscriptoresReferences = suscriptoresPaths.map {
+            FirebaseFirestore.getInstance().document(it)
+        }
+
+        return UsuarioRoko(
+            this.getString("UsuarioImagen") ?: null,
+            FirebaseFirestore.getInstance().collection("donaciones").document(this.id),
+            this.getString("UsuarioDireccion") ?: "Direccion desconocida",
+            this.getString("UsuarioMail") ?: "Desconocido",
+            this.getString("UsuarioNombre") ?: "Nombre desconocido",
+            stringToGeoPoint(direccionString),
+            suscriptores = suscriptoresReferences
+        )
+    }
+
+    fun suscribirseAlDonador(don: UsuarioRoko, usuarioDocumentRef: DocumentReference?) {
+        db.collection("users").document(don.usuarioDocumentRef!!.id)
+            .update("suscriptores", FieldValue.arrayUnion(usuarioDocumentRef) )
+            .addOnSuccessListener { Log.d(TAG, "Donacion actualizado correctamente!") }
+            .addOnFailureListener { e -> Log.w(TAG, "Error actualizando donacion", e) }
+    }
+
+    fun desuscribirseAlDonador(don: UsuarioRoko, usuarioDocumentRef: DocumentReference?) {
+        db.collection("users").document(don.usuarioDocumentRef!!.id)
+            .update("suscriptores", FieldValue.arrayRemove(usuarioDocumentRef))
+            .addOnSuccessListener { Log.d(TAG, "Usuario desuscrito correctamente del donador!") }
+            .addOnFailureListener { e -> Log.w(TAG, "Error al desuscribir al usuario", e) }
     }
 }

@@ -1,15 +1,20 @@
 package com.mano_solidaria.app.solicitantes
 
+import android.content.ClipData.Item
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,40 +22,44 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
-import androidx.compose.material3.Text
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.launch
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -58,15 +67,30 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.google.android.gms.common.server.converter.StringToIntConverter
-import com.mano_solidaria.app.donadores.Donacion
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.GeoPoint
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.mano_solidaria.app.AppBarWithDrawer
 import com.mano_solidaria.app.donadores.DonacionRoko
+import com.mano_solidaria.app.donadores.ReservaRoko
 import com.mano_solidaria.app.donadores.SolicitantesPropuestasRepository
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
+import com.mano_solidaria.app.donadores.UsuarioRoko
+import kotlinx.coroutines.launch
+import okhttp3.internal.wait
+import kotlin.random.Random
 
 
 class SolicitantesPropuestasActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val intent = Intent(this, NotificationServiceSolicitante::class.java)
@@ -77,6 +101,8 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
         }
     }
 }
+
+private lateinit var _usuarioCurrent: UsuarioRoko
 
 @Composable
 fun AppNavigation() {
@@ -93,48 +119,53 @@ fun AppNavigation() {
             arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id")
-            DetalleReservaScreen(id = id ?: "Sin ID")
+            DetalleReservaScreen(idDonacion = id ?: "Sin ID")
         }
     }
 }
 
 
 @Composable
-fun ViewContainer(navController: NavHostController) {
+fun ViewContainer(navController: NavHostController,
+                  viewModel: SolicitantesPropuestasRepository = SolicitantesPropuestasRepository) {
     val donadores = remember { mutableStateListOf<DonacionRoko>() }
     val scope = rememberCoroutineScope()
 
+    val stateUsuarioActual = viewModel.usuario.collectAsState()
     LaunchedEffect(true) {
         scope.launch {
             val donacionesList = SolicitantesPropuestasRepository.getAllDonaciones()
             donadores.clear()
             donadores.addAll(donacionesList)
+            SolicitantesPropuestasRepository.getUserById(SolicitantesPropuestasRepository.currentUser())
         }
     }
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {ToolBar()}
-    ){innerPadding ->
-        Content(innerPadding, donadores, navController)
-    }
-}
+    _usuarioCurrent = stateUsuarioActual.value
+    val scaffoldState = rememberScaffoldState()  // Agregar ScaffoldState
 
-
-@Preview
-@Composable
-fun ToolBar(){
-    TopAppBar (
-        title = {
-            Text("Top app bar")
+    // Usamos AppBarWithDrawer en lugar de Scaffold directamente
+    AppBarWithDrawer(
+        scaffoldState = scaffoldState,
+        coroutineScope = scope,
+        title = "Solicitantes Propuestas",
+        content = { innerPadding ->
+            Content(innerPadding, donadores, navController, stateUsuarioActual.value.usuarioUbicacion)
         }
     )
 }
 
+@Composable
+fun ToolBar(){
+    TopAppBar (
+        title = { Text("Top app bar") }
+    )
+}
 
 @Composable
 fun Content(paddingValues: PaddingValues,
             donadores: SnapshotStateList<DonacionRoko>,
-            navController: NavController) {
+            navController: NavController,
+            usuarioUbicacion: GeoPoint){
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -143,26 +174,25 @@ fun Content(paddingValues: PaddingValues,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ){
         item {
-            MyGoogleMaps()
-            Spacer(modifier = Modifier.height(16.dp)) // Espacio entre ítems
+            MyGoogleMaps(usuarioUbicacion)
+            Spacer(modifier = Modifier.height(16.dp))
         }
         item {
-            MyReservaRealizadas()
-            Spacer(modifier = Modifier.height(16.dp)) // Espacio entre ítems
+            MyReservaRealizadas(_usuarioCurrent)
+            Spacer(modifier = Modifier.height(16.dp))
         }
-        println(donadores)
         // Generar dinámicamente los elementos según la lista
         items(donadores) { donacion ->
-            MyReservaDisponibles(donacion, navController) // Tu componente para representar una donación
-            Spacer(modifier = Modifier.height(16.dp)) // Espacio entre ítems
+            MyReservaDisponibles(donacion, navController)
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 
 @Composable
-fun MyGoogleMaps() {
-    val address = LatLng(0.0, 0.0)
+fun MyGoogleMaps(geoPoint: GeoPoint) {
+    val address = LatLng(geoPoint.latitude, geoPoint.longitude)
     val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
@@ -180,23 +210,48 @@ fun MyGoogleMaps() {
     ) {
         Marker(
             state = MarkerState(position = address),
-            title = "Singapore",
-            snippet = "Marker in Singapore"
+            title = "Marker",
+            snippet = "Lat: ${geoPoint.latitude}, Lng: ${geoPoint.longitude}"
         )
     }
 }
 
 
 @Composable
-fun MyReservaRealizadas(){
-    val context = LocalContext.current
-    Button(
-        onClick = {
-            val intent = Intent(context, ReservasActivity::class.java)
-            context.startActivity(intent)
-        }
+fun MostrarMapaMultiplesPuntos(geoPoints: List<GeoPoint>) {
+    val centroide = if (geoPoints.isNotEmpty()) {
+        val latitudPromedio = geoPoints.map { it.latitude }.average()
+        val longitudPromedio = geoPoints.map { it.longitude }.average()
+
+        GeoPoint(latitudPromedio, longitudPromedio)
+    } else {
+        GeoPoint(0.0, 0.0)
+    }
+    val initialLatLng = LatLng(centroide.latitude, centroide.longitude)
+
+    val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
+
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
+    }
+
+    LaunchedEffect(initialLatLng) {
+        cameraPositionState.position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
+    }
+
+    GoogleMap(
+        modifier = Modifier.height(250.dp),
+        cameraPositionState = cameraPositionState,
+        uiSettings = uiSettings,
     ) {
-        Text("Ver Reservas Realizadas")
+        geoPoints.forEach { geoPoint ->
+            val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+            Marker(
+                state = MarkerState(position = latLng),
+                title = "Marker",
+                snippet = "Lat: ${geoPoint.latitude}, Lng: ${geoPoint.longitude}"
+            )
+        }
     }
 }
 
@@ -204,15 +259,44 @@ fun MyReservaRealizadas(){
 
 
 @Composable
-fun MyReservaDisponibles(donacion: DonacionRoko,
-                         navController: NavController // Recibe el NavController para navegar
-    ){
+fun MyReservaRealizadas(usuarioRoko: UsuarioRoko){
+    val context = LocalContext.current
+    Button(
+        onClick = {
+            val intent = Intent(context, ReservasActivity::class.java)
+            context.startActivity(intent)
+        },
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Image(
+                painter =
+                rememberAsyncImagePainter(model =
+                _usuarioCurrent.imagenUrl ?: "https://i.pinimg.com/originals/9a/dd/74/9add7496fe5ec85b9dd52a0066873f62.jpg"), // URL de la foto
+                contentDescription = "Foto del usuario",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.LightGray),
+                contentScale = ContentScale.Crop
+            )
+            Text("Ver Reservas Realizadas")
+        }
+    }
+}
+
+
+@Composable
+fun MyReservaDisponibles(donacion: DonacionRoko, navController: NavController){
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .border(1.dp, color = Color.Red)
             .clickable {
-                navController.navigate("detalle/${donacion.id}")
+                navController.navigate("detalle/${donacion.id.id}")
             },
         verticalAlignment = Alignment.CenterVertically
     ){
@@ -222,7 +306,7 @@ fun MyReservaDisponibles(donacion: DonacionRoko,
                 .fillMaxHeight()
         ){
             AsyncImage(
-                model = "https://peruretail.sfo3.cdn.digitaloceanspaces.com/wp-content/uploads/Pollo-a-al-abrasa.jpg",
+                model = donacion.imagenUrl,
                 contentDescription = "Imagen de reserva",
                 modifier = Modifier
                     .size(80.dp)
@@ -239,17 +323,13 @@ fun MyReservaDisponibles(donacion: DonacionRoko,
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = "Alimento: ${donacion.descripcion} ${donacion.pesoAlimento}",
-                )
+                Text(text = "Alimento: ${donacion.descripcion} ${donacion.pesoTotal}",)
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = "Caduca en: ${donacion.tiempoRestante}",
-                )
+                Text(text = "Caduca en: ${donacion.tiempoRestante}",)
             }
         }
         Column(
@@ -261,17 +341,13 @@ fun MyReservaDisponibles(donacion: DonacionRoko,
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = "Coto"
-                )
+                Text(text = "Coto")
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = "7 km",
-                )
+                Text(text = "7 km",)
             }
         }
     }
@@ -279,81 +355,275 @@ fun MyReservaDisponibles(donacion: DonacionRoko,
 
 
 
-
-
-
-
-
-
-
 @Composable
-fun DetalleReservaScreen(id: String) {
-    val donacion : DonacionRoko? = null
-    val scope = rememberCoroutineScope()
-    var response : DonacionRoko? = null
+fun DetalleReservaScreen(
+    idDonacion: String,
+    viewModel: SolicitantesPropuestasRepository = SolicitantesPropuestasRepository)
+{
+    val stateDonaciones = viewModel.donaciones.collectAsState()
+    val stateUsuarioActual = viewModel.usuario.collectAsState()
+    val donaciones = stateDonaciones.value
+
+    val donacion: DonacionRoko? = donaciones.find { it.id.id == idDonacion }
+
+    var value by remember { mutableStateOf("") }
+    var isError by remember { mutableStateOf(false) }
+    var isSuscriptor by remember { mutableStateOf(true) }
+    var donador by remember { mutableStateOf(UsuarioRoko()) }
+    var botonText by remember { mutableStateOf("suscribirse") }
+    var buttonColor by remember { mutableStateOf("MaterialTheme.colors.primary") }
+
+    var suscriptorRefEncontrada : DocumentReference?
 
     LaunchedEffect(true) {
-        scope.launch {
-            val deferred : Deferred<DonacionRoko?> = async { SolicitantesPropuestasRepository.getDonacionById(id) }
-            response = deferred.await()
+        donador = viewModel.getDonadorByRef(donacion!!.donanteId)!!
+        donacion?.let {
+            donador = viewModel.getDonadorByRef(it.donanteId) ?: UsuarioRoko()
         }
     }
 
-    DetalleReservaScreen2(response)
+    stateUsuarioActual.value.usuarioDocumentRef
+    suscriptorRefEncontrada = donador.suscriptores.find { it == stateUsuarioActual.value.usuarioDocumentRef }
 
+    Log.d("Donador", donador.usuarioDocumentRef.toString())
+    Log.d("RefUsuario", stateUsuarioActual.value.usuarioDocumentRef.toString())
 
-}
+    val imagenReserva = donacion?.imagenUrl ?: "https://peruretail.sfo3.cdn.digitaloceanspaces.com/wp-content/uploads/Pollo-a-al-abrasa.jpg"
+    val pesoRestante = try {
+        val total = donacion?.pesoTotal ?: 0
+        val reservado = donacion?.pesoReservado ?: 0
+        maxOf(total - reservado, 0)
+    } catch (e: Exception) {
+        0
+    }
 
+    // Efecto lanzado para cargar el donador y comprobar la suscripción
+    LaunchedEffect(donacion) {
+        if (donacion != null) {
+            val fetchedDonador = viewModel.getDonadorByRef(donacion.donanteId)
+            fetchedDonador?.let { donadorData ->
+                donador = donadorData
 
+                val suscriptorRefEncontrada = donadorData.suscriptores.find {
+                    it == stateUsuarioActual.value.usuarioDocumentRef
+                }
 
-@Composable
-fun DetalleReservaScreen2(donacion: DonacionRoko?) {
+                if (suscriptorRefEncontrada == null) {
+                    botonText = "suscribirse al donador"
+                    isSuscriptor = false
+                } else {
+                    botonText = "desuscribirse del donador"
+                    isSuscriptor = true
+                }
+            }
+        }
+    }
+
+    val scaffoldState = rememberScaffoldState()
+    val coroutineScope = rememberCoroutineScope()
+
     ToolBar()
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceEvenly,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            AsyncImage(
-                model = "https://peruretail.sfo3.cdn.digitaloceanspaces.com/wp-content/uploads/Pollo-a-al-abrasa.jpg",
-                contentDescription = "Imagen de reserva",
+    AppBarWithDrawer(
+        scaffoldState = scaffoldState,
+        coroutineScope = coroutineScope,
+        title = "Detalle de Reserva",
+        content = { innerPadding ->
+            LazyColumn(
                 modifier = Modifier
+                    .fillMaxSize()
                     .padding(8.dp),
-                contentScale = ContentScale.Crop
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-        // First row of 3 fields
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Text(text = "Alimento: ${donacion?.descripcion ?: "null"}")
-            Text(text = "Peso restante:")
-            Text(text = "Peso total: ${donacion?.pesoAlimento ?: "null"}")
-        }
-
-        // Second row of 3 fields
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Text(text = "Coto ",)
-            Text(text = "Coto ",)
-            Text(text = "Coto ",)
-        }
-
-        // Button
-        Button(
-            onClick = {},
-            modifier = Modifier.fillMaxWidth(0.8f)
-        ) {
-            Text("Reservar")
-        }
-    }
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 300.dp)
+                    ) {
+                        AsyncImage(
+                            model = imagenReserva,
+                            contentDescription = "Imagen de reserva",
+                            contentScale = ContentScale.Crop
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text(text = "Alimento:")
+                            Text(
+                                text = donacion?.alimentoNombre ?: "null",
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(text = "Peso restante:")
+                            Text(
+                                text = pesoRestante.toString(),
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(text = "Peso total:")
+                            Text(
+                                text = donacion?.pesoTotal.toString(),
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(text = "Donante:")
+                            Text(
+                                text = donador.usuarioNombre ?: "Nombre no encontrado",
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                /*item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
+                    ){
+                        Button(
+                            onClick = {
+                                if(suscriptorRefEncontrada == null){
+                                    viewModel.suscribirseAlDonador(donador, stateUsuarioActual.value.usuarioDocumentRef)
+                                }
+                                else{
+                                    viewModel.desuscribirseAlDonador(donador, stateUsuarioActual.value.usuarioDocumentRef)
+                                }
+                            },
+                            modifier = Modifier
+                                .width(IntrinsicSize.Min)
+                                .padding(start = 16.dp)
+                        ) {
+                            Text(botonText)
+                        }
+                    }
+                }*/
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 15.dp),
+                        horizontalArrangement = Arrangement.Start
+                    ){
+                        Column (
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(text = "${donacion?.descripcion}")
+                            Text(text = "- ${donacion?.estado}")
+                        }
+                    }
+                }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(text = "kilos a reservar")
+                            TextField(
+                                value = value,
+                                onValueChange = {
+                                        newValue ->
+                                    val filteredValue =
+                                        newValue.filter { it.isDigit() }.trimStart { it == '0' }
+                                    value = filteredValue.ifEmpty { "" }
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                isError = isError
+                            )
+                            if (isError) {
+                                Text(text = "cantidad invalida", style = MaterialTheme.typography.subtitle1
+                                )
+                            }
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            val numericValue = value.toIntOrNull() ?: 0
+                            if ((numericValue > donacion!!.pesoTotal) or (numericValue == 0)) {
+                                isError = true
+                            } else {
+                                isError = false
+                                val reserva = ReservaRoko(
+                                    dispararNoti = true,
+                                    donacionId = donacion!!.id,
+                                    donanteId = donacion.donanteId,
+                                    estado = "Pendiente",
+                                    notiRecibida = false,
+                                    palabraClave = generateRandomWord(8),
+                                    pesoReservado = value.toInt(),
+                                    usuarioReservador = viewModel.usuario.value.usuarioDocumentRef!!
+                                )
+                                viewModel.addReservaInDb(reserva)
+                                viewModel.updateDonacionAfterReserva(
+                                    reserva.donacionId,
+                                    reserva.pesoReservado,
+                                    donacion.pesoReservado
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    ) {
+                        Text("Reservar")
+                    }
+                }
+            }
+        })
 }
+
+
+
+fun generateRandomWord(length: Int): String {
+    val chars = ('a'..'z') + ('A'..'Z') // Letras mayúsculas y minúsculas
+    return (1..length)
+        .map { Random.nextInt(chars.size) } // Genera índices aleatorios
+        .map(chars::get) // Obtiene el carácter correspondiente
+        .joinToString("") // Une los caracteres en una cadena
+}
+
+
 
