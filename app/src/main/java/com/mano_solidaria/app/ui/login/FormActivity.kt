@@ -20,6 +20,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -46,13 +47,18 @@ import com.mano_solidaria.app.R
 import com.mano_solidaria.app.donadores.MainDonadoresActivity
 import com.mano_solidaria.app.donadores.Repository.getFileFromUri
 import com.mano_solidaria.app.solicitantes.SolicitantesPropuestasActivity
+import com.squareup.moshi.Moshi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
+import org.json.JSONObject
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -82,6 +88,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
     private var userFirebase = FirebaseAuth.getInstance().currentUser
     private var provider: String = ""
     private var LogByGoogle: Boolean = false
+    private var currentMarker: Marker? = null
     private lateinit var mMap: GoogleMap
     private lateinit var mapFragment: SupportMapFragment
     private lateinit var autocomplete: AutocompleteSupportFragment
@@ -125,9 +132,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             override fun onPlaceSelected(p0: Place) {
                 val add = p0.address
-                val id = p0.id
                 val latLng = p0.latLng!!
-                val name = p0.name
                 setAddress(add, latLng)
                 zoomOnMap(latLng)
             }
@@ -512,6 +517,9 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
+        // Habilitar controles de zoom
+        mMap.uiSettings.isZoomControlsEnabled = true
+
         // Buenos Aires, Argentina
         val initialLocation = LatLng(-34.6037, -58.3816)
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialLocation, 5f))
@@ -519,7 +527,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         val place = LatLng(-34.77459095976608, -58.266914119799154)
         val newLatLng = CameraUpdateFactory.newLatLngZoom(place,15f)
 
-        var currentMarker: Marker? = mMap.addMarker(MarkerOptions().position(place).title("Marker in unaj city "))
+        currentMarker = mMap.addMarker(MarkerOptions().position(place).title("Marker in unaj city "))
         mMap.animateCamera(
             newLatLng,
             5000,
@@ -527,14 +535,92 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         )
 
         mMap.setOnMapClickListener { latLng ->
+            val currentZoom = mMap.cameraPosition.zoom
+            val place = LatLng(latLng.latitude, latLng.longitude)
+            lifecycleScope.launch {
+                reverseGeocodeAsync(place)
+            }
+            val newLatLngZoom = CameraUpdateFactory.newLatLngZoom(place, currentZoom)
+
             currentMarker?.remove()
             currentMarker = mMap.addMarker(
                 MarkerOptions()
-                    .position(LatLng(latLng.latitude, latLng.longitude))
-                    .title("")
+                    .position(place)
+                    .title("Cargando dirección...")
             )
-            Toast.makeText(this, "nueva ubicacion", Toast.LENGTH_SHORT).show()
+            mMap.animateCamera(
+                newLatLngZoom,
+                5000,
+                null
+            )
+            mMap.setOnMarkerClickListener { marker ->
+                marker.showInfoWindow()
+                true
+            }
+            mMap.animateCamera(newLatLngZoom)
         }
+    }
+
+    private fun reverseGeocodeAsync(latLng: LatLng) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=${latLng.latitude},${latLng.longitude}&key=${BuildConfig.MAPS_API_KEY}"
+                val client = OkHttpClient()
+                val request = Request.Builder().url(url).build()
+
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) throw Exception("Error de red: ${response.code}")
+                    var body = response.body?.string() ?: throw Exception("Cuerpo de respuesta vacío")
+
+                    // Parsear el JSON para extraer los valores
+                    val jsonObject = JSONObject(body)
+                    val results = jsonObject.optJSONArray("results")
+                    val firstResult = results?.optJSONObject(0)
+                    val formattedAddress = firstResult?.optString("formatted_address", "Dirección no disponible")!!
+                    val addressComponents = firstResult?.optJSONArray("address_components")
+
+                    // Valores predeterminados
+                    var streetNumber = "Calle desconocida"
+                    var route = "Ruta desconocida"
+
+                    addressComponents?.let {
+                        for (i in 0 until it.length()) {
+                            val component = it.optJSONObject(i)
+                            val types = component?.optJSONArray("types") ?: continue
+
+                            if (types.toString().contains("street_number")) {
+                                streetNumber = component.optString("long_name", "Calle desconocida")
+                            }
+                            if (types.toString().contains("route")) {
+                                route = component.optString("short_name", "Ruta desconocida")
+                            }
+                        }
+                    }
+                    // Cambia al hilo principal para actualizar la UI
+                    CoroutineScope(Dispatchers.Main).launch {
+                        setAdd(formattedAddress, route, streetNumber, latLng)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun setAdd(add: String, route:String, streetNumber: String, latLng: LatLng) {
+        // Actualiza el título del marker existente
+        currentMarker?.title = add
+
+        // O si prefieres remover el marker anterior y crear uno nuevo:
+        currentMarker?.remove()
+        currentMarker = mMap.addMarker(
+            MarkerOptions()
+                .position(latLng)
+                .title("${route} ${streetNumber}")
+        )
+        userAddress = add
+        ubicacion = latLng.toString()
+        address.setText(add)
     }
 
     private fun setAddress(add: String, latLng: LatLng) {

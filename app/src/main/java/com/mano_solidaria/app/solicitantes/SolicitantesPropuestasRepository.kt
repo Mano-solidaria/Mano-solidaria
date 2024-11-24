@@ -130,7 +130,7 @@ object SolicitantesPropuestasRepository {
         pesoReservadoActual: Int
     ) {
         donacionId
-            .update("pesoReservado", pesoReservadoActual - pesoReservadoNuevo)
+            .update("pesoReservado", pesoReservadoActual + pesoReservadoNuevo)
             .addOnSuccessListener { Log.d(TAG, "Donacion actualizada correctamente!") }
             .addOnFailureListener { e -> Log.w(TAG, "Error actualizando donacion", e) }
     }
