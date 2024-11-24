@@ -327,7 +327,7 @@ object Repository {
         val imagenURL = this.getString("imagenURL") ?: ""
         val fechaInicio = this.getTimestamp("fechaInicio")?.toDate()
         val fechaFin = this.getTimestamp("fechaFin")?.toDate()
-        val duracion = calcularDuracion(fechaInicio, fechaFin)
+        val duracion = calcularDuracion(fechaFin)
         val estado = this.getString("estado") ?: "Desconocido"
 
         return Donacion(

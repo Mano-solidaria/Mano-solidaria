@@ -203,7 +203,7 @@ object SolicitantesPropuestasRepository {
     private fun toDonacion(snap: DocumentSnapshot): DonacionRoko {
         val fechaInicio = snap.getTimestamp("fechaInicio")?.toDate()
         val fechaFin = snap.getTimestamp("fechaFin")?.toDate()
-        val duracion = calcularDuracion(fechaInicio, fechaFin)
+        val duracion = calcularDuracion(fechaFin)
         return DonacionRoko(
             FirebaseFirestore.getInstance().collection("donaciones").document(snap.id),
             snap.getString("alimento") ?: "Alimento desconocido",
