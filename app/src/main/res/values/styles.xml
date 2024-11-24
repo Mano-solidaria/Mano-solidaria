@@ -8,8 +8,10 @@
         <item name="android:colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="android:colorAccent">@color/colorAccent</item>
 
+
         <!-- Fondo principal -->
         <item name="android:windowBackground">@color/colorBackgroundDark</item>
+        <item name="android:background">@android:color/black</item>
 
         <!-- Estilos de botones -->
         <item name="buttonStyle">@style/CustomButtonDark</item>
