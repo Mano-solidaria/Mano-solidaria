@@ -144,6 +144,7 @@
         <item>Cereal</item>
         <item>Proteína</item>
         <item>Lácteo</item>
+        <item>Otros</item>
     </string-array>
 
     <string-array name="requiere_refrigeracion_options">
