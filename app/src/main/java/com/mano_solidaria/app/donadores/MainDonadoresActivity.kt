@@ -39,6 +39,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.mano_solidaria.app.Utils.cambioEstado
 import kotlinx.coroutines.CoroutineScope
 
 
@@ -49,6 +52,7 @@ class MainDonadoresActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val intent = Intent(this, NotificationServiceDonador::class.java)
         startService(intent)
+        cambioEstado()
         setContent { MainDonadoresApp() }
     }
 

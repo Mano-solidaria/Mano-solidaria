@@ -17,6 +17,8 @@ import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.mano_solidaria.app.R
+import com.mano_solidaria.app.Utils.calcularDuracion
+import com.mano_solidaria.app.Utils.cambioEstado
 
 class NotificationServiceDonador : Service() {
 
@@ -114,7 +116,7 @@ class NotificationServiceDonador : Service() {
             return
         }
         val user = db.collection("users").document(userId)
-        val collectionRefDonaciones = db.collection("donaciones").whereEqualTo("donanteId", db.collection("users").document(userId))
+        val collectionRefDonaciones = db.collection("donaciones").whereEqualTo("donanteId", user)
 
 
         listenerRegistrationDonaciones = collectionRefDonaciones.addSnapshotListener { snapshots, error ->
@@ -130,6 +132,7 @@ class NotificationServiceDonador : Service() {
                 val pesoTotal = donacionSnapshot.getLong("pesoTotal") ?: 0L
                 val pesoEntregado = donacionSnapshot.getLong("pesoEntregado") ?: 0L
                 val notiRecibida = donacionSnapshot.getBoolean("notiRecibida") ?: false
+                cambioEstado()
                 when (change.type) {
                     DocumentChange.Type.ADDED -> {
                         if (donacionSnapshot.metadata.hasPendingWrites()) {
@@ -143,13 +146,21 @@ class NotificationServiceDonador : Service() {
 
                     DocumentChange.Type.MODIFIED -> {
                         val estado = donacionSnapshot.getString("estado") ?: "activo"
-                        if(!notiRecibida && (estado.lowercase() == "finalizado" || pesoEntregado == pesoTotal)){
+                        if(estado.lowercase() == "finalizada"){
                             actualizarEstadoNotiDona(id)
                             showNotification(
                                 "Estado: Finalizado",
                                 "Propuesta: $pesoTotal KG $alimento",
                                 "",
                                 "Una propuesta ha finalizado"
+                            )
+                        } else if(estado.lowercase() == "pendiente"){
+                            actualizarEstadoNotiDona(id)
+                            showNotification(
+                                "Estado: Finalizado",
+                                "Propuesta: $pesoTotal KG $alimento",
+                                "",
+                                "Una propuesta ha llegado al tope de reservas"
                             )
                         }
                     }
