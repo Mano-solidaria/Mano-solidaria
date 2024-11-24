@@ -45,7 +45,7 @@ class NotificationServiceDonador : Service() {
             return
         }
 
-        val collectionRef = db.collection("reservas").whereEqualTo("donadorId", db.collection("users").document(userId))
+        val collectionRef = db.collection("reservas").whereEqualTo("donanteId", db.collection("users").document(userId))
 
         listenerRegistrationReservas = collectionRef.addSnapshotListener { snapshots, error ->
             if (error != null) {
@@ -57,15 +57,15 @@ class NotificationServiceDonador : Service() {
                 val reservaSnapshot = change.document
                 val id = reservaSnapshot.id
                 val docRefDonacion = reservaSnapshot.getDocumentReference("donacionId")
+                val docRefSolicitante = reservaSnapshot.getDocumentReference("usuarioReservador")
                 var pesoReser = reservaSnapshot.getLong("pesoReservado") ?: 0L
                 var notiRecibida = reservaSnapshot.getBoolean("notiRecibida") ?: false
                 dispararNoti = reservaSnapshot.getBoolean("dispararNoti") ?: true
                 docRefDonacion?.get()?.addOnSuccessListener { donacion ->
                     var pesoTotal = donacion.getLong("pesoTotal") ?: 0L
                     var alimento = donacion.getString("alimento") ?: "Sin alimento"
-                    val docRefDonante = donacion.getDocumentReference("donanteId")
-                    docRefDonante?.get()?.addOnSuccessListener { donante ->
-                        var nombre = donante.getString("nombre") ?: "UserContento"
+                    docRefSolicitante?.get()?.addOnSuccessListener { solicitante ->
+                        var nombre = solicitante.getString("UsuarioNombre") ?: "UserContento"
                         when (change.type) {
                             DocumentChange.Type.ADDED ->
                                 if (!notiRecibida) {
@@ -79,7 +79,7 @@ class NotificationServiceDonador : Service() {
                                     dispararNoti = reservaSnapshot.getBoolean("dispararNoti") ?: false
                                 }
 
-                            DocumentChange.Type.MODIFIED ->
+                            DocumentChange.Type.MODIFIED -> //De momento no se es posible cambiar el estado
                                 if (dispararNoti) {
                                     showNotification(
                                         nombre!!,
@@ -130,13 +130,6 @@ class NotificationServiceDonador : Service() {
                 val pesoTotal = donacionSnapshot.getLong("pesoTotal") ?: 0L
                 val pesoEntregado = donacionSnapshot.getLong("pesoEntregado") ?: 0L
                 val notiRecibida = donacionSnapshot.getBoolean("notiRecibida") ?: false
-//                var suscriptores: List<String> = emptyList()
-//                user.get()
-//                    .addOnSuccessListener { document ->
-//                        if (document.exists()) {
-//                            // Extraemos la lista de suscriptores
-//                            suscriptores = document.get("suscriptores") as? List<String> ?: emptyList()
-//                        }
                 when (change.type) {
                     DocumentChange.Type.ADDED -> {
                         if (donacionSnapshot.metadata.hasPendingWrites()) {
@@ -156,7 +149,7 @@ class NotificationServiceDonador : Service() {
                                 "Estado: Finalizado",
                                 "Propuesta: $pesoTotal KG $alimento",
                                 "",
-                                "Se ha finalizado una reserva"
+                                "Una propuesta ha finalizado"
                             )
                         }
                     }

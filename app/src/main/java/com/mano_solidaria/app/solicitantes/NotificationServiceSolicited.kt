@@ -14,11 +14,12 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.mano_solidaria.app.R
 
-class NotificationServiceSolicitante : Service() {
+class NotificationServiceSolicited : Service() {
 
     private var listenerRegistrationDonaciones: ListenerRegistration? = null
     val db = FirebaseFirestore.getInstance()
@@ -48,25 +49,27 @@ class NotificationServiceSolicitante : Service() {
 
             for (change in snapshots?.documentChanges ?: emptyList()) {
                 val donacionSnapshot = change.document
-                val id = donacionSnapshot.id
-                val donadorId = donacionSnapshot.getString("donanteId") ?: ""
-                val user = db.collection("users").document(donadorId)
-                val alimento = donacionSnapshot.getString("alimento") ?: "Desconocido"
-                val pesoTotal = donacionSnapshot.getLong("pesoTotal") ?: 0L
-                val pesoEntregado = donacionSnapshot.getLong("pesoEntregado") ?: 0L
-                val notiRecibida = donacionSnapshot.getBoolean("notiRecibida") ?: false
-                var suscriptores: List<String> = emptyList()
-                user.get()
-                    .addOnSuccessListener { document ->
-                        if (document.exists()) {
-                            // Extraemos la lista de suscriptores
-                            suscriptores = document.get("suscriptores") as? List<String> ?: emptyList()
-                        }
-
+                val docRefUser = donacionSnapshot.getDocumentReference("donanteId")
+                var pesoTotal = donacionSnapshot.getLong("pesoTotal") ?: 0L
+                var alimento = donacionSnapshot.getString("alimento") ?: "Sin alimento"
+                docRefUser?.get()?.addOnSuccessListener { donante ->
+                    var nombre = donante.getString("UsuarioNombre") ?: "UserContento"
+                    val suscriptores = donante.get("suscriptores") as? List<DocumentReference> ?: emptyList()
                         when (change.type) {
                             DocumentChange.Type.ADDED -> {
                                 for (suscriptor in suscriptores) {
-                                    println(suscriptor)
+                                    //val userSus = db.collection("users").document(suscriptor)
+
+                                    suscriptor?.get()?.addOnSuccessListener { donante ->
+                                        if (donante.id == userId) {
+                                            showNotification(
+                                                nombre!!, //Usuario donador
+                                                "Propuesta: $pesoTotal KG $alimento",
+                                                "",
+                                                "Nueva donacion registrada"
+                                            )
+                                        }
+                                    }
                                 }
                             }
 
@@ -85,8 +88,6 @@ class NotificationServiceSolicitante : Service() {
             }
         }
     }
-
-
 
     override fun onBind(intent: Intent?): IBinder? {
         return null

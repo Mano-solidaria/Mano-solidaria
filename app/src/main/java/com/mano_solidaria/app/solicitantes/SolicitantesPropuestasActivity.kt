@@ -1,6 +1,5 @@
 package com.mano_solidaria.app.solicitantes
 
-import android.content.ClipData.Item
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -56,9 +55,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -69,7 +66,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.DocumentReference
@@ -87,7 +83,6 @@ import com.mano_solidaria.app.donadores.UsuarioRoko
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.internal.wait
 import kotlin.random.Random
 
 
@@ -95,7 +90,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val intent = Intent(this, NotificationServiceSolicitante::class.java)
+        val intent = Intent(this, NotificationServiceSolicited::class.java)
         startService(intent)
         enableEdgeToEdge()
         setContent {
