@@ -93,10 +93,10 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        FirebaseAuth.getInstance().signOut() // Cerrar sesión al iniciar LoginActivity
-    }
+//    override fun onStart() {
+//        super.onStart()
+//        FirebaseAuth.getInstance().signOut() // Cerrar sesión al iniciar LoginActivity
+//    }
 
     private fun setup(){
         auth.signOut()

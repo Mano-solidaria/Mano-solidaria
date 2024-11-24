@@ -251,8 +251,6 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun validateData(){ //Acá validamos los datos y en caso de estar de 10 (Fuaaaaah el diego) se continua con el flujo normalmente.
 
-        val currentUser = Firebase.auth.currentUser
-
         if(userFirebase != null){
             //recupero correo de firebase
             userEmail = userFirebase!!.email.toString()
@@ -289,14 +287,8 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
                 } //Era una validacion bastante mala del horario (Mejorar)
             }
             validateEmail(userEmail)
-            var googleProviderFound: Boolean = false
-            for (userInfo in currentUser!!.providerData) {
-                if (userInfo.providerId == "google.com") {
-                    googleProviderFound= true
-                    break
-                }
-            }
-            if (googleProviderFound){
+
+            if (!LogByGoogle){
                 validatePassword(userPassword)
             }
             if (imageUri == null) {

@@ -81,7 +81,8 @@ class NotificationServiceSolicitante : Service() {
                                 Toast.makeText(this, "Donacion eliminada correctamente", Toast.LENGTH_SHORT).show()
                             }
                         }
-                    }}
+                    }
+            }
         }
     }
 

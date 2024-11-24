@@ -287,7 +287,7 @@ class MainDonadoresActivity : ComponentActivity() {
                 )
             }
 
-            if (updatedReserva.estado == "pendiente" || updatedReserva.estado == "reservado") {
+            if (updatedReserva.estado.lowercase() == "pendiente" || updatedReserva.estado.lowercase() == "confirmada") {
                 Button(onClick = {
                     scope.launch {
                         Repository.confirmarEntrega(updatedReserva.id)
