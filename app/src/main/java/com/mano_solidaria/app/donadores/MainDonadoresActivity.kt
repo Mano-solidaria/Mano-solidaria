@@ -167,6 +167,7 @@ class MainDonadoresActivity : ComponentActivity() {
                                     .padding(bottom = 16.dp),
                                 contentScale = ContentScale.Crop
                             )
+                            // Muestra los detalles de la donación con los nuevos campos
                             DonacionDetails(donacion!!)
                             ExtenderDuracionButton(
                                 donacion = donacion!!,
@@ -213,6 +214,8 @@ class MainDonadoresActivity : ComponentActivity() {
             }
         }
     }
+
+
     @Composable
     fun ReservaItem(
         reserva: Reserva,
@@ -256,26 +259,26 @@ class MainDonadoresActivity : ComponentActivity() {
 
     @Composable
     fun DonacionDetails(donacion: Donacion) {
-        var pesoDisponible= donacion.pesoTotal - donacion.pesoReservado - donacion.pesoEntregado
+        var pesoDisponible = donacion.pesoTotal - donacion.pesoReservado - donacion.pesoEntregado
         Column {
-            Text(stringResource(id = R.string.donador_alimento, donacion.pesoAlimento)
-            )
-            Text(stringResource(id = R.string.donador_duracion_restante, donacion.tiempoRestante)
-            )
-            Text(stringResource(id = R.string.donador_disponible, pesoDisponible)
-            )
-            Text(stringResource(id = R.string.donador_reservado, donacion.pesoReservado)
-            )
-            Text(stringResource(id = R.string.donador_estado, donacion.estado)
-            )
-            Text(stringResource(id = R.string.donador_entregado, donacion.pesoEntregado)
-            )
+            Text(stringResource(id = R.string.donador_alimento, donacion.pesoAlimento))
+            Text(stringResource(id = R.string.donador_duracion_restante, donacion.tiempoRestante))
+            Text(stringResource(id = R.string.donador_disponible, pesoDisponible))
+            Text(stringResource(id = R.string.donador_reservado, donacion.pesoReservado))
+            Text(stringResource(id = R.string.donador_estado, donacion.estado))
+            Text(stringResource(id = R.string.donador_entregado, donacion.pesoEntregado))
             Spacer(modifier = Modifier.height(16.dp))
-            Text(stringResource(id = R.string.donador_descripcion, donacion.descripcion)
-            )
+            Text(stringResource(id = R.string.donador_descripcion, donacion.descripcion))
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Nuevos campos:
+            Text(stringResource(id = R.string.tipo_alimento, donacion.tipoAlimento))
+            Text(stringResource(id = R.string.requiere_refrigeracion, donacion.requiereRefrigeracion))
+            Text(stringResource(id = R.string.es_perecedero, donacion.esPedecedero))
+
         }
     }
+
 
     @Composable
     fun ExtenderDuracionButton(

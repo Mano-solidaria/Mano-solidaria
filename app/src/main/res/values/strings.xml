@@ -138,8 +138,34 @@
 
 
 
+    <string-array name="tipo_alimento_options">
+        <item>Fruta</item>
+        <item>Verdura</item>
+        <item>Cereal</item>
+        <item>Proteína</item>
+        <item>Lácteo</item>
+    </string-array>
 
+    <string-array name="requiere_refrigeracion_options">
+        <item>Sí</item>
+        <item>No</item>
+    </string-array>
+
+    <string-array name="es_perecedero_options">
+        <item>Sí</item>
+        <item>No</item>
+    </string-array>
+
+    <!-- Tipo de Alimento -->
+    <string name="tipo_alimento">Tipo de Alimento: %1$s</string>
+
+    <!-- Requiere Refrigeración -->
+    <string name="requiere_refrigeracion">Requiere Refrigeración: %1$s</string>
+
+    <!-- Es Perecedero -->
+    <string name="es_perecedero">Es Perecedero: %1$s</string>
 
 
 
 </resources>
+

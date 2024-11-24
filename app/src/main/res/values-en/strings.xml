@@ -135,6 +135,15 @@
     <string name="donador_entrega_confirmada">Delivery confirmed</string>
     <string name="donador_confirmar_entrega">Confirm delivery</string>
 
+    <!-- Tipo de Alimento -->
+    <string name="tipo_alimento">Food Type: %1$s</string>
+
+    <!-- Requiere Refrigeración -->
+    <string name="requiere_refrigeracion">Requires Refrigeration: %1$s</string>
+
+    <!-- Es Perecedero -->
+    <string name="es_perecedero">Is Perishable: %1$s</string>
+
 
 
 

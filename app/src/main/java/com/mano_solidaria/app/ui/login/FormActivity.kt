@@ -47,7 +47,6 @@ import com.mano_solidaria.app.R
 import com.mano_solidaria.app.donadores.MainDonadoresActivity
 import com.mano_solidaria.app.donadores.Repository.getFileFromUri
 import com.mano_solidaria.app.solicitantes.SolicitantesPropuestasActivity
-import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
