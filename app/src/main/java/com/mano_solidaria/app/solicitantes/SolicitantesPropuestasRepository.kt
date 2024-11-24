@@ -74,7 +74,7 @@ object SolicitantesPropuestasRepository {
     }
 
 
-    suspend fun getAllDonaciones(): List<DonacionRoko> {
+    /*suspend fun getAllDonaciones(): List<DonacionRoko> {
         return try {
             val snapshots = db.collection("donaciones")
                 .whereEqualTo("estado","activo")
@@ -92,14 +92,10 @@ object SolicitantesPropuestasRepository {
         return donaciones.filter {
             it.pesoTotal - it.pesoEntregado - it.pesoReservado == 0
         }
-    }
+    }*/
 
 
-
-
-
-
-    /*suspend fun getAllDonaciones(): List<DonacionRoko> {
+    suspend fun getAllDonaciones(): List<DonacionRoko> {
         return try {
             val snapshots = db.collection("donaciones")
                 .whereEqualTo("estado","activo")
@@ -110,7 +106,7 @@ object SolicitantesPropuestasRepository {
         } catch (e: Exception) {
             emptyList<DonacionRoko>()
         }
-    }*/
+    }
 
 
 
@@ -126,7 +122,7 @@ object SolicitantesPropuestasRepository {
     suspend fun getUserById(documentId: String){
         try {
             val snapshots = db.collection("users").document(documentId).get().await()
-            _usuario.value = snapshots.ToUser()
+            _usuario.value = ToUser(snapshots)!!
         } catch (e: Exception) {
             emptyList<DonacionRoko>()
         }
@@ -134,10 +130,12 @@ object SolicitantesPropuestasRepository {
 
     suspend fun getDonadorByRef(ref: DocumentReference): UsuarioRoko? {
         return try {
-            val snapshots = db.collection("users").document(ref.id).get().await()
-            snapshots.ToUser()
+            val dato = ref
+            val data = ref.id
+            val snapshots = db.collection("users").document(ref.id.toString()).get().await()
+            ToUser(snapshots)
         } catch (e: Exception) {
-            Log.d("ERRORRRR", "error al devolver donador por referencia")
+            Log.d("ERRORRRR", "error al devolver donador por referencia ${e.localizedMessage}")
             UsuarioRoko()
         }
     }
@@ -154,8 +152,10 @@ object SolicitantesPropuestasRepository {
             val pesoRestante = donacion.pesoTotal - donacion.pesoEntregado - donacion.pesoReservado
 
             if (pesoRestante >= reservaNueva.pesoReservado) {
+                if (pesoRestante == reservaNueva.pesoReservado){
+                    transaction.update(donacionRef, "estado", "pendiente")
+                }
                 val nuevoPesoReservado = donacion.pesoReservado + reservaNueva.pesoReservado
-                
                 transaction.update(donacionRef, "pesoReservado", nuevoPesoReservado)
                 transaction.set(db.collection("reservas").document(), reservaNueva)
             }
@@ -218,25 +218,22 @@ object SolicitantesPropuestasRepository {
             snap.getString("estado") ?: "Estado no valido")
     }
 
-    private fun DocumentSnapshot.ToUser(): UsuarioRoko{
-        val direccionString = this.getString("Usuarioubicacion") ?: "Desconocido"
+    private fun ToUser(snap: DocumentSnapshot): UsuarioRoko?{
+        val direccionString = snap.getString("Usuarioubicacion") ?: "Desconocido"
 
         // Obtener el array de suscriptores como lista de cadenas
-        val suscriptoresPaths = this.get("suscriptores") as? List<String> ?: emptyList()
+        val suscriptoresPaths = snap.get("suscriptores") as? List<DocumentReference> ?: emptyList()
 
-        // Convertir las rutas de documentos en objetos DocumentReference
-        val suscriptoresReferences = suscriptoresPaths.map {
-            FirebaseFirestore.getInstance().document(it)
-        }
+        val ubicacion = stringToGeoPoint(direccionString)
 
         return UsuarioRoko(
-            this.getString("UsuarioImagen") ?: null,
-            FirebaseFirestore.getInstance().collection("donaciones").document(this.id),
-            this.getString("UsuarioDireccion") ?: "Direccion desconocida",
-            this.getString("UsuarioMail") ?: "Desconocido",
-            this.getString("UsuarioNombre") ?: "Nombre desconocido",
-            stringToGeoPoint(direccionString),
-            suscriptores = suscriptoresReferences
+            snap.getString("UsuarioImagen") ?: null,
+            FirebaseFirestore.getInstance().collection("users").document(snap.id),
+            snap.getString("UsuarioDireccion") ?: "Direccion desconocida",
+            snap.getString("UsuarioMail") ?: "Desconocido",
+            snap.getString("UsuarioNombre") ?: "Nombre desconocido",
+            ubicacion,
+            suscriptores = suscriptoresPaths
         )
     }
 

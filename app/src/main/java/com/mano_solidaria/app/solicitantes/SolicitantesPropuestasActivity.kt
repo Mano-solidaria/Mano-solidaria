@@ -59,6 +59,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -70,6 +71,7 @@ import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
+import coil.imageLoader
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.DocumentReference
@@ -91,7 +93,7 @@ import okhttp3.internal.wait
 import kotlin.random.Random
 
 
-private var _usuarioCurrent: UsuarioRoko = UsuarioRoko()
+private lateinit var _usuarioCurrent: UsuarioRoko
 
 class SolicitantesPropuestasActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -136,12 +138,13 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
 
         LaunchedEffect(true) {
             scope.launch {
-                val donacionesList = SolicitantesPropuestasRepository.getAllDonaciones()
+                val donacionesList = viewModel.getAllDonaciones()
                 donadores.clear()
                 donadores.addAll(donacionesList)
-                SolicitantesPropuestasRepository.getUserById(SolicitantesPropuestasRepository.currentUser())
+                viewModel.getUserById(viewModel.currentUser())
             }
         }
+
         _usuarioCurrent = stateUsuarioActual.value
         val scaffoldState = rememberScaffoldState()  // Agregar ScaffoldState
 
@@ -182,11 +185,11 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item {
+            item (_usuarioCurrent.usuarioUbicacion.toString()) {
                 MyGoogleMaps(usuarioUbicacion)
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            item {
+            item (_usuarioCurrent.imagenUrl) {
                 MyReservaRealizadas(_usuarioCurrent)
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -305,6 +308,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
             modifier = Modifier
                 .fillMaxWidth()
                 .border(1.dp, color = Color.Red)
+                .height(90.dp)
                 .clickable {
                     navController.navigate("detalle/${donacion.id.id}")
                 },
@@ -319,7 +323,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                     model = donacion.imagenUrl,
                     contentDescription = "Imagen de reserva",
                     modifier = Modifier
-                        .size(80.dp)
+                        .fillMaxSize()
                         .padding(end = 8.dp),
                     contentScale = ContentScale.Crop
                 )
@@ -327,7 +331,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
             Column(
                 modifier = Modifier
                     .weight(2f)
-                    .fillMaxHeight()
+                    .fillMaxHeight(),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -364,11 +368,18 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
     }
 
 
+
     @Composable
     fun DetalleReservaScreen(
         idDonacion: String,
         viewModel: SolicitantesPropuestasRepository = SolicitantesPropuestasRepository
     ) {
+        // Estado para controlar el trigger de recomposición
+        var reloadTrigger by remember { mutableStateOf(0) }
+
+        // Estado para almacenar el peso restante
+        var pesoRestante by remember { mutableStateOf(0) }
+
         val stateDonaciones = viewModel.donaciones.collectAsState()
         val stateUsuarioActual = viewModel.usuario.collectAsState()
         val donaciones = stateDonaciones.value
@@ -384,23 +395,42 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
 
         var suscriptorRefEncontrada: DocumentReference?
 
-        LaunchedEffect(true) {
-            donador = viewModel.getDonadorByRef(donacion!!.donanteId)!!
-            donacion?.let {
-                donador = viewModel.getDonadorByRef(it.donanteId) ?: UsuarioRoko()
+
+        /*LaunchedEffect(true) {
+            lifecycleScope.launch {
+                donador = viewModel.getDonadorByRef(donacion!!.donanteId)!!
+                donacion?.let {
+                    donador = viewModel.getDonadorByRef(it.donanteId) ?: UsuarioRoko()
+                }
             }
         }
 
-        stateUsuarioActual.value.usuarioDocumentRef
-        suscriptorRefEncontrada =
-            donador.suscriptores.find { it == stateUsuarioActual.value.usuarioDocumentRef }
+        stateUsuarioActual.value.usuarioDocumentRef*/
+
+        suscriptorRefEncontrada = donador.suscriptores.find { suscriptor ->
+            Log.d("Donador", donador.usuarioDocumentRef.toString())
+            Log.d("esSuscriptor", stateUsuarioActual.value.usuarioDocumentRef.toString())
+            suscriptor == stateUsuarioActual.value.usuarioDocumentRef
+        }
 
         Log.d("Donador", donador.usuarioDocumentRef.toString())
         Log.d("RefUsuario", stateUsuarioActual.value.usuarioDocumentRef.toString())
 
+
+        LaunchedEffect(reloadTrigger) {
+            // Actualiza el donador y el estado de la suscripción cada vez que cambia reloadTrigger
+            donador = donacion?.donanteId?.let { viewModel.getDonadorByRef(it) } ?: UsuarioRoko()
+            val suscriptorRefEncontrada = donador.suscriptores.find {
+                it == stateUsuarioActual.value.usuarioDocumentRef
+            }
+            isSuscriptor = suscriptorRefEncontrada != null
+            botonText = if (isSuscriptor) "desuscribirse del donador" else "suscribirse al donador"
+        }
+
+
         val imagenReserva = donacion?.imagenUrl
             ?: "https://peruretail.sfo3.cdn.digitaloceanspaces.com/wp-content/uploads/Pollo-a-al-abrasa.jpg"
-        val pesoRestante =
+        /*pesoRestante =
             try {
                 val total: Int = donacion?.pesoTotal ?: 0
                 val reservado: Int = donacion?.pesoReservado ?: 0
@@ -408,7 +438,20 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                 maxOf((total - reservado - entregado), 0)
             } catch (e: Exception) {
                 0
-            }
+            }*/
+
+        LaunchedEffect(reloadTrigger) {
+            // Actualiza el peso restante cada vez que reloadTrigger cambia
+            pesoRestante =
+                try {
+                    val total: Int = donacion?.pesoTotal ?: 0
+                    val reservado: Int = donacion?.pesoReservado ?: 0
+                    val entregado: Int = donacion?.pesoEntregado ?: 0
+                    maxOf((total - reservado - entregado), 0)
+                } catch (e: Exception) {
+                    0
+                }
+        }
 
         // Efecto lanzado para cargar el donador y comprobar la suscripción
         LaunchedEffect(donacion) {
@@ -451,18 +494,21 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                     item {
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 300.dp)
+                                .fillMaxSize()
+                                .heightIn(max = 300.dp),
                         ) {
                             AsyncImage(
                                 model = imagenReserva,
                                 contentDescription = "Imagen de reserva",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(end = 8.dp),
                                 contentScale = ContentScale.Crop
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
-                    item {
+                    item (pesoRestante) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -508,7 +554,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                             }
                         }
                     }
-                    item {
+                    item (isSuscriptor) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
@@ -618,6 +664,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                                         usuarioReservador = viewModel.usuario.value.usuarioDocumentRef!!
                                     )
                                     CoroutineScope(Dispatchers.Main).launch {
+                                        reloadTrigger++
                                         viewModel.addReservaInDb(reserva, donacion.id)
                                     }
                                 }
