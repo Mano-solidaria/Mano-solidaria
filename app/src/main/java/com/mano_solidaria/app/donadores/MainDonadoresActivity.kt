@@ -153,53 +153,54 @@ class MainDonadoresActivity : ComponentActivity() {
         Scaffold {
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 donacion?.let {
-                    Column {
-                        AsyncImage(
-                            model = it.imagenUrl,
-                            contentDescription = "Imagen de donación",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(250.dp)
-                                .padding(bottom = 16.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                        DonacionDetails(donacion!!)
-                        ExtenderDuracionButton(
-                            donacion = donacion!!,
-                            diasRestantes = diasRestantes,
-                            onDiasRestantesChange = { diasRestantes = it },
-                            onDurationExtended = {
-                                Toast.makeText(context, R.string.extended_duration, Toast.LENGTH_SHORT).show()
-                            }
-                        )
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        item {
+                            AsyncImage(
+                                model = it.imagenUrl,
+                                contentDescription = "Imagen de donación",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(250.dp)
+                                    .padding(bottom = 16.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                            DonacionDetails(donacion!!)
+                            ExtenderDuracionButton(
+                                donacion = donacion!!,
+                                diasRestantes = diasRestantes,
+                                onDiasRestantesChange = { diasRestantes = it },
+                                onDurationExtended = {
+                                    Toast.makeText(context, R.string.extended_duration, Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
 
                         if (reservas.isNotEmpty()) {
-                            LazyColumn(modifier = Modifier.weight(1f)) {
-                                items(
-                                    count = reservas.size, // Número de elementos en la lista
-                                    key = { index -> reservas[index].id } // Clave única basada en `id`
-                                ) { index ->
-                                    val reserva = reservas[index]
-                                    ReservaItem(
-                                        reserva = reserva,
-                                        onEstadoChange = { updatedReserva ->
-                                            reservas[index] = updatedReserva
-                                        }
-                                    )
-                                }
+                            items(
+                                count = reservas.size, // Número de elementos en la lista
+                                key = { index -> reservas[index].id } // Clave única basada en `id`
+                            ) { index ->
+                                val reserva = reservas[index]
+                                ReservaItem(
+                                    reserva = reserva,
+                                    onEstadoChange = { updatedReserva ->
+                                        reservas[index] = updatedReserva
+                                    }
+                                )
                             }
                         } else {
-                            Text(stringResource(id = R.string.no_reservations_for_donation)
-                            )
+                            item {
+                                Text(stringResource(id = R.string.no_reservations_for_donation))
+                            }
                         }
                     }
                 } ?: run {
-                    Text(stringResource(id = R.string.loading_details)
-                    )
+                    Text(stringResource(id = R.string.loading_details))
                 }
             }
         }
     }
+
 
 
     @Composable
