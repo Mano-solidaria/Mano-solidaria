@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "963251373970-3r7onkera8a1u7qo88o30eap56vaeg45.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mano_solidaria.app",
+            "certificate_hash": "aee85a729c7b05b1c0d77fc73ff46fb3dc80c786"
+          }
+        },
+        {
           "client_id": "963251373970-a57ca6dncv3q46urm8q794cu511vne9f.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
