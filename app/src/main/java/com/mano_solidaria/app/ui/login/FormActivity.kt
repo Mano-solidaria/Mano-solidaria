@@ -154,6 +154,8 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
             LogByGoogle = true //No es muy escalable ya que si se desea hacer login con por ejemplo facebook no se puede pero me tiene los huevos lleno ya. Solo voy a comentar ProviderData y ProviderId (Buscalo) // chupala estoy con otras cosas
             fillOutEmail()
             hidePassword()
+        }else {
+            cleanEmail()
         }
 
         address = findViewById(R.id.usuario_direccion) //Comprobar que no es null
@@ -227,6 +229,13 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         email.isFocusableInTouchMode = false
     }
 
+    private fun cleanEmail(){
+        email.setHint(R.string.ingrese_email)
+        email.isEnabled = true
+        email.isFocusable = true
+        email.isFocusableInTouchMode = true
+    }
+
     private fun visibility(isChecked: Boolean) {
         if (isChecked) {
             // Switch está a la derecha, muestra los TimePickers
@@ -246,6 +255,8 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun validateData(){ //Acá validamos los datos y en caso de estar de 10 (Fuaaaaah el diego) se continua con el flujo normalmente.
+
+        val currentUser = Firebase.auth.currentUser
 
         if(userFirebase != null){
             //recupero correo de firebase
@@ -283,7 +294,16 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
                 } //Era una validacion bastante mala del horario (Mejorar)
             }
             validateEmail(userEmail)
-            validatePassword(userPassword)
+            var googleProviderFound: Boolean = false
+            for (userInfo in currentUser!!.providerData) {
+                if (userInfo.providerId == "google.com") {
+                    googleProviderFound= true
+                    break
+                }
+            }
+            if (googleProviderFound){
+                validatePassword(userPassword)
+            }
             if (imageUri == null) {
                 Toast.makeText(this, "Por favor seleccione una imagen.", Toast.LENGTH_SHORT).show()
                 return

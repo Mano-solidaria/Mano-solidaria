@@ -93,7 +93,13 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        FirebaseAuth.getInstance().signOut() // Cerrar sesión al iniciar LoginActivity
+    }
+
     private fun setup(){
+        auth.signOut()
         setContentView(R.layout.activity_login)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.login_template)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
