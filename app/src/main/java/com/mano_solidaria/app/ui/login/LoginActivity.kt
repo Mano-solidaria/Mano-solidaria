@@ -87,6 +87,17 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Cargar el idioma guardado desde SharedPreferences
+        val currentLanguage = getSavedLanguagePreference(this)
+
+        // Establecer el idioma en la configuración del sistema
+        val locale = Locale(currentLanguage)
+        Locale.setDefault(locale)
+        val config = resources.configuration
+        config.setLocale(locale)
+        resources.updateConfiguration(config, resources.displayMetrics)
+
         db = Firebase.firestore
         auth = Firebase.auth
         if (auth.currentUser != null){
@@ -161,11 +172,19 @@ class LoginActivity : AppCompatActivity() {
         config.setLocale(Locale(nuevoIdioma))
         resources.updateConfiguration(config, resources.displayMetrics)
 
-        // Reinicia la actividad para aplicar el cambio de idioma
-        val intent = intent
-        finish()
-        startActivity(intent)
+        // Guarda la preferencia de idioma
+        val sharedPreferences = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        sharedPreferences.edit().putString("language", nuevoIdioma).apply()
+
+        // Recarga la actividad para aplicar el cambio de idioma
+        recreate()
     }
+
+    fun getSavedLanguagePreference(context: Context): String {
+        val prefs = context.getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+        return prefs.getString("language_code", "es") ?: "es" // Default "es" (Español)
+    }
+
 
     private fun startGoogle(){
         //configuración
