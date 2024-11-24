@@ -53,11 +53,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
@@ -70,8 +69,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
-import coil.imageLoader
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.DocumentReference
@@ -82,6 +79,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.mano_solidaria.app.AppBarWithDrawer
+import com.mano_solidaria.app.R
 import com.mano_solidaria.app.donadores.DonacionRoko
 import com.mano_solidaria.app.donadores.ReservaRoko
 import com.mano_solidaria.app.donadores.SolicitantesPropuestasRepository
@@ -93,12 +91,12 @@ import okhttp3.internal.wait
 import kotlin.random.Random
 
 
-private lateinit var _usuarioCurrent: UsuarioRoko
+private var _usuarioCurrent: UsuarioRoko = UsuarioRoko()
 
 class SolicitantesPropuestasActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val intent = Intent(this, NotificationServiceSolicitante::class.java)
+        val intent = Intent(this, NotificationServiceSolicited::class.java)
         startService(intent)
         enableEdgeToEdge()
         setContent {
@@ -304,6 +302,8 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
 
     @Composable
     fun MyReservaDisponibles(donacion: DonacionRoko, navController: NavController) {
+        val diasTexto = stringResource(id = R.string.dias) // Obtener el texto de "días" desde strings.xml
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -343,7 +343,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "Caduca en: ${donacion.tiempoRestante}",)
+                    Text("Caduca en: ${donacion.tiempoRestante} $diasTexto")
                 }
             }
             Column(

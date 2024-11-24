@@ -31,8 +31,12 @@ data class Donacion(
     val pesoReservado: Int,
     val pesoEntregado: Int,
     val pesoTotal: Int,
-    val estado: String
+    val estado: String,
+    val tipoAlimento: String,  // Nuevo campo
+    val requiereRefrigeracion: String,  // Nuevo campo
+    val esPedecedero: String  // Nuevo campo
 )
+
 
 data class Reserva(
     val id: String,
@@ -81,7 +85,6 @@ object Repository {
             null
         }
     }
-
 
     fun obtenerReservasPorDonacion(donacionId: String, onResult: (List<Reserva>) -> Unit) {
         val donacionRef = db.collection("donaciones").document(donacionId)
@@ -140,6 +143,35 @@ object Repository {
             throw e
         }
     }
+    suspend fun terminarDonacion(donacionId: String) {
+        try {
+            val donacionRef = db.collection("donaciones").document(donacionId)
+
+            // Actualizar el estado de la donación a "finalizada"
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(donacionRef)
+                val estadoActual = snapshot.getString("estado") ?: ""
+
+                // Si la donación ya está finalizada, no hacemos nada
+                if (estadoActual == "finalizada") {
+                    return@runTransaction
+                }
+
+                // Realizar la actualización del estado
+                val actualizaciones = mutableMapOf<String, Any>(
+                    "estado" to "finalizada"
+                )
+
+                // Realizar la actualización
+                transaction.update(donacionRef, actualizaciones)
+            }.await()
+
+            Log.d("terminarDonacion", "Donación finalizada correctamente.")
+        } catch (e: Exception) {
+            Log.e("terminarDonacion", "Error al finalizar la donación.", e)
+            throw e
+        }
+    }
 
 
     // Función para confirmar la entrega
@@ -194,7 +226,18 @@ object Repository {
         }
     }
 
-    suspend fun registrarDonacion(donanteId: String, alimento: String, pesoTotal: Double, duracionDias: Int, descripcion: String, imageUri: Uri, context: Context): String {
+    suspend fun registrarDonacion(
+        donanteId: String,
+        alimento: String,
+        pesoTotal: Double,
+        duracionDias: Int,
+        descripcion: String,
+        tipoAlimento: String,  // Nuevo parámetro
+        requiereRefrigeracion: String,  // Nuevo parámetro
+        esPedecedero: String,  // Nuevo parámetro
+        imageUri: Uri,
+        context: Context
+    ): String {
         val fechaInicio = Timestamp.now()
         val fechaFin = Timestamp(Date(fechaInicio.toDate().time + duracionDias * 86400000L))
 
@@ -212,7 +255,10 @@ object Repository {
             "pesoReservado" to 0,
             "pesoTotal" to pesoTotal,
             "imagenURL" to imagenURL,
-            "notiRecibida" to false
+            "notiRecibida" to false,
+            "tipoAlimento" to tipoAlimento,  // Almacenamos el nuevo campo
+            "requiereRefrigeracion" to requiereRefrigeracion,  // Almacenamos el nuevo campo
+            "esPedecedero" to esPedecedero  // Almacenamos el nuevo campo
         )
 
         return try {
@@ -270,6 +316,10 @@ object Repository {
     private fun DocumentSnapshot.toDonacion(): Donacion {
         val id = this.id
         val alimento = this.getString("alimento") ?: "Desconocido"
+        val tipoAlimento = this.getString("tipoAlimento") ?: ""  // Nuevo campo, valor vacío si no existe
+        val requiereRefrigeracion = this.getString("requiereRefrigeracion") ?: ""  // Nuevo campo, valor vacío si no existe
+        val esPedecedero = this.getString("esPedecedero") ?: ""  // Nuevo campo, valor vacío si no existe
+
         val pesoTotal = (this.get("pesoTotal") as? Number)?.toInt() ?: 0
         val pesoReservado = (this.get("pesoReservado") as? Number)?.toInt() ?: 0
         val pesoEntregado = (this.get("pesoEntregado") as? Number)?.toInt() ?: 0
@@ -277,19 +327,22 @@ object Repository {
         val imagenURL = this.getString("imagenURL") ?: ""
         val fechaInicio = this.getTimestamp("fechaInicio")?.toDate()
         val fechaFin = this.getTimestamp("fechaFin")?.toDate()
-        val duracion = calcularDuracion(fechaInicio, fechaFin)
+        val duracion = calcularDuracion(fechaFin)
         val estado = this.getString("estado") ?: "Desconocido"
 
         return Donacion(
             id,
-            "$pesoTotal kg: $alimento",
+            "$alimento $pesoTotal kg",
             duracion,
             imagenURL,
             descripcion,
             pesoReservado,
             pesoEntregado,
             pesoTotal,
-            estado
+            estado,
+            tipoAlimento,
+            requiereRefrigeracion,
+            esPedecedero
         )
     }
 

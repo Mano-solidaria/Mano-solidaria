@@ -5,7 +5,7 @@
     <string name="prefs_file">com.mano_solidaria.PREFERENCE_FILE_KEY</string>
     <string name="default_web_client_id">963251373970-ufcki0g7c35fq7ci4g465p197kl2tp2m.apps.googleusercontent.com</string>
     <string name="title_activity_maps">MapsActivity</string>
-    <string name="title_activity_solicitantes_propuestas">SolicitantesPropuestasActivity</string>
+    <string name="title_activity_solicitantes_propuestas">RequestersProposalsActivity</string>
 
     <!-- strings de nav bar -->
 
@@ -40,14 +40,14 @@
     <string name="distancia_km">Distance in km</string>
     <string name="donante">Donor: %1$s</string>
     <string name="descripcion">Description: %1$s</string>
-    <string name="palabra_clave">Key words: %1$s</string>
+    <string name="palabra_clave">Keywords: %1$s</string>
     <string name="cancelar_reserva">Cancel reservation</string>
     <string name="max_reserva_posible">Maximum possible reservation: minimum 1 kg, maximum %1$s kg</string>
     <string name="nuevo_peso_reservado">New reserved weight</string>
     <string name="confirmar">Confirm</string>
     <string name="cancelar">Cancel</string>
     <string name="confirmacion">Confirmation</string>
-    <string name="confirmacion_cancelacion">Sure?</string>
+    <string name="confirmacion_cancelacion">Are you sure?</string>
     <string name="si">Yes</string>
     <string name="no">No</string>
     <string name="modificar_reserva">Modify reservation</string>
@@ -95,8 +95,6 @@
     <string name="registro_completar_contrasena">Please complete the password</string>
     <string name="registro_completar_direccion">Please complete the address</string>
 
-
-
     <!-- strings de registrar donacion activity -->
 
     <string name="alimento">Food:</string>
@@ -112,16 +110,15 @@
     <string name="donador_seleccionar_imagen">Please select an image.</string>
     <string name="donador_error_registrar_donacion">Error registering donation.</string>
 
-
     <!-- strings de main donadores -->
 
-    <string name="active_donations">My active donations</string>
+    <string name="active_donations">My donations</string>
     <string name="register_donation">Register Donation</string>
     <string name="extended_duration">Extended Duration</string>
     <string name="no_reservations_for_donation">There are no reservations for this donation.</string>
     <string name="loading_details">Loading details...</string>
     <string name="donador_alimento">Food: %1$s</string>
-    <string name="donador_duracion_restante">Remaining Duration: %1$s</string>
+    <string name="donador_duracion_restante">Ends in: %1$s days</string>
     <string name="donador_disponible">Available: %1$s kg</string>
     <string name="donador_reservado">Reserved: %1$s kg</string>
     <string name="donador_estado">Status: %1$s</string>
@@ -129,15 +126,42 @@
     <string name="donador_descripcion">Description: %1$s</string>
     <string name="donador_extender_duracion">Extend duration</string>
     <string name="donador_dias">Days</string>
+    <string name="dias">days</string>
+    <string name="termina">Ends in</string>
+
     <string name="donador_palabra_clave">Keyword: %1$s</string>
     <string name="donador_kg_reservados">Reserved kg: %1$s</string>
     <string name="donador_estado_reserva">Status: %1$s</string>
     <string name="donador_entrega_confirmada">Delivery confirmed</string>
     <string name="donador_confirmar_entrega">Confirm delivery</string>
 
+    <!-- Food Type -->
+    <string name="tipo_alimento">Food Type: %1$s</string>
 
+    <!-- Requires Refrigeration -->
+    <string name="requiere_refrigeracion">Requires Refrigeration: %1$s</string>
 
+    <!-- Is Perishable -->
+    <string name="es_perecedero">Is Perishable: %1$s</string>
 
+    <!-- Food Type -->
+    <string name="tipo_alimento_registro">Food Type:</string>
+
+    <!-- Requires Refrigeration -->
+    <string name="requiere_refrigeracion_registro">Requires Refrigeration:</string>
+
+    <!-- Is Perishable -->
+    <string name="es_perecedero_registro">Is Perishable:</string>
+    <string name="donaciones_activas">Active Donations</string>
+    <string name="donaciones_pendientes">Fully Reserved</string>
+    <string name="donaciones_finalizadas">Completed</string>
+    <string name="registra_primera_propuesta">Register your first donation proposal!</string>
+    <string name="registrar_donacion">Register Donation</string>
+
+    <!-- Terminar donacion -->
+    <string name="terminar_donacion_button">Finish Donation</string>
+    <string name="donacion_terminada">Donation Completed</string>
+    <string name="error_terminar_donacion">Error finishing the donation</string>
 
 
 </resources>

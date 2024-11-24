@@ -47,7 +47,6 @@ import com.mano_solidaria.app.R
 import com.mano_solidaria.app.donadores.MainDonadoresActivity
 import com.mano_solidaria.app.donadores.Repository.getFileFromUri
 import com.mano_solidaria.app.solicitantes.SolicitantesPropuestasActivity
-import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -179,6 +178,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         sendLogin = findViewById(R.id.boton_guardar)
 
         imgFoto = findViewById(R.id.imgFoto)
+        imgFoto.visibility = View.GONE
         btnElegirFoto = findViewById(R.id.btnElegirFoto)
 
 
@@ -211,6 +211,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             imageUri = result.data?.data
             imgFoto.setImageURI(imageUri)
+            imgFoto.visibility = View.VISIBLE
         }
     }
 
