@@ -115,7 +115,7 @@
 
     <!-- strings de main donadores -->
 
-    <string name="active_donations">My active donations</string>
+    <string name="active_donations">My donations</string>
     <string name="register_donation">Register Donation</string>
     <string name="extended_duration">Extended Duration</string>
     <string name="no_reservations_for_donation">There are no reservations for this donation.</string>
@@ -156,8 +156,10 @@
     <!-- Es Perecedero -->
     <string name="es_perecedero_registro">Is Perishable:</string>
     <string name="donaciones_activas">Activas</string>
+    <string name="donaciones_pendientes">Totalmente reservadas</string>
     <string name="donaciones_finalizadas">Finalizadas</string>
     <string name="registra_primera_propuesta">¡Registra tu primera propuesta de donación!</string>
+    <string name="registrar_donacion">Registrar Donacion</string>
 
 
 </resources>

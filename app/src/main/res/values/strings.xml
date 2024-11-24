@@ -116,7 +116,7 @@
 
     <!-- strings de main donadores -->
 
-    <string name="active_donations">Mis donaciones activas</string>
+    <string name="active_donations">Mis donaciones</string>
     <string name="register_donation">Registrar Donación</string>
     <string name="extended_duration">Duración extendida</string>
     <string name="no_reservations_for_donation">No hay reservas para esta donación.</string>
@@ -181,6 +181,7 @@
     <string name="donaciones_pendientes">Totalmente reservadas</string>
     <string name="donaciones_finalizadas">Finalizadas</string>
     <string name="registra_primera_propuesta">¡Registra tu primera propuesta de donación!</string>
+    <string name="registrar_donacion">Registrar Donacion</string>
 
 
 </resources>

@@ -35,6 +35,7 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import com.mano_solidaria.app.Utils.applySavedTheme
 import com.mano_solidaria.app.donadores.MainDonadoresActivity
 import com.mano_solidaria.app.solicitantes.SolicitantesPropuestasActivity
 import org.mindrot.jbcrypt.BCrypt
@@ -90,6 +91,7 @@ class LoginActivity : AppCompatActivity() {
         }else {
             setup()
         }
+
     }
 
 //    override fun onStart() {

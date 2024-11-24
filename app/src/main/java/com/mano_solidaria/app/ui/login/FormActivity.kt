@@ -178,6 +178,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         sendLogin = findViewById(R.id.boton_guardar)
 
         imgFoto = findViewById(R.id.imgFoto)
+        imgFoto.visibility = View.GONE
         btnElegirFoto = findViewById(R.id.btnElegirFoto)
 
 
@@ -210,6 +211,7 @@ class FormActivity : AppCompatActivity(), OnMapReadyCallback {
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             imageUri = result.data?.data
             imgFoto.setImageURI(imageUri)
+            imgFoto.visibility = View.VISIBLE
         }
     }
 
