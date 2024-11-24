@@ -592,7 +592,7 @@ fun DetalleReservaScreen(
                                     dispararNoti = true,
                                     donacionId = donacion!!.id,
                                     donanteId = donacion.donanteId,
-                                    estado = "Pendiente",
+                                    estado = "pendiente",
                                     notiRecibida = false,
                                     palabraClave = generateRandomWord(8),
                                     pesoReservado = value.toInt(),
