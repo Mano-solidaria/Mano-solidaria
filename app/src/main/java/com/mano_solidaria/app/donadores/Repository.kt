@@ -143,6 +143,35 @@ object Repository {
             throw e
         }
     }
+    suspend fun terminarDonacion(donacionId: String) {
+        try {
+            val donacionRef = db.collection("donaciones").document(donacionId)
+
+            // Actualizar el estado de la donación a "finalizada"
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(donacionRef)
+                val estadoActual = snapshot.getString("estado") ?: ""
+
+                // Si la donación ya está finalizada, no hacemos nada
+                if (estadoActual == "finalizada") {
+                    return@runTransaction
+                }
+
+                // Realizar la actualización del estado
+                val actualizaciones = mutableMapOf<String, Any>(
+                    "estado" to "finalizada"
+                )
+
+                // Realizar la actualización
+                transaction.update(donacionRef, actualizaciones)
+            }.await()
+
+            Log.d("terminarDonacion", "Donación finalizada correctamente.")
+        } catch (e: Exception) {
+            Log.e("terminarDonacion", "Error al finalizar la donación.", e)
+            throw e
+        }
+    }
 
 
     // Función para confirmar la entrega

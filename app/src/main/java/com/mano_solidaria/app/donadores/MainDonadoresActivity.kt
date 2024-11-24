@@ -1,6 +1,8 @@
 package com.mano_solidaria.app.donadores
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.content.Intent
 import android.util.Log
@@ -37,6 +39,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.CoroutineScope
 
 
 class MainDonadoresActivity : ComponentActivity() {
@@ -100,6 +103,7 @@ class MainDonadoresActivity : ComponentActivity() {
                         val intent = Intent(navController.context, RegistrarDonacionActivity::class.java)
                         navController.context.startActivity(intent)
                     },
+
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(id = R.string.register_donation))
@@ -288,20 +292,23 @@ class MainDonadoresActivity : ComponentActivity() {
 
         Scaffold {
             Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                donacion?.let {
+                donacion?.let { donacion ->
+                    // Comprobamos si el estado de la donación es "finalizada"
+                    val isFinalizada = donacion.estado == "finalizada"
+
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         item {
                             // Título "Alimento" encima de la imagen
                             Text(
-                                text = donacion!!.pesoAlimento, // Corrección aquí
+                                text = donacion.pesoAlimento,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 22.sp,  // Tamaño de fuente más grande
-                                modifier = Modifier.padding(bottom = 8.dp)  // Espacio debajo del título
+                                fontSize = 22.sp,
+                                modifier = Modifier.padding(bottom = 8.dp)
                             )
 
                             // Imagen relacionada con la donación
                             AsyncImage(
-                                model = it.imagenUrl,
+                                model = donacion.imagenUrl,
                                 contentDescription = "Imagen de donación",
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -311,66 +318,81 @@ class MainDonadoresActivity : ComponentActivity() {
                             )
 
                             // Muestra los detalles de la donación con los nuevos campos
-                            DonacionDetails(donacion!!)
+                            DonacionDetails(donacion)
 
                             // Tabla con los valores de Disponible, Reservado, Entregado
-                            val disponible = it.pesoTotal - it.pesoReservado - it.pesoEntregado
+                            val disponible = donacion.pesoTotal - donacion.pesoReservado - donacion.pesoEntregado
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 8.dp)
-                                    .clip(RoundedCornerShape(4.dp)) // Aquí agregamos el redondeo de bordes
-                                    .background(Color(0x99999999)) // Fondo de color
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0x99999999))
                                     .padding(8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                // Columna "Disponible"
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(text = "Disponible", fontWeight = FontWeight.Bold)
-                                    Text(text = "${disponible} kg") // Calcula disponible
+                                    Text(text = "${disponible} kg")
                                 }
-                                // Columna "Reservado"
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(text = "Reservado", fontWeight = FontWeight.Bold)
-                                    Text(text = "${it.pesoReservado} kg") // Valor reservado
+                                    Text(text = "${donacion.pesoReservado} kg")
                                 }
-                                // Columna "Entregado"
                                 Column(
                                     modifier = Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(text = "Entregado", fontWeight = FontWeight.Bold)
-                                    Text(text = "${it.pesoEntregado} kg") // Valor entregado
+                                    Text(text = "${donacion.pesoEntregado} kg")
                                 }
                             }
 
-                            // Botón para extender duración
-                            ExtenderDuracionButton(
-                                donacion = donacion!!,
-                                diasRestantes = diasRestantes,
-                                onDiasRestantesChange = { diasRestantes = it },
-                                onDurationExtended = {
-                                    Toast.makeText(context, R.string.extended_duration, Toast.LENGTH_SHORT).show()
-                                    // Después de extender, volvemos a cargar los datos actualizados
-                                    scope.launch {
-                                        cargarDatosSuspendido()
+                            // Botón para extender duración, solo si no está "finalizada"
+                            if (!isFinalizada) {
+                                ExtenderDuracionButton(
+                                    donacion = donacion,
+                                    diasRestantes = diasRestantes,
+                                    onDiasRestantesChange = { diasRestantes = it },
+                                    onDurationExtended = {
+                                        Toast.makeText(
+                                            context,
+                                            R.string.extended_duration,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        // Después de extender, volvemos a cargar los datos actualizados
+                                        scope.launch {
+                                            cargarDatosSuspendido()
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
+                        }
+
+                        // Verificar si el estado "pendiente" es 0
+                        val reservasPendientes = reservas.filter { it.estado == "pendiente" }
+
+                        // Botón para terminar la donación, solo si no está "finalizada"
+                        item {
+                            if (!isFinalizada) {
+                                TerminarDonacionButton(
+                                    donacion = donacion,
+                                    scope = scope,
+                                    context = context,
+                                    reservasPendientes = reservasPendientes
+                                )
+                            }
                         }
 
                         // Mostrar las reservas, si hay alguna
                         if (reservas.isNotEmpty()) {
-                            items(
-                                count = reservas.size,
-                                key = { index -> reservas[index].id }
-                            ) { index ->
+                            items(count = reservas.size, key = { index -> reservas[index].id }) { index ->
                                 val reserva = reservas[index]
                                 ReservaItem(
                                     reserva = reserva,
@@ -397,6 +419,42 @@ class MainDonadoresActivity : ComponentActivity() {
             }
         }
     }
+
+    @Composable
+    fun TerminarDonacionButton(
+        donacion: Donacion?,
+        scope: CoroutineScope,
+        context: Context,
+        reservasPendientes: List<Reserva>
+    ) {
+        Button(
+            onClick = {
+                // Llamar a la función para terminar la donación
+                scope.launch {
+                    try {
+                        donacion?.id?.let {
+                            // Llamamos a la función del repositorio
+                            Repository.terminarDonacion(it)
+
+                            // Mostrar mensaje de éxito
+                            Toast.makeText(context, "Donación Terminada", Toast.LENGTH_SHORT).show()
+
+                            // Volver a la pantalla anterior
+                            (context as? Activity)?.onBackPressed()  // Regresa a la pantalla anterior
+                        }
+                    } catch (e: Exception) {
+                        // Manejar cualquier error
+                        Toast.makeText(context, "Error al terminar la donación", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+            enabled = reservasPendientes.isEmpty(),  // El botón estará habilitado solo si no hay reservas pendientes
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+        ) {
+            Text("Terminador Donacion")
+        }
+    }
+
 
     @Composable
     fun ReservaItem(
@@ -507,4 +565,5 @@ class MainDonadoresActivity : ComponentActivity() {
             )
         }
     }
+
 }
