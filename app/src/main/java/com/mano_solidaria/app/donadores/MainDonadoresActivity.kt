@@ -7,10 +7,12 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -33,6 +35,8 @@ import com.mano_solidaria.app.AppBarWithDrawer
 import com.mano_solidaria.app.R
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 
 
 class MainDonadoresActivity : ComponentActivity() {
@@ -287,6 +291,15 @@ class MainDonadoresActivity : ComponentActivity() {
                 donacion?.let {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         item {
+                            // Título "Alimento" encima de la imagen
+                            Text(
+                                text = donacion!!.pesoAlimento, // Corrección aquí
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 22.sp,  // Tamaño de fuente más grande
+                                modifier = Modifier.padding(bottom = 8.dp)  // Espacio debajo del título
+                            )
+
+                            // Imagen relacionada con la donación
                             AsyncImage(
                                 model = it.imagenUrl,
                                 contentDescription = "Imagen de donación",
@@ -296,8 +309,48 @@ class MainDonadoresActivity : ComponentActivity() {
                                     .padding(bottom = 16.dp),
                                 contentScale = ContentScale.Crop
                             )
+
                             // Muestra los detalles de la donación con los nuevos campos
                             DonacionDetails(donacion!!)
+
+                            // Tabla con los valores de Disponible, Reservado, Entregado
+                            val disponible = it.pesoTotal - it.pesoReservado - it.pesoEntregado
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                                    .clip(RoundedCornerShape(4.dp)) // Aquí agregamos el redondeo de bordes
+                                    .background(Color(0x99999999)) // Fondo de color
+                                    .padding(8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                // Columna "Disponible"
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(text = "Disponible", fontWeight = FontWeight.Bold)
+                                    Text(text = "${disponible} kg") // Calcula disponible
+                                }
+                                // Columna "Reservado"
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(text = "Reservado", fontWeight = FontWeight.Bold)
+                                    Text(text = "${it.pesoReservado} kg") // Valor reservado
+                                }
+                                // Columna "Entregado"
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(text = "Entregado", fontWeight = FontWeight.Bold)
+                                    Text(text = "${it.pesoEntregado} kg") // Valor entregado
+                                }
+                            }
+
+                            // Botón para extender duración
                             ExtenderDuracionButton(
                                 donacion = donacion!!,
                                 diasRestantes = diasRestantes,
@@ -312,6 +365,7 @@ class MainDonadoresActivity : ComponentActivity() {
                             )
                         }
 
+                        // Mostrar las reservas, si hay alguna
                         if (reservas.isNotEmpty()) {
                             items(
                                 count = reservas.size,
@@ -344,7 +398,6 @@ class MainDonadoresActivity : ComponentActivity() {
         }
     }
 
-
     @Composable
     fun ReservaItem(
         reserva: Reserva,
@@ -362,7 +415,11 @@ class MainDonadoresActivity : ComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(stringResource(id = R.string.donador_palabra_clave, updatedReserva.palabraClave))
+                // Palabra clave en negrita
+                Text(
+                    text = stringResource(id = R.string.donador_palabra_clave, updatedReserva.palabraClave),
+                    fontWeight = FontWeight.Bold // Aplicamos la negrita aquí
+                )
                 Text(stringResource(id = R.string.donador_kg_reservados, updatedReserva.pesoReservado))
                 Text(stringResource(id = R.string.donador_estado_reserva, updatedReserva.estado))
             }
@@ -385,25 +442,31 @@ class MainDonadoresActivity : ComponentActivity() {
     }
 
 
-
     @Composable
     fun DonacionDetails(donacion: Donacion) {
         var pesoDisponible = donacion.pesoTotal - donacion.pesoReservado - donacion.pesoEntregado
         Column {
-            Text(stringResource(id = R.string.donador_alimento, donacion.pesoAlimento))
             Text(stringResource(id = R.string.donador_duracion_restante, donacion.tiempoRestante))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            /*Divider() // Línea separadora
             Text(stringResource(id = R.string.donador_disponible, pesoDisponible))
             Text(stringResource(id = R.string.donador_reservado, donacion.pesoReservado))
-            Text(stringResource(id = R.string.donador_estado, donacion.estado))
             Text(stringResource(id = R.string.donador_entregado, donacion.pesoEntregado))
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(stringResource(id = R.string.donador_descripcion, donacion.descripcion))
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))*/
 
-            // Nuevos campos:
+            Divider() // Línea separadora
             Text(stringResource(id = R.string.tipo_alimento, donacion.tipoAlimento))
             Text(stringResource(id = R.string.requiere_refrigeracion, donacion.requiereRefrigeracion))
             Text(stringResource(id = R.string.es_perecedero, donacion.esPedecedero))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Divider() // Línea separadora
+
+            Text(stringResource(id = R.string.donador_descripcion, donacion.descripcion))
+
+
+
 
         }
     }

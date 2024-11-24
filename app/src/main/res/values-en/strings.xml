@@ -121,7 +121,7 @@
     <string name="no_reservations_for_donation">There are no reservations for this donation.</string>
     <string name="loading_details">Loading details...</string>
     <string name="donador_alimento">Food: %1$s</string>
-    <string name="donador_duracion_restante">Remaining Duration: %1$s</string>
+    <string name="donador_duracion_restante">Ends in: %1$s days</string>
     <string name="donador_disponible">Available: %1$s kg</string>
     <string name="donador_reservado">Reserved: %1$s kg</string>
     <string name="donador_estado">Status: %1$s</string>
