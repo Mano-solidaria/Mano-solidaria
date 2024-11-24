@@ -76,7 +76,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/tipo_alimento" />
+                android:text="@string/tipo_alimento_registro" />
             <Spinner
                 android:id="@+id/tipoAlimentoSpinner"
                 android:layout_width="match_parent"
@@ -87,7 +87,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/requiere_refrigeracion" />
+                android:text="@string/requiere_refrigeracion_registro" />
             <Spinner
                 android:id="@+id/requiereRefrigeracionSpinner"
                 android:layout_width="match_parent"
@@ -98,7 +98,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/es_perecedero" />
+                android:text="@string/es_perecedero_registro" />
             <Spinner
                 android:id="@+id/esPedecederoSpinner"
                 android:layout_width="match_parent"

@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -77,6 +78,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.mano_solidaria.app.AppBarWithDrawer
+import com.mano_solidaria.app.R
 import com.mano_solidaria.app.donadores.DonacionRoko
 import com.mano_solidaria.app.donadores.ReservaRoko
 import com.mano_solidaria.app.donadores.SolicitantesPropuestasRepository
@@ -297,6 +299,8 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
 
     @Composable
     fun MyReservaDisponibles(donacion: DonacionRoko, navController: NavController) {
+        val diasTexto = stringResource(id = R.string.dias) // Obtener el texto de "días" desde strings.xml
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -335,7 +339,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "Caduca en: ${donacion.tiempoRestante}",)
+                    Text("Caduca en: ${donacion.tiempoRestante} $diasTexto")
                 }
             }
             Column(

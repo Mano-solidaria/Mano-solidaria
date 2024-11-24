@@ -130,6 +130,9 @@
     <string name="donador_descripcion">Descripción: %1$s</string>
     <string name="donador_extender_duracion">Extender duración</string>
     <string name="donador_dias">Días</string>
+    <string name="dias">días</string>
+    <string name="termina">termina en</string>
+
     <string name="donador_palabra_clave">Palabra clave: %1$s</string>
     <string name="donador_kg_reservados">Kg reservados: %1$s</string>
     <string name="donador_estado_reserva">Estado: %1$s</string>
@@ -166,6 +169,18 @@
     <!-- Es Perecedero -->
     <string name="es_perecedero">Es Perecedero: %1$s</string>
 
+    <!-- Tipo de Alimento -->
+    <string name="tipo_alimento_registro">Tipo de Alimento:</string>
+
+    <!-- Requiere Refrigeración -->
+    <string name="requiere_refrigeracion_registro">Requiere Refrigeración:</string>
+
+    <!-- Es Perecedero -->
+    <string name="es_perecedero_registro">Es Perecedero:</string>
+    <string name="donaciones_activas">Activas</string>
+    <string name="donaciones_pendientes">Totalmente reservadas</string>
+    <string name="donaciones_finalizadas">Finalizadas</string>
+    <string name="registra_primera_propuesta">¡Registra tu primera propuesta de donación!</string>
 
 
 </resources>

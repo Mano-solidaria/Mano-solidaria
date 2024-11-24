@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -26,8 +27,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.mano_solidaria.app.AppBarWithDrawer
 import com.mano_solidaria.app.R
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 
 
 class MainDonadoresActivity : ComponentActivity() {
@@ -65,21 +70,24 @@ class MainDonadoresActivity : ComponentActivity() {
         }
     }
 
-
-
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     @Composable
     fun DonadoresListScreen(navController: NavController) {
-        val donadores = remember { mutableStateListOf<Donacion>() }
+        val donaciones = remember { mutableStateListOf<Donacion>() }
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(true) {
             scope.launch {
                 val donacionesList = Repository.getDonaciones()
-                donadores.clear()
-                donadores.addAll(donacionesList)
+                donaciones.clear()
+                donaciones.addAll(donacionesList)
             }
         }
+
+        // Estados de expansión de las listas
+        val isActiveExpanded = remember { mutableStateOf(true) }
+        val isPendingExpanded = remember { mutableStateOf(true) }
+        val isFinalizedExpanded = remember { mutableStateOf(false) }
 
         Scaffold() {
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -93,10 +101,116 @@ class MainDonadoresActivity : ComponentActivity() {
                     Text(stringResource(id = R.string.register_donation))
                 }
 
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(donadores.size) { index ->
-                        DonadorItem(donadores[index]) {
-                            navController.navigate("detail/${donadores[index].id}")
+                // Verificar si todas las listas están vacías
+                val donacionesActivas = donaciones.filter { it.estado == "activo" }
+                val donacionesPendientes = donaciones.filter { it.estado == "pendiente" }
+                val donacionesFinalizadas = donaciones.filter { it.estado == "finalizada" }
+
+                if (donacionesActivas.isEmpty() && donacionesPendientes.isEmpty() && donacionesFinalizadas.isEmpty()) {
+                    // Mostrar el mensaje si no hay donaciones
+                    Text(
+                        text = stringResource(id = R.string.registra_primera_propuesta),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else {
+                    // Si hay donaciones, mostrar las listas
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        // Título y lista de donaciones activas (expandida por defecto)
+                        if (donacionesActivas.isNotEmpty()) {
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { isActiveExpanded.value = !isActiveExpanded.value }
+                                        .padding(vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.donaciones_activas),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Icon(
+                                        imageVector = if (isActiveExpanded.value) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                        contentDescription = "Expandir/Contraer",
+                                        modifier = Modifier.align(Alignment.CenterVertically)
+                                    )
+                                }
+                            }
+                            // Mostrar las donaciones activas solo si está expandida
+                            if (isActiveExpanded.value) {
+                                items(donacionesActivas) { donacion ->
+                                    DonadorItem(donacion) {
+                                        navController.navigate("detail/${donacion.id}")
+                                    }
+                                }
+                            }
+                        }
+
+                        // Título y lista de donaciones pendientes (expandida por defecto)
+                        if (donacionesPendientes.isNotEmpty()) {
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { isPendingExpanded.value = !isPendingExpanded.value }
+                                        .padding(vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.donaciones_pendientes),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Icon(
+                                        imageVector = if (isPendingExpanded.value) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                        contentDescription = "Expandir/Contraer",
+                                        modifier = Modifier.align(Alignment.CenterVertically)
+                                    )
+                                }
+                            }
+                            // Mostrar las donaciones pendientes solo si está expandida
+                            if (isPendingExpanded.value) {
+                                items(donacionesPendientes) { donacion ->
+                                    DonadorItem(donacion) {
+                                        navController.navigate("detail/${donacion.id}")
+                                    }
+                                }
+                            }
+                        }
+
+                        // Título y lista de donaciones finalizadas (plegada por defecto)
+                        if (donacionesFinalizadas.isNotEmpty()) {
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { isFinalizedExpanded.value = !isFinalizedExpanded.value }
+                                        .padding(vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.donaciones_finalizadas),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 20.sp,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Icon(
+                                        imageVector = if (isFinalizedExpanded.value) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                        contentDescription = "Expandir/Contraer",
+                                        modifier = Modifier.align(Alignment.CenterVertically)
+                                    )
+                                }
+                            }
+                            // Mostrar las donaciones finalizadas solo si está expandida
+                            if (isFinalizedExpanded.value) {
+                                items(donacionesFinalizadas) { donacion ->
+                                    DonadorItem(donacion) {
+                                        navController.navigate("detail/${donacion.id}")
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -104,8 +218,12 @@ class MainDonadoresActivity : ComponentActivity() {
         }
     }
 
+
     @Composable
-    fun DonadorItem(donador: Donacion, onClick: () -> Unit) {
+    fun DonadorItem(donacion: Donacion, onClick: () -> Unit) {
+        val diasTexto = stringResource(id = R.string.dias) // Obtener el texto de "días" desde strings.xml
+        val terminaTexto = stringResource(id = R.string.termina)
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -113,18 +231,29 @@ class MainDonadoresActivity : ComponentActivity() {
                 .padding(vertical = 8.dp)
         ) {
             AsyncImage(
-                model = donador.imagenUrl,
+                model = donacion.imagenUrl,
                 contentDescription = "Imagen de donación",
-                modifier = Modifier.size(80.dp).padding(end = 8.dp),
+                modifier = Modifier
+                    .size(80.dp)
+                    .padding(end = 8.dp),
                 contentScale = ContentScale.Crop
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(donador.pesoAlimento)
-                Text(donador.tiempoRestante)
+                Text(
+                    text = donacion.pesoAlimento,
+                    fontWeight = FontWeight.Bold, // Negrita
+                    fontSize = 20.sp // Tamaño más grande
+                )
+
+                // Solo mostrar el tiempo restante si la donación no está finalizada
+                if (donacion.estado != "finalizada") {
+                    Text("$terminaTexto ${donacion.tiempoRestante} $diasTexto")
+                }
             }
         }
         Divider()
     }
+
 
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     @Composable

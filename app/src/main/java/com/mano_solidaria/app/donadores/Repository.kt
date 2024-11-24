@@ -303,7 +303,7 @@ object Repository {
 
         return Donacion(
             id,
-            "$pesoTotal kg: $alimento",
+            "$alimento $pesoTotal kg",
             duracion,
             imagenURL,
             descripcion,
