@@ -231,7 +231,7 @@ object SolicitantesPropuestasRepository {
 
         return UsuarioRoko(
             this.getString("UsuarioImagen") ?: null,
-            FirebaseFirestore.getInstance().collection("donaciones").document(this.id),
+            FirebaseFirestore.getInstance().collection("users").document(this.id),
             this.getString("UsuarioDireccion") ?: "Direccion desconocida",
             this.getString("UsuarioMail") ?: "Desconocido",
             this.getString("UsuarioNombre") ?: "Nombre desconocido",
