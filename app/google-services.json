@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "963251373970",
     "project_id": "mano-solidaria-unaj",
-    "storage_bucket": "mano-solidaria-unaj.appspot.com"
+    "storage_bucket": "mano-solidaria-unaj.firebasestorage.app"
   },
   "client": [
     {
@@ -12,7 +12,20 @@
           "package_name": "com.mano_solidaria.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "963251373970-a57ca6dncv3q46urm8q794cu511vne9f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mano_solidaria.app",
+            "certificate_hash": "cb2a16aae42c3d4d9cfc25fbf9f98c476fdf281d"
+          }
+        },
+        {
+          "client_id": "963251373970-ufcki0g7c35fq7ci4g465p197kl2tp2m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBegzkxCm1hGXv1deXxEgYpvB8FBgblrDs"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "963251373970-ufcki0g7c35fq7ci4g465p197kl2tp2m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

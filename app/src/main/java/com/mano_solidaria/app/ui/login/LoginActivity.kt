@@ -46,7 +46,6 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var google_boton : Button
     private lateinit var mail: EditText
     private lateinit var contrasena: EditText
-    private lateinit var container:LinearLayout
     private lateinit var auth: FirebaseAuth
     private lateinit var oneTapClient: SignInClient
     private lateinit var db: FirebaseFirestore

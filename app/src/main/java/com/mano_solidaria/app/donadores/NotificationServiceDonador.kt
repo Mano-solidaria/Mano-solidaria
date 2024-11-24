@@ -57,39 +57,50 @@ class NotificationServiceDonador : Service() {
                 val reservaSnapshot = change.document
                 val id = reservaSnapshot.id
                 val docRefDonacion = reservaSnapshot.getDocumentReference("donacionId")
-                docRefDonacion?.get()?.addOnSuccessListener { snapshot ->
-                    var pesoTotal = snapshot.getLong("pesoTotal") ?: 0L
-                    var alimento = snapshot.getString("alimento") ?: "Sin alimento"
-                    var pesoReser = reservaSnapshot.getLong("pesoReservado") ?: 0L
-                    var nombre = snapshot.getString("nombre") ?: "UserContento"
-                    var notiRecibida = reservaSnapshot.getBoolean("notiRecibida") ?: false
-                    dispararNoti = reservaSnapshot.getBoolean("dispararNoti") ?: true
-                    when (change.type) {
-                        DocumentChange.Type.ADDED ->
-                            if (!notiRecibida){
-                                actualizarEstadoNotiRese(id)
-                                showNotification(nombre!!,
-                                    "Propuesta: $pesoTotal KG $alimento",
-                                    "Reserva: $pesoReser KG",
-                                    "Tiene una nueva reserva")
-                                dispararNoti = reservaSnapshot.getBoolean("dispararNoti") ?: false
-                            }
+                var pesoReser = reservaSnapshot.getLong("pesoReservado") ?: 0L
+                var notiRecibida = reservaSnapshot.getBoolean("notiRecibida") ?: false
+                dispararNoti = reservaSnapshot.getBoolean("dispararNoti") ?: true
+                docRefDonacion?.get()?.addOnSuccessListener { donacion ->
+                    var pesoTotal = donacion.getLong("pesoTotal") ?: 0L
+                    var alimento = donacion.getString("alimento") ?: "Sin alimento"
+                    val docRefDonante = donacion.getDocumentReference("donanteId")
+                    docRefDonante?.get()?.addOnSuccessListener { donante ->
+                        var nombre = donante.getString("nombre") ?: "UserContento"
+                        when (change.type) {
+                            DocumentChange.Type.ADDED ->
+                                if (!notiRecibida) {
+                                    actualizarEstadoNotiRese(id)
+                                    showNotification(
+                                        nombre!!,
+                                        "Propuesta: $pesoTotal KG $alimento",
+                                        "Reserva: $pesoReser KG",
+                                        "Tiene una nueva reserva"
+                                    )
+                                    dispararNoti = reservaSnapshot.getBoolean("dispararNoti") ?: false
+                                }
 
-                        DocumentChange.Type.MODIFIED ->
-                            if (dispararNoti) {
-                                showNotification(
-                                    nombre!!,
-                                    "Propuesta: $pesoTotal KG $alimento",
-                                    "Reserva: $pesoReser KG",
-                                    "Se ha modificado una reserva"
-                                )
-                            }
+                            DocumentChange.Type.MODIFIED ->
+                                if (dispararNoti) {
+                                    showNotification(
+                                        nombre!!,
+                                        "Propuesta: $pesoTotal KG $alimento",
+                                        "Reserva: $pesoReser KG",
+                                        "Se ha modificado una reserva"
+                                    )
+                                }
 
-                        DocumentChange.Type.REMOVED -> showNotification(nombre!!,"Propuesta: $pesoTotal KG $alimento", "Reserva: $pesoReser KG","Se ha eliminado una reserva")
+                            DocumentChange.Type.REMOVED -> showNotification(
+                                nombre!!,
+                                "Propuesta: $pesoTotal KG $alimento",
+                                "Reserva: $pesoReser KG",
+                                "Se ha eliminado una reserva"
+                            )
+                        }
+                    }?.addOnFailureListener { e ->
+                        Log.w("Firestore", "Error al obtener los datos del donador", e)
                     }
-
                 }?.addOnFailureListener { e ->
-                    Log.w("Firestore", "Error al obtener el campo 'alimento'", e)
+                    Log.w("Firestore", "Error al obtener los datos de la donacion", e)
                 }
             }
         }
@@ -119,13 +130,13 @@ class NotificationServiceDonador : Service() {
                 val pesoTotal = donacionSnapshot.getLong("pesoTotal") ?: 0L
                 val pesoEntregado = donacionSnapshot.getLong("pesoEntregado") ?: 0L
                 val notiRecibida = donacionSnapshot.getBoolean("notiRecibida") ?: false
-                var suscriptores: List<String> = emptyList()
-                user.get()
-                    .addOnSuccessListener { document ->
-                        if (document.exists()) {
-                            // Extraemos la lista de suscriptores
-                            suscriptores = document.get("suscriptores") as? List<String> ?: emptyList()
-                        }
+//                var suscriptores: List<String> = emptyList()
+//                user.get()
+//                    .addOnSuccessListener { document ->
+//                        if (document.exists()) {
+//                            // Extraemos la lista de suscriptores
+//                            suscriptores = document.get("suscriptores") as? List<String> ?: emptyList()
+//                        }
                 when (change.type) {
                     DocumentChange.Type.ADDED -> {
                         if (donacionSnapshot.metadata.hasPendingWrites()) {
@@ -134,11 +145,6 @@ class NotificationServiceDonador : Service() {
                                 "Donacion agregada correctamente",
                                 Toast.LENGTH_SHORT
                             ).show()
-
-                            for (suscriptor in suscriptores) {
-                                println(suscriptor) // Aquí puedes trabajar con cada elemento
-                            }
-
                         }
                     }
 
@@ -159,7 +165,8 @@ class NotificationServiceDonador : Service() {
                         Toast.makeText(this, "Donacion eliminada correctamente", Toast.LENGTH_SHORT).show()
                     }
                 }
-            }}
+            }
+//            }
         }
     }
 
