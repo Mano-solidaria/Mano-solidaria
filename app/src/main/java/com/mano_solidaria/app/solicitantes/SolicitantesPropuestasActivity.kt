@@ -1,6 +1,5 @@
 package com.mano_solidaria.app.solicitantes
 
-import android.content.ClipData.Item
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -60,6 +59,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -91,8 +91,9 @@ import okhttp3.internal.wait
 import kotlin.random.Random
 
 
-class SolicitantesPropuestasActivity : ComponentActivity() {
+private var _usuarioCurrent: UsuarioRoko = UsuarioRoko()
 
+class SolicitantesPropuestasActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val intent = Intent(this, NotificationServiceSolicitante::class.java)
@@ -102,520 +103,534 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
             AppNavigation()
         }
     }
-}
 
-private lateinit var _usuarioCurrent: UsuarioRoko
+    @Composable
+    fun AppNavigation() {
+        val navController = rememberNavController()
+        NavHost(
+            navController = navController,
+            startDestination = "reservas"
+        ) {
+            composable("reservas") {
+                ViewContainer(navController)
+            }
+            composable(
+                "detalle/{id}",
+                arguments = listOf(navArgument("id") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id")
+                DetalleReservaScreen(idDonacion = id ?: "Sin ID")
+            }
+        }
+    }
 
-@Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
-    NavHost(
-        navController = navController,
-        startDestination = "reservas"
+    @Composable
+    fun ViewContainer(
+        navController: NavHostController,
+        viewModel: SolicitantesPropuestasRepository = SolicitantesPropuestasRepository
     ) {
-        composable("reservas") {
-            ViewContainer(navController)
+        val donadores = remember { mutableStateListOf<DonacionRoko>() }
+        val scope = rememberCoroutineScope()
+
+        val stateUsuarioActual = viewModel.usuario.collectAsState()
+
+        LaunchedEffect(true) {
+            scope.launch {
+                val donacionesList = SolicitantesPropuestasRepository.getAllDonaciones()
+                donadores.clear()
+                donadores.addAll(donacionesList)
+                SolicitantesPropuestasRepository.getUserById(SolicitantesPropuestasRepository.currentUser())
+            }
         }
-        composable(
-            "detalle/{id}",
-            arguments = listOf(navArgument("id") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id")
-            DetalleReservaScreen(idDonacion = id ?: "Sin ID")
-        }
-    }
-}
+        _usuarioCurrent = stateUsuarioActual.value
+        val scaffoldState = rememberScaffoldState()  // Agregar ScaffoldState
 
-
-@Composable
-fun ViewContainer(navController: NavHostController,
-                  viewModel: SolicitantesPropuestasRepository = SolicitantesPropuestasRepository) {
-    val donadores = remember { mutableStateListOf<DonacionRoko>() }
-    val scope = rememberCoroutineScope()
-
-    val stateUsuarioActual = viewModel.usuario.collectAsState()
-    LaunchedEffect(true) {
-        scope.launch {
-            val donacionesList = SolicitantesPropuestasRepository.getAllDonaciones()
-            donadores.clear()
-            donadores.addAll(donacionesList)
-            SolicitantesPropuestasRepository.getUserById(SolicitantesPropuestasRepository.currentUser())
-        }
-    }
-    _usuarioCurrent = stateUsuarioActual.value
-    val scaffoldState = rememberScaffoldState()  // Agregar ScaffoldState
-
-    // Usamos AppBarWithDrawer en lugar de Scaffold directamente
-    AppBarWithDrawer(
-        scaffoldState = scaffoldState,
-        coroutineScope = scope,
-        title = "Solicitantes Propuestas",
-        content = { innerPadding ->
-            Content(innerPadding, donadores, navController, stateUsuarioActual.value.usuarioUbicacion)
-        }
-    )
-}
-
-@Composable
-fun ToolBar(){
-    TopAppBar (
-        title = { Text("Top app bar") }
-    )
-}
-
-@Composable
-fun Content(paddingValues: PaddingValues,
-            donadores: SnapshotStateList<DonacionRoko>,
-            navController: NavController,
-            usuarioUbicacion: GeoPoint){
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ){
-        item {
-            MyGoogleMaps(usuarioUbicacion)
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-        item {
-            MyReservaRealizadas(_usuarioCurrent)
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-        // Generar dinámicamente los elementos según la lista
-        items(donadores) { donacion ->
-            MyReservaDisponibles(donacion, navController)
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-
-@Composable
-fun MyGoogleMaps(geoPoint: GeoPoint) {
-    val address = LatLng(geoPoint.latitude, geoPoint.longitude)
-    val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
-
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val mapHeight = screenHeight / 3
-
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(address, 15f)
-    }
-    GoogleMap(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(mapHeight),
-        cameraPositionState = cameraPositionState,
-        uiSettings = uiSettings,
-    ) {
-        Marker(
-            state = MarkerState(position = address),
-            title = "Marker",
-            snippet = "Lat: ${geoPoint.latitude}, Lng: ${geoPoint.longitude}"
+        // Usamos AppBarWithDrawer en lugar de Scaffold directamente
+        AppBarWithDrawer(
+            scaffoldState = scaffoldState,
+            coroutineScope = scope,
+            title = "Solicitantes Propuestas",
+            content = { innerPadding ->
+                Content(
+                    innerPadding,
+                    donadores,
+                    navController,
+                    stateUsuarioActual.value.usuarioUbicacion
+                )
+            }
         )
     }
-}
 
-
-@Composable
-fun MostrarMapaMultiplesPuntos(geoPoints: List<GeoPoint>) {
-    val centroide = if (geoPoints.isNotEmpty()) {
-        val latitudPromedio = geoPoints.map { it.latitude }.average()
-        val longitudPromedio = geoPoints.map { it.longitude }.average()
-
-        GeoPoint(latitudPromedio, longitudPromedio)
-    } else {
-        GeoPoint(0.0, 0.0)
-    }
-    val initialLatLng = LatLng(centroide.latitude, centroide.longitude)
-
-    val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
-
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
+    @Composable
+    fun ToolBar() {
+        TopAppBar(
+            title = { Text("Top app bar") }
+        )
     }
 
-    LaunchedEffect(initialLatLng) {
-        cameraPositionState.position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
-    }
-
-    GoogleMap(
-        modifier = Modifier.height(250.dp),
-        cameraPositionState = cameraPositionState,
-        uiSettings = uiSettings,
+    @Composable
+    fun Content(
+        paddingValues: PaddingValues,
+        donadores: SnapshotStateList<DonacionRoko>,
+        navController: NavController,
+        usuarioUbicacion: GeoPoint
     ) {
-        geoPoints.forEach { geoPoint ->
-            val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                MyGoogleMaps(usuarioUbicacion)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            item {
+                MyReservaRealizadas(_usuarioCurrent)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            // Generar dinámicamente los elementos según la lista
+            items(donadores) { donacion ->
+                MyReservaDisponibles(donacion, navController)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
+
+    @Composable
+    fun MyGoogleMaps(geoPoint: GeoPoint) {
+        val address = LatLng(geoPoint.latitude, geoPoint.longitude)
+        val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
+
+        val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+        val mapHeight = screenHeight / 3
+
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(address, 15f)
+        }
+        GoogleMap(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(mapHeight),
+            cameraPositionState = cameraPositionState,
+            uiSettings = uiSettings,
+        ) {
             Marker(
-                state = MarkerState(position = latLng),
+                state = MarkerState(position = address),
                 title = "Marker",
                 snippet = "Lat: ${geoPoint.latitude}, Lng: ${geoPoint.longitude}"
             )
         }
     }
-}
 
 
+    @Composable
+    fun MostrarMapaMultiplesPuntos(geoPoints: List<GeoPoint>) {
+        val centroide = if (geoPoints.isNotEmpty()) {
+            val latitudPromedio = geoPoints.map { it.latitude }.average()
+            val longitudPromedio = geoPoints.map { it.longitude }.average()
 
+            GeoPoint(latitudPromedio, longitudPromedio)
+        } else {
+            GeoPoint(0.0, 0.0)
+        }
+        val initialLatLng = LatLng(centroide.latitude, centroide.longitude)
 
-@Composable
-fun MyReservaRealizadas(usuarioRoko: UsuarioRoko){
-    val context = LocalContext.current
-    Button(
-        onClick = {
-            val intent = Intent(context, ReservasActivity::class.java)
-            context.startActivity(intent)
-        },
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        val uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
+
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
+        }
+
+        LaunchedEffect(initialLatLng) {
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(initialLatLng, 12f)
+        }
+
+        GoogleMap(
+            modifier = Modifier.height(250.dp),
+            cameraPositionState = cameraPositionState,
+            uiSettings = uiSettings,
         ) {
-            Image(
-                painter =
-                rememberAsyncImagePainter(model =
-                _usuarioCurrent.imagenUrl ?: "https://i.pinimg.com/originals/9a/dd/74/9add7496fe5ec85b9dd52a0066873f62.jpg"), // URL de la foto
-                contentDescription = "Foto del usuario",
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.LightGray),
-                contentScale = ContentScale.Crop
-            )
-            Text("Ver Reservas Realizadas")
+            geoPoints.forEach { geoPoint ->
+                val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+                Marker(
+                    state = MarkerState(position = latLng),
+                    title = "Marker",
+                    snippet = "Lat: ${geoPoint.latitude}, Lng: ${geoPoint.longitude}"
+                )
+            }
         }
     }
-}
 
 
-@Composable
-fun MyReservaDisponibles(donacion: DonacionRoko, navController: NavController){
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, color = Color.Red)
-            .clickable {
-                navController.navigate("detalle/${donacion.id.id}")
+    @Composable
+    fun MyReservaRealizadas(usuarioRoko: UsuarioRoko) {
+        val context = LocalContext.current
+        Button(
+            onClick = {
+                val intent = Intent(context, ReservasActivity::class.java)
+                context.startActivity(intent)
             },
-        verticalAlignment = Alignment.CenterVertically
-    ){
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-        ){
-            AsyncImage(
-                model = donacion.imagenUrl,
-                contentDescription = "Imagen de reserva",
-                modifier = Modifier
-                    .size(80.dp)
-                    .padding(end = 8.dp),
-                contentScale = ContentScale.Crop
-            )
-        }
-        Column(
-            modifier = Modifier
-                .weight(2f)
-                .fillMaxHeight()
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(text = "Alimento: ${donacion.descripcion} ${donacion.pesoTotal}",)
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(text = "Caduca en: ${donacion.tiempoRestante}",)
+                Image(
+                    painter =
+                    rememberAsyncImagePainter(
+                        model =
+                        _usuarioCurrent.imagenUrl
+                            ?: "https://i.pinimg.com/originals/9a/dd/74/9add7496fe5ec85b9dd52a0066873f62.jpg"
+                    ), // URL de la foto
+                    contentDescription = "Foto del usuario",
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray),
+                    contentScale = ContentScale.Crop
+                )
+                Text("Ver Reservas Realizadas")
             }
         }
-        Column(
+    }
+
+
+    @Composable
+    fun MyReservaDisponibles(donacion: DonacionRoko, navController: NavController) {
+        Row(
             modifier = Modifier
-                .weight(2f)
-                .fillMaxHeight()
+                .fillMaxWidth()
+                .border(1.dp, color = Color.Red)
+                .clickable {
+                    navController.navigate("detalle/${donacion.id.id}")
+                },
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(text = "Coto")
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(text = "7 km",)
-            }
-        }
-    }
-}
-
-
-
-@Composable
-fun DetalleReservaScreen(
-    idDonacion: String,
-    viewModel: SolicitantesPropuestasRepository = SolicitantesPropuestasRepository)
-{
-    val stateDonaciones = viewModel.donaciones.collectAsState()
-    val stateUsuarioActual = viewModel.usuario.collectAsState()
-    val donaciones = stateDonaciones.value
-
-    val donacion: DonacionRoko? = donaciones.find { it.id.id == idDonacion }
-
-    var value by remember { mutableStateOf("") }
-    var isError by remember { mutableStateOf(false) }
-    var isSuscriptor by remember { mutableStateOf(true) }
-    var donador by remember { mutableStateOf(UsuarioRoko()) }
-    var botonText by remember { mutableStateOf("suscribirse") }
-    var buttonColor by remember { mutableStateOf("MaterialTheme.colors.primary") }
-
-    var suscriptorRefEncontrada : DocumentReference?
-
-    LaunchedEffect(true) {
-        donador = viewModel.getDonadorByRef(donacion!!.donanteId)!!
-        donacion?.let {
-            donador = viewModel.getDonadorByRef(it.donanteId) ?: UsuarioRoko()
-        }
-    }
-
-    stateUsuarioActual.value.usuarioDocumentRef
-    suscriptorRefEncontrada = donador.suscriptores.find { it == stateUsuarioActual.value.usuarioDocumentRef }
-
-    Log.d("Donador", donador.usuarioDocumentRef.toString())
-    Log.d("RefUsuario", stateUsuarioActual.value.usuarioDocumentRef.toString())
-
-    val imagenReserva = donacion?.imagenUrl ?: "https://peruretail.sfo3.cdn.digitaloceanspaces.com/wp-content/uploads/Pollo-a-al-abrasa.jpg"
-    val pesoRestante =
-        try {
-            val total : Int = donacion?.pesoTotal ?: 0
-            val reservado : Int = donacion?.pesoReservado ?: 0
-            val entregado : Int = donacion?.pesoEntregado ?: 0
-            maxOf((total - reservado - entregado), 0)
-        } catch (e: Exception) {
-            0
-        }
-
-    // Efecto lanzado para cargar el donador y comprobar la suscripción
-    LaunchedEffect(donacion) {
-        if (donacion != null) {
-            val fetchedDonador = viewModel.getDonadorByRef(donacion.donanteId)
-            fetchedDonador?.let { donadorData ->
-                donador = donadorData
-
-                val suscriptorRefEncontrada = donadorData.suscriptores.find {
-                    it == stateUsuarioActual.value.usuarioDocumentRef
-                }
-
-                if (suscriptorRefEncontrada == null) {
-                    botonText = "suscribirse al donador"
-                    isSuscriptor = false
-                } else {
-                    botonText = "desuscribirse del donador"
-                    isSuscriptor = true
-                }
-            }
-        }
-    }
-
-    val scaffoldState = rememberScaffoldState()
-    val coroutineScope = rememberCoroutineScope()
-
-    ToolBar()
-    AppBarWithDrawer(
-        scaffoldState = scaffoldState,
-        coroutineScope = coroutineScope,
-        title = "Detalle de Reserva",
-        content = { innerPadding ->
-            LazyColumn(
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.SpaceEvenly,
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .weight(1f)
+                    .fillMaxHeight()
             ) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 300.dp)
-                    ) {
-                        AsyncImage(
-                            model = imagenReserva,
-                            contentDescription = "Imagen de reserva",
-                            contentScale = ContentScale.Crop
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
+                AsyncImage(
+                    model = donacion.imagenUrl,
+                    contentDescription = "Imagen de reserva",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .padding(end = 8.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .weight(2f)
+                    .fillMaxHeight()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(text = "Alimento: ${donacion.descripcion} ${donacion.pesoTotal}",)
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(text = "Caduca en: ${donacion.tiempoRestante}",)
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .weight(2f)
+                    .fillMaxHeight()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(text = "Coto")
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(text = "7 km",)
+                }
+            }
+        }
+    }
+
+
+    @Composable
+    fun DetalleReservaScreen(
+        idDonacion: String,
+        viewModel: SolicitantesPropuestasRepository = SolicitantesPropuestasRepository
+    ) {
+        val stateDonaciones = viewModel.donaciones.collectAsState()
+        val stateUsuarioActual = viewModel.usuario.collectAsState()
+        val donaciones = stateDonaciones.value
+
+        val donacion: DonacionRoko? = donaciones.find { it.id.id == idDonacion }
+
+        var value by remember { mutableStateOf("") }
+        var isError by remember { mutableStateOf(false) }
+        var isSuscriptor by remember { mutableStateOf(true) }
+        var donador by remember { mutableStateOf(UsuarioRoko()) }
+        var botonText by remember { mutableStateOf("suscribirse") }
+        var buttonColor by remember { mutableStateOf("MaterialTheme.colors.primary") }
+
+        var suscriptorRefEncontrada: DocumentReference?
+
+        LaunchedEffect(true) {
+            donador = viewModel.getDonadorByRef(donacion!!.donanteId)!!
+            donacion?.let {
+                donador = viewModel.getDonadorByRef(it.donanteId) ?: UsuarioRoko()
+            }
+        }
+
+        stateUsuarioActual.value.usuarioDocumentRef
+        suscriptorRefEncontrada =
+            donador.suscriptores.find { it == stateUsuarioActual.value.usuarioDocumentRef }
+
+        Log.d("Donador", donador.usuarioDocumentRef.toString())
+        Log.d("RefUsuario", stateUsuarioActual.value.usuarioDocumentRef.toString())
+
+        val imagenReserva = donacion?.imagenUrl
+            ?: "https://peruretail.sfo3.cdn.digitaloceanspaces.com/wp-content/uploads/Pollo-a-al-abrasa.jpg"
+        val pesoRestante =
+            try {
+                val total: Int = donacion?.pesoTotal ?: 0
+                val reservado: Int = donacion?.pesoReservado ?: 0
+                val entregado: Int = donacion?.pesoEntregado ?: 0
+                maxOf((total - reservado - entregado), 0)
+            } catch (e: Exception) {
+                0
+            }
+
+        // Efecto lanzado para cargar el donador y comprobar la suscripción
+        LaunchedEffect(donacion) {
+            if (donacion != null) {
+                val fetchedDonador = viewModel.getDonadorByRef(donacion.donanteId)
+                fetchedDonador?.let { donadorData ->
+                    donador = donadorData
+
+                    val suscriptorRefEncontrada = donadorData.suscriptores.find {
+                        it == stateUsuarioActual.value.usuarioDocumentRef
+                    }
+
+                    if (suscriptorRefEncontrada == null) {
+                        botonText = "suscribirse al donador"
+                        isSuscriptor = false
+                    } else {
+                        botonText = "desuscribirse del donador"
+                        isSuscriptor = true
                     }
                 }
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+            }
+        }
+
+        val scaffoldState = rememberScaffoldState()
+        val coroutineScope = rememberCoroutineScope()
+
+        ToolBar()
+        AppBarWithDrawer(
+            scaffoldState = scaffoldState,
+            coroutineScope = coroutineScope,
+            title = "Detalle de Reserva",
+            content = { innerPadding ->
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 300.dp)
                         ) {
-                            Text(text = "Alimento:")
-                            Text(
-                                text = donacion?.alimentoNombre ?: "null",
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.wrapContentWidth().padding(4.dp),
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis
+                            AsyncImage(
+                                model = imagenReserva,
+                                contentDescription = "Imagen de reserva",
+                                contentScale = ContentScale.Crop
                             )
-                        }
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(text = "Peso restante:")
-                            Text(
-                                text = pesoRestante.toString(),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.wrapContentWidth().padding(4.dp),
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(text = "Peso total:")
-                            Text(
-                                text = donacion?.pesoTotal.toString(),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.wrapContentWidth().padding(4.dp),
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
-                }
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
                         ) {
-                            Text(text = "Donante:")
-                            Text(
-                                text = donador.usuarioNombre ?: "Nombre no encontrado",
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.wrapContentWidth().padding(4.dp),
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Text(text = "Alimento:")
+                                Text(
+                                    text = donacion?.alimentoNombre ?: "null",
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                    maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(text = "Peso restante:")
+                                Text(
+                                    text = pesoRestante.toString(),
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                    maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(text = "Peso total:")
+                                Text(
+                                    text = donacion?.pesoTotal.toString(),
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                    maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
-                }
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start
-                    ){
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(text = "Donante:")
+                                Text(
+                                    text = donador.usuarioNombre ?: "Nombre no encontrado",
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                    maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            Button(
+                                onClick = {
+                                    if (suscriptorRefEncontrada == null) {
+                                        viewModel.suscribirseAlDonador(
+                                            donador,
+                                            stateUsuarioActual.value.usuarioDocumentRef
+                                        )
+                                    } else {
+                                        viewModel.desuscribirseAlDonador(
+                                            donador,
+                                            stateUsuarioActual.value.usuarioDocumentRef
+                                        )
+                                    }
+                                },
+                                modifier = Modifier
+                                    .width(IntrinsicSize.Min)
+                                    .padding(start = 16.dp)
+                            ) {
+                                Text(botonText)
+                            }
+                        }
+                    }
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 15.dp),
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(text = "${donacion?.descripcion}")
+                                Text(text = "- ${donacion?.estado}")
+                            }
+                        }
+                    }
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                Text(text = "kilos a reservar")
+                                TextField(
+                                    value = value,
+                                    onValueChange = { newValue ->
+                                        val filteredValue =
+                                            newValue.filter { it.isDigit() }.trimStart { it == '0' }
+                                        value = filteredValue.ifEmpty { "" }
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    isError = isError
+                                )
+                                if (isError) {
+                                    Text(
+                                        text = "cantidad invalida",
+                                        style = MaterialTheme.typography.subtitle1
+                                    )
+                                }
+                            }
+                        }
                         Button(
                             onClick = {
-                                if(suscriptorRefEncontrada == null){
-                                    viewModel.suscribirseAlDonador(donador, stateUsuarioActual.value.usuarioDocumentRef)
-                                }
-                                else{
-                                    viewModel.desuscribirseAlDonador(donador, stateUsuarioActual.value.usuarioDocumentRef)
+                                val numericValue = value.toIntOrNull() ?: 0
+                                if ((numericValue > (donacion!!.pesoTotal - donacion!!.pesoReservado - donacion!!.pesoEntregado)) or (numericValue == 0)) {
+                                    isError = true
+                                } else {
+                                    isError = false
+                                    val reserva = ReservaRoko(
+                                        dispararNoti = true,
+                                        donacionId = donacion!!.id,
+                                        donanteId = donacion.donanteId,
+                                        estado = "pendiente",
+                                        notiRecibida = false,
+                                        palabraClave = generateRandomWord(8),
+                                        pesoReservado = value.toInt(),
+                                        usuarioReservador = viewModel.usuario.value.usuarioDocumentRef!!
+                                    )
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        viewModel.addReservaInDb(reserva, donacion.id)
+                                    }
                                 }
                             },
-                            modifier = Modifier
-                                .width(IntrinsicSize.Min)
-                                .padding(start = 16.dp)
+                            modifier = Modifier.fillMaxWidth(0.8f)
                         ) {
-                            Text(botonText)
+                            Text("Reservar")
                         }
                     }
                 }
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 15.dp),
-                        horizontalArrangement = Arrangement.Start
-                    ){
-                        Column (
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(text = "${donacion?.descripcion}")
-                            Text(text = "- ${donacion?.estado}")
-                        }
-                    }
-                }
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(text = "kilos a reservar")
-                            TextField(
-                                value = value,
-                                onValueChange = {
-                                        newValue ->
-                                    val filteredValue =
-                                        newValue.filter { it.isDigit() }.trimStart { it == '0' }
-                                    value = filteredValue.ifEmpty { "" }
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                isError = isError
-                            )
-                            if (isError) {
-                                Text(text = "cantidad invalida", style = MaterialTheme.typography.subtitle1
-                                )
-                            }
-                        }
-                    }
-                    Button(
-                        onClick = {
-                            val numericValue = value.toIntOrNull() ?: 0
-                            if ((numericValue > (donacion!!.pesoTotal - donacion!!.pesoReservado - donacion!!.pesoEntregado)) or (numericValue == 0)) {
-                                isError = true
-                            } else {
-                                isError = false
-                                val reserva = ReservaRoko(
-                                    dispararNoti = true,
-                                    donacionId = donacion!!.id,
-                                    donanteId = donacion.donanteId,
-                                    estado = "pendiente",
-                                    notiRecibida = false,
-                                    palabraClave = generateRandomWord(8),
-                                    pesoReservado = value.toInt(),
-                                    usuarioReservador = viewModel.usuario.value.usuarioDocumentRef!!
-                                )
-                                CoroutineScope(Dispatchers.Main).launch{
-                                    viewModel.addReservaInDb(reserva, donacion.id)
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(0.8f)
-                    ) {
-                        Text("Reservar")
-                    }
-                }
-            }
-        })
+            })
+    }
 }
-
 
 
 fun generateRandomWord(length: Int): String {
