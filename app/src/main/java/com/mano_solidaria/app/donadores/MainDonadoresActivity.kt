@@ -133,21 +133,24 @@ class MainDonadoresActivity : ComponentActivity() {
         val reservas = remember { mutableStateListOf<Reserva>() }
         var diasRestantes by remember { mutableIntStateOf(1) }
         val context = LocalContext.current
+        val scope = rememberCoroutineScope() // Usamos rememberCoroutineScope para lanzar corrutinas
 
-        // Limpiar los datos anteriores cada vez que el itemId cambie
-        LaunchedEffect(itemId) {
-            // Limpiar los datos antiguos para asegurar que se cargue desde el servidor
-            donacion = null
-            reservas.clear()
-
+        // Función para cargar los datos desde el servidor de forma suspendida
+        suspend fun cargarDatosSuspendido() {
             itemId?.let {
                 // Solicitar nuevamente los datos del servidor
-                donacion = Repository.getDonacionById(it)
+                donacion = Repository.getDonacionById(it) // Función suspendida
                 Log.d("Donacion", "Donación recibida: $donacion")
                 Repository.obtenerReservasPorDonacion(it) { reservasList ->
+                    reservas.clear()  // Limpiar reservas antes de añadir las nuevas
                     reservas.addAll(reservasList)
                 }
             }
+        }
+
+        // Limpiar y cargar los datos cada vez que el itemId cambie
+        LaunchedEffect(itemId) {
+            cargarDatosSuspendido() // Llamada a la función suspendida
         }
 
         Scaffold {
@@ -171,20 +174,30 @@ class MainDonadoresActivity : ComponentActivity() {
                                 onDiasRestantesChange = { diasRestantes = it },
                                 onDurationExtended = {
                                     Toast.makeText(context, R.string.extended_duration, Toast.LENGTH_SHORT).show()
+                                    // Después de extender, volvemos a cargar los datos actualizados
+                                    scope.launch {
+                                        cargarDatosSuspendido()
+                                    }
                                 }
                             )
                         }
 
                         if (reservas.isNotEmpty()) {
                             items(
-                                count = reservas.size, // Número de elementos en la lista
-                                key = { index -> reservas[index].id } // Clave única basada en `id`
+                                count = reservas.size,
+                                key = { index -> reservas[index].id }
                             ) { index ->
                                 val reserva = reservas[index]
                                 ReservaItem(
                                     reserva = reserva,
                                     onEstadoChange = { updatedReserva ->
                                         reservas[index] = updatedReserva
+                                    },
+                                    onEntregaConfirmada = {
+                                        // Recargar los datos después de confirmar la entrega
+                                        scope.launch {
+                                            cargarDatosSuspendido() // Recargar los datos
+                                        }
                                     }
                                 )
                             }
@@ -199,6 +212,44 @@ class MainDonadoresActivity : ComponentActivity() {
                 }
             }
         }
+    }
+    @Composable
+    fun ReservaItem(
+        reserva: Reserva,
+        onEstadoChange: (Reserva) -> Unit,
+        onEntregaConfirmada: () -> Unit // Callback para notificar cuando se confirme la entrega
+    ) {
+        val scope = rememberCoroutineScope()
+        val context = LocalContext.current
+        var updatedReserva by remember { mutableStateOf(reserva) }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(stringResource(id = R.string.donador_palabra_clave, updatedReserva.palabraClave))
+                Text(stringResource(id = R.string.donador_kg_reservados, updatedReserva.pesoReservado))
+                Text(stringResource(id = R.string.donador_estado_reserva, updatedReserva.estado))
+            }
+
+            if (updatedReserva.estado.lowercase() == "pendiente" || updatedReserva.estado.lowercase() == "confirmada") {
+                Button(onClick = {
+                    scope.launch {
+                        Repository.confirmarEntrega(updatedReserva.id)
+                        updatedReserva = updatedReserva.copy(estado = "entregada")
+                        onEstadoChange(updatedReserva)
+                        Toast.makeText(context, R.string.donador_entrega_confirmada, Toast.LENGTH_SHORT).show()
+                        onEntregaConfirmada() // Notificar a la pantalla padre para recargar datos
+                    }
+                }) {
+                    Text(stringResource(id = R.string.donador_confirmar_entrega))
+                }
+            }
+        }
+        Divider()
     }
 
 
@@ -234,74 +285,31 @@ class MainDonadoresActivity : ComponentActivity() {
         onDurationExtended: () -> Unit
     ) {
         val scope = rememberCoroutineScope()
-        val donacionState = remember { mutableStateOf(donacion) }
 
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Button(
                 onClick = {
                     scope.launch {
-                        Repository.actualizarFechaFin(donacionState.value.id, diasRestantes)
-                        val tiempoRestanteActual = donacionState.value.tiempoRestante.split(" ")[0].toIntOrNull() ?: 0
+                        // Actualizar la fecha de fin en el repositorio
+                        Repository.actualizarFechaFin(donacion.id, diasRestantes)
+                        val tiempoRestanteActual = donacion.tiempoRestante.split(" ")[0].toIntOrNull() ?: 0
                         val nuevoTiempoRestante = tiempoRestanteActual + diasRestantes
-                        donacionState.value = donacionState.value.copy(tiempoRestante = "$nuevoTiempoRestante días")
+                        // Al hacer click, se invoca el callback para extender la duración
                         onDurationExtended()
                     }
                 },
                 modifier = Modifier.weight(1f).height(56.dp)
             ) {
-                Text(stringResource(id = R.string.donador_extender_duracion)
-                )
+                Text(stringResource(id = R.string.donador_extender_duracion))
             }
 
             TextField(
                 value = diasRestantes.toString(),
                 onValueChange = { newValue -> onDiasRestantesChange(newValue.toIntOrNull() ?: 0) },
-                label = { Text(stringResource(id = R.string.donador_dias)
-                ) },
+                label = { Text(stringResource(id = R.string.donador_dias)) },
                 modifier = Modifier.width(80.dp).padding(start = 8.dp).height(56.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
             )
         }
-    }
-
-    @Composable
-    fun ReservaItem(
-        reserva: Reserva,
-        onEstadoChange: (Reserva) -> Unit
-    ) {
-        val scope = rememberCoroutineScope()
-        val context = LocalContext.current
-        var updatedReserva by remember { mutableStateOf(reserva) }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(stringResource(id = R.string.donador_palabra_clave, updatedReserva.palabraClave)
-                )
-                Text(stringResource(id = R.string.donador_kg_reservados, updatedReserva.pesoReservado)
-                )
-                Text(stringResource(id = R.string.donador_estado_reserva, updatedReserva.estado)
-                )
-            }
-
-            if (updatedReserva.estado.lowercase() == "pendiente" || updatedReserva.estado.lowercase() == "confirmada") {
-                Button(onClick = {
-                    scope.launch {
-                        Repository.confirmarEntrega(updatedReserva.id)
-                        updatedReserva = updatedReserva.copy(estado = "entregada")
-                        onEstadoChange(updatedReserva)
-                        Toast.makeText(context, R.string.donador_entrega_confirmada, Toast.LENGTH_SHORT).show()
-                    }
-                }) {
-                    Text(stringResource(id = R.string.donador_confirmar_entrega)
-                    )
-                }
-            }
-        }
-        Divider()
     }
 }
