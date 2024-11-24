@@ -50,13 +50,10 @@
     <string name="no">No</string>
     <string name="modificar_reserva">Modificar reserva</string>
 
-
-
     <!-- strings de home activity -->
-
     <string name="bienvenido">Bienvenido</string>
-    <string name="email">Email</string>
-    <string name="tipo_logueo">Tipo Logueo</string>
+    <string name="email">Correo electrónico</string>
+    <string name="tipo_logueo">Tipo de inicio de sesión</string>
     <string name="contraseña">Contraseña</string>
     <string name="cerrar_sesion">Cerrar sesión</string>
     <string name="siguiente">Siguiente</string>
@@ -65,43 +62,38 @@
     <string name="error_obtener_rol_usuario">Error al obtener el rol de usuario.</string>
     <string name="usuario_no_autenticado">Usuario no autenticado.</string>
 
-
     <!-- strings de login activity -->
-
     <string name="ingrese_sus_datos">Ingresa tu correo y contraseña</string>
-    <string name="ingrese_su_email">Ingrese su email</string>
+    <string name="ingrese_su_email">Ingrese su correo electrónico</string>
     <string name="ingrese_su_contraseña">Ingrese su contraseña</string>
     <string name="log_in">Iniciar sesión</string>
     <string name="sign_in">Registrarme</string>
 
     <!-- strings de form activity -->
-
-    <string name="rol_usuario">Rol de Usuario</string>
+    <string name="rol_usuario">Rol de usuario</string>
     <string name="solicitante">Solicitante</string>
     <string name="donador_registro">Donador</string>
     <string name="nombre">Nombre</string>
     <string name="nombre_usuario">Nombre de usuario</string>
-    <string name="ingrese_email">Ingrese su email</string>
+    <string name="ingrese_email">Ingrese su correo electrónico</string>
     <string name="ingrese_contraseña">Ingrese una contraseña</string>
-    <string name="horario_atencion_inicio">Horario de Atención (Inicio)</string>
-    <string name="horario_atencion_fin">Horario de Atención (Fin)</string>
+    <string name="horario_atencion_inicio">Horario de atención (inicio)</string>
+    <string name="horario_atencion_fin">Horario de atención (fin)</string>
     <string name="direccion">Dirección</string>
     <string name="ingrese_direccion">Ingrese su dirección</string>
-    <string name="elegir_foto">Elegir Foto</string>
+    <string name="elegir_foto">Elegir foto</string>
     <string name="espacio_para_mostrar_foto">Espacio para mostrar la foto</string>
     <string name="registrarme">Registrarme</string>
 
     <string name="registro_completar_nombre">Por favor, complete el nombre</string>
-    <string name="registro_completar_email">Por favor, complete el email</string>
+    <string name="registro_completar_email">Por favor, complete el correo electrónico</string>
     <string name="registro_completar_contrasena">Por favor, complete la contraseña</string>
     <string name="registro_completar_direccion">Por favor, complete la dirección</string>
 
-
     <!-- strings de registrar donacion -->
-
     <string name="alimento">Alimento:</string>
     <string name="ingrese_el_alimento">Ingrese el alimento</string>
-    <string name="peso_kg">Peso (Kg):</string>
+    <string name="peso_kg">Peso (kg):</string>
     <string name="ingrese_peso">Ingrese el peso</string>
     <string name="ingrese_duracion">Ingrese la duración</string>
     <string name="informacion_adicional">Información adicional:</string>
@@ -109,20 +101,17 @@
     <string name="registrar">Registrar</string>
 
     <string name="donador_completar_campos">Por favor, complete todos los campos correctamente.</string>
-    <string name="donador_seleccionar_imagen">Por favor seleccione una imagen.</string>
-    <string name="donador_error_registrar_donacion">Error al registrar donación.</string>
-
-
+    <string name="donador_seleccionar_imagen">Por favor, seleccione una imagen.</string>
+    <string name="donador_error_registrar_donacion">Error al registrar la donación.</string>
 
     <!-- strings de main donadores -->
-
-    <string name="active_donations">Mis donaciones activas</string>
-    <string name="register_donation">Registrar Donación</string>
+    <string name="active_donations">Mis donaciones</string>
+    <string name="register_donation">Registrar donación</string>
     <string name="extended_duration">Duración extendida</string>
     <string name="no_reservations_for_donation">No hay reservas para esta donación.</string>
     <string name="loading_details">Cargando detalles...</string>
     <string name="donador_alimento">Alimento: %1$s</string>
-    <string name="donador_duracion_restante">Termina en: %1$s dias</string>
+    <string name="donador_duracion_restante">Termina en: %1$s días</string>
     <string name="donador_disponible">Disponible: %1$s kg</string>
     <string name="donador_reservado">Reservado: %1$s kg</string>
     <string name="donador_estado">Estado: %1$s</string>
@@ -131,15 +120,13 @@
     <string name="donador_extender_duracion">Extender duración</string>
     <string name="donador_dias">Días</string>
     <string name="dias">días</string>
-    <string name="termina">termina en</string>
+    <string name="termina">Termina en</string>
 
     <string name="donador_palabra_clave">Palabra clave: %1$s</string>
     <string name="donador_kg_reservados">Kg reservados: %1$s</string>
     <string name="donador_estado_reserva">Estado: %1$s</string>
     <string name="donador_entrega_confirmada">Entrega confirmada</string>
     <string name="donador_confirmar_entrega">Confirmar entrega</string>
-
-
 
     <string-array name="tipo_alimento_options">
         <item>Fruta</item>
@@ -181,6 +168,13 @@
     <string name="donaciones_pendientes">Totalmente reservadas</string>
     <string name="donaciones_finalizadas">Finalizadas</string>
     <string name="registra_primera_propuesta">¡Registra tu primera propuesta de donación!</string>
+    <string name="registrar_donacion">Registrar Donacion</string>
+
+    <!-- Terminar donacion -->
+
+    <string name="terminar_donacion_button">Terminar Donación</string>
+    <string name="donacion_terminada">Donación Completa</string>
+    <string name="error_terminar_donacion">Error al terminar la donación</string>
 
 
 </resources>

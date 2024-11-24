@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import android.app.Activity
 import android.content.Intent
 import android.provider.MediaStore
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +34,12 @@ class RegistrarDonacionActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             imageUri = result.data?.data
             imgFoto.setImageURI(imageUri)
+
+            // Hacer visible la ImageView cuando se elige una imagen
+            imgFoto.visibility = View.VISIBLE
+        } else {
+            // Mantenerla oculta si no se elige una imagen
+            imgFoto.visibility = View.GONE
         }
     }
 
@@ -46,6 +53,9 @@ class RegistrarDonacionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         applySavedTheme(this)
         setContentView(R.layout.activity_registrar_donacion)
+
+        supportActionBar?.title = getString(R.string.registrar_donacion)
+
         initUI()
 
 
@@ -204,5 +214,8 @@ class RegistrarDonacionActivity : AppCompatActivity() {
         imgFoto = findViewById(R.id.imgFoto)
         btnRegistrar = findViewById(R.id.btnRegistrar)
         btnElegirFoto = findViewById(R.id.btnElegirFoto)
+
+        // Inicializa la ImageView como invisible
+        imgFoto.visibility = View.GONE
     }
 }

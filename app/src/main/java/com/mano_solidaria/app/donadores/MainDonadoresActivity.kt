@@ -441,21 +441,21 @@ class MainDonadoresActivity : ComponentActivity() {
                             Repository.terminarDonacion(it)
 
                             // Mostrar mensaje de éxito
-                            Toast.makeText(context, "Donación Terminada", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.donacion_terminada), Toast.LENGTH_SHORT).show()
 
                             // Volver a la pantalla anterior
                             (context as? Activity)?.onBackPressed()  // Regresa a la pantalla anterior
                         }
                     } catch (e: Exception) {
                         // Manejar cualquier error
-                        Toast.makeText(context, "Error al terminar la donación", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.error_terminar_donacion), Toast.LENGTH_SHORT).show()
                     }
                 }
             },
             enabled = reservasPendientes.isEmpty(),  // El botón estará habilitado solo si no hay reservas pendientes
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         ) {
-            Text("Terminador Donacion")
+            Text(context.getString(R.string.terminar_donacion_button))
         }
     }
 

@@ -37,6 +37,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.firestoreSettings
+import com.mano_solidaria.app.Utils.applySavedTheme
 import com.mano_solidaria.app.donadores.MainDonadoresActivity
 import com.mano_solidaria.app.solicitantes.SolicitantesPropuestasActivity
 import org.mindrot.jbcrypt.BCrypt
@@ -87,12 +88,6 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         db = Firebase.firestore
         auth = Firebase.auth
-        // Configurar persistencia de Firestore
-//        val settings = FirebaseFirestoreSettings.Builder()
-//            .setPersistenceEnabled(true) // Habilita la persistencia local
-//            .build()
-//
-//        FirebaseFirestore.getInstance().firestoreSettings = settings
         if (auth.currentUser != null){
             showHome()
         }else {
