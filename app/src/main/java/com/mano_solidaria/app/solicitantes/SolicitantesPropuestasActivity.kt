@@ -84,6 +84,8 @@ import com.mano_solidaria.app.donadores.DonacionRoko
 import com.mano_solidaria.app.donadores.ReservaRoko
 import com.mano_solidaria.app.donadores.SolicitantesPropuestasRepository
 import com.mano_solidaria.app.donadores.UsuarioRoko
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.internal.wait
 import kotlin.random.Random
@@ -389,13 +391,15 @@ fun DetalleReservaScreen(
     Log.d("RefUsuario", stateUsuarioActual.value.usuarioDocumentRef.toString())
 
     val imagenReserva = donacion?.imagenUrl ?: "https://peruretail.sfo3.cdn.digitaloceanspaces.com/wp-content/uploads/Pollo-a-al-abrasa.jpg"
-    val pesoRestante = try {
-        val total = donacion?.pesoTotal ?: 0
-        val reservado = donacion?.pesoReservado ?: 0
-        maxOf(total - reservado, 0)
-    } catch (e: Exception) {
-        0
-    }
+    val pesoRestante =
+        try {
+            val total : Int = donacion?.pesoTotal ?: 0
+            val reservado : Int = donacion?.pesoReservado ?: 0
+            val entregado : Int = donacion?.pesoEntregado ?: 0
+            maxOf((total - reservado - entregado), 0)
+        } catch (e: Exception) {
+            0
+        }
 
     // Efecto lanzado para cargar el donador y comprobar la suscripción
     LaunchedEffect(donacion) {
@@ -515,7 +519,7 @@ fun DetalleReservaScreen(
                         }
                     }
                 }
-                /*item {
+                item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Start
@@ -536,7 +540,7 @@ fun DetalleReservaScreen(
                             Text(botonText)
                         }
                     }
-                }*/
+                }
                 item {
                     Row(
                         modifier = Modifier
@@ -584,7 +588,7 @@ fun DetalleReservaScreen(
                     Button(
                         onClick = {
                             val numericValue = value.toIntOrNull() ?: 0
-                            if ((numericValue > donacion!!.pesoTotal) or (numericValue == 0)) {
+                            if ((numericValue > (donacion!!.pesoTotal - donacion!!.pesoReservado - donacion!!.pesoEntregado)) or (numericValue == 0)) {
                                 isError = true
                             } else {
                                 isError = false
@@ -598,12 +602,9 @@ fun DetalleReservaScreen(
                                     pesoReservado = value.toInt(),
                                     usuarioReservador = viewModel.usuario.value.usuarioDocumentRef!!
                                 )
-                                viewModel.addReservaInDb(reserva)
-                                viewModel.updateDonacionAfterReserva(
-                                    reserva.donacionId,
-                                    reserva.pesoReservado,
-                                    donacion.pesoReservado
-                                )
+                                CoroutineScope(Dispatchers.Main).launch{
+                                    viewModel.addReservaInDb(reserva, donacion.id)
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxWidth(0.8f)

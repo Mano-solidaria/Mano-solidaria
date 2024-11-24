@@ -79,8 +79,8 @@ object SolicitantesPropuestasRepository {
                 .whereEqualTo("estado","activo")
                 .get()
                 .await()
-            _donaciones.value = snapshots.documents.map { it.toDonacion() }
-            snapshots.documents.map { it.toDonacion()}
+            _donaciones.value = snapshots.documents.map { toDonacion(it) }
+            snapshots.documents.map { toDonacion(it)}
         } catch (e: Exception) {
             emptyList<DonacionRoko>()
         }
@@ -111,30 +111,29 @@ object SolicitantesPropuestasRepository {
         }
     }
 
-    fun addReservaInDb(reservaNueva: ReservaRoko) {
-        db.collection("reservas").document()
-            .set(reservaNueva)
-            .addOnSuccessListener {
-                Log.d(TAG, "Documento creado con exito!")
-            }
-            .addOnFailureListener { e ->
-                Log.w(TAG, "Error al crear el documento", e)
-            }
-    }
 
-
-
-    fun updateDonacionAfterReserva(
-        donacionId: DocumentReference,
-        pesoReservadoNuevo: Int,
-        pesoReservadoActual: Int
+    fun addReservaInDb(
+        reservaNueva: ReservaRoko,
+        donacionRef: DocumentReference,
     ) {
-        donacionId
-            .update("pesoReservado", pesoReservadoActual + pesoReservadoNuevo)
-            .addOnSuccessListener { Log.d(TAG, "Donacion actualizada correctamente!") }
-            .addOnFailureListener { e -> Log.w(TAG, "Error actualizando donacion", e) }
-    }
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(donacionRef)
+            val donacion = toDonacion(snapshot)
 
+            val pesoRestante = donacion.pesoTotal - donacion.pesoEntregado - donacion.pesoReservado
+
+            if (pesoRestante >= reservaNueva.pesoReservado) {
+                val nuevoPesoReservado = donacion.pesoReservado + reservaNueva.pesoReservado
+                
+                transaction.update(donacionRef, "pesoReservado", nuevoPesoReservado)
+                transaction.set(db.collection("reservas").document(), reservaNueva)
+            }
+        }.addOnSuccessListener {
+            Log.d("Reservarr", "funciona reserva")
+        }.addOnFailureListener { e ->
+            Log.d("Reservarr", "falla reserva")
+        }
+    }
 
     // convertir el string con formato "lat/lng: (latitud,longitud)" a un GeoPoint
     fun stringToGeoPoint(ubicacion: String): GeoPoint {
@@ -170,25 +169,22 @@ object SolicitantesPropuestasRepository {
         return Reserva(id, donacionId, palabraClave, pesoReservado, usuarioReservadorId, estado)
     }
 
-    private fun DocumentSnapshot.toDonacion(): DonacionRoko {
-        val pesoTotal = (this.get("pesoTotal") as? Double ?: 0.0).toInt()
-        val pesoReservado = (this.get("pesoReservado") as? Double ?: 0.0).toInt()
-        val pesoEntregado = (this.get("pesoEntregado") as? Double ?: 0.0).toInt()
-        val fechaInicio = this.getTimestamp("fechaInicio")?.toDate()
-        val fechaFin = this.getTimestamp("fechaFin")?.toDate()
+    private fun toDonacion(snap: DocumentSnapshot): DonacionRoko {
+        val fechaInicio = snap.getTimestamp("fechaInicio")?.toDate()
+        val fechaFin = snap.getTimestamp("fechaFin")?.toDate()
         val duracion = calcularDuracion(fechaInicio, fechaFin)
         return DonacionRoko(
-            FirebaseFirestore.getInstance().collection("donaciones").document(this.id),
-            this.getString("alimento") ?: "Alimento desconocido",
-            this.getDocumentReference("donanteId") ?:
-            FirebaseFirestore.getInstance().document("users/desconocido") ,
+            FirebaseFirestore.getInstance().collection("donaciones").document(snap.id),
+            snap.getString("alimento") ?: "Alimento desconocido",
+            snap.getDocumentReference("donanteId") ?:
+                FirebaseFirestore.getInstance().document("users/desconocido") ,
             duracion,
-            this.getString("imagenURL") ?: "Imagen no encontrada",
-            this.getString("descripcion") ?: "Descripcion no disponible",
-            pesoReservado,
-            pesoEntregado,
-            pesoTotal,
-            this.getString("estado") ?: "Estado no valido")
+            snap.getString("imagenURL") ?: "Imagen no encontrada",
+            snap.getString("descripcion") ?: "Descripcion no disponible",
+            snap.getLong("pesoReservado")?.toInt() ?: 0,
+            snap.getLong("pesoEntregado")?.toInt() ?: 0,
+            snap.getLong("pesoTotal")?.toInt() ?: 0,
+            snap.getString("estado") ?: "Estado no valido")
     }
 
     private fun DocumentSnapshot.ToUser(): UsuarioRoko{
