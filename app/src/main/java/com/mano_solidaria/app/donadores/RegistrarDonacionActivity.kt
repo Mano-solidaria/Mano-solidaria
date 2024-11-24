@@ -100,7 +100,7 @@ class RegistrarDonacionActivity : AppCompatActivity() {
         try {
             validateString(donacionData)
 
-            if (regex.containsMatchIn(alimentoEditText.text.toString()) || descripcion.length > 500){
+            if (regex.containsMatchIn(alimentoEditText.text.toString()) || descripcion.length > 500 || duracionEditText.text.toString().toInt() <= 0){
                 throw IllegalArgumentException("")
             }
 
@@ -163,6 +163,8 @@ class RegistrarDonacionActivity : AppCompatActivity() {
 
         if (duracionEditText.text.toString().trim().isEmpty()) {
             duracionEditText.setError("Por favor, ingrese la duracion de la donación")
+        } else if(duracionEditText.text.toString().toInt() <= 0){
+            duracionEditText.setError("Por favor, ingrese una duracion mayor a 0")
         } else {
             duracionEditText.setError(null)
         }
