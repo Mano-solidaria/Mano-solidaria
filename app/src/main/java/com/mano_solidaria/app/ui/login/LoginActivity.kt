@@ -88,15 +88,6 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Cargar el idioma guardado desde SharedPreferences
-        val currentLanguage = getSavedLanguagePreference(this)
-
-        // Establecer el idioma en la configuración del sistema
-        val locale = Locale(currentLanguage)
-        Locale.setDefault(locale)
-        val config = resources.configuration
-        config.setLocale(locale)
-        resources.updateConfiguration(config, resources.displayMetrics)
 
         db = Firebase.firestore
         auth = Firebase.auth
