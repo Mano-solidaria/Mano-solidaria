@@ -302,7 +302,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
 
     @Composable
     fun MyReservaDisponibles(donacion: DonacionRoko, navController: NavController) {
-        val diasTexto = stringResource(id = R.string.dias) // Obtener el texto de "días" desde strings.xml
+        val diasTexto = stringResource(id = R.string.dias)
 
         Row(
             modifier = Modifier
@@ -337,13 +337,13 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "Alimento: ${donacion.descripcion} ${donacion.pesoTotal}",)
+                    Text(text = "Alimento: ${donacion.alimentoNombre} ${donacion.pesoTotal} Kg.",)
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text("Caduca en: ${donacion.tiempoRestante} $diasTexto")
+                    Text("Caduca en: ${donacion.tiempoRestante} dias")
                 }
             }
             Column(
@@ -355,13 +355,13 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "Coto")
+                    Text(text = "${donacion.estado}")
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "7 km",)
+                    Text(text = "distancia",)
                 }
             }
         }
@@ -395,18 +395,6 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
 
         var suscriptorRefEncontrada: DocumentReference?
 
-
-        /*LaunchedEffect(true) {
-            lifecycleScope.launch {
-                donador = viewModel.getDonadorByRef(donacion!!.donanteId)!!
-                donacion?.let {
-                    donador = viewModel.getDonadorByRef(it.donanteId) ?: UsuarioRoko()
-                }
-            }
-        }
-
-        stateUsuarioActual.value.usuarioDocumentRef*/
-
         suscriptorRefEncontrada = donador.suscriptores.find { suscriptor ->
             Log.d("Donador", donador.usuarioDocumentRef.toString())
             Log.d("esSuscriptor", stateUsuarioActual.value.usuarioDocumentRef.toString())
@@ -424,21 +412,11 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                 it == stateUsuarioActual.value.usuarioDocumentRef
             }
             isSuscriptor = suscriptorRefEncontrada != null
-            botonText = if (isSuscriptor) "desuscribirse del donador" else "suscribirse al donador"
         }
 
 
         val imagenReserva = donacion?.imagenUrl
             ?: "https://peruretail.sfo3.cdn.digitaloceanspaces.com/wp-content/uploads/Pollo-a-al-abrasa.jpg"
-        /*pesoRestante =
-            try {
-                val total: Int = donacion?.pesoTotal ?: 0
-                val reservado: Int = donacion?.pesoReservado ?: 0
-                val entregado: Int = donacion?.pesoEntregado ?: 0
-                maxOf((total - reservado - entregado), 0)
-            } catch (e: Exception) {
-                0
-            }*/
 
         LaunchedEffect(reloadTrigger) {
             // Actualiza el peso restante cada vez que reloadTrigger cambia
@@ -554,7 +532,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                             }
                         }
                     }
-                    item (isSuscriptor) {
+                    item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
@@ -574,14 +552,14 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                             }
                         }
                     }
-                    item {
+                    item (isSuscriptor){
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Start
                         ) {
                             Button(
                                 onClick = {
-                                    if (suscriptorRefEncontrada == null) {
+                                    if (!isSuscriptor) {
                                         viewModel.suscribirseAlDonador(
                                             donador,
                                             stateUsuarioActual.value.usuarioDocumentRef
@@ -592,12 +570,16 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                                             stateUsuarioActual.value.usuarioDocumentRef
                                         )
                                     }
+                                    isSuscriptor = !isSuscriptor
                                 },
                                 modifier = Modifier
                                     .width(IntrinsicSize.Min)
                                     .padding(start = 16.dp)
                             ) {
-                                Text(botonText)
+                                Text(
+                                    text = if (!isSuscriptor) "Suscribirse" else "Desuscribirse"
+                                )
+
                             }
                         }
                     }
@@ -664,7 +646,6 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                                         usuarioReservador = viewModel.usuario.value.usuarioDocumentRef!!
                                     )
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        reloadTrigger++
                                         viewModel.addReservaInDb(reserva, donacion.id)
                                     }
                                 }
@@ -678,6 +659,12 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
             })
     }
 }
+
+
+
+
+
+
 
 
 fun generateRandomWord(length: Int): String {

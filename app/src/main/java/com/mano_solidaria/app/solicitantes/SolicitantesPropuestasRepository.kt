@@ -74,27 +74,6 @@ object SolicitantesPropuestasRepository {
     }
 
 
-    /*suspend fun getAllDonaciones(): List<DonacionRoko> {
-        return try {
-            val snapshots = db.collection("donaciones")
-                .whereEqualTo("estado","activo")
-                .get()
-                .await()
-            val donaciones = snapshots.documents.map { toDonacion(it) }
-            _donaciones.value = filtrarDonaPorPeso(donaciones)
-            return donaciones
-        } catch (e: Exception) {
-            emptyList<DonacionRoko>()
-        }
-    }
-
-    private fun filtrarDonaPorPeso(donaciones: List<DonacionRoko>) : List<DonacionRoko> {
-        return donaciones.filter {
-            it.pesoTotal - it.pesoEntregado - it.pesoReservado == 0
-        }
-    }*/
-
-
     suspend fun getAllDonaciones(): List<DonacionRoko> {
         return try {
             val snapshots = db.collection("donaciones")
