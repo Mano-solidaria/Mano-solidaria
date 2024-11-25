@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -87,7 +88,10 @@ fun AppBarWithDrawer(
 
     // Variable para gestionar el idioma actual
     var currentLanguage by remember {
-        mutableStateOf(getSavedLanguagePreference(context))
+        mutableStateOf(getSavedLanguagePreference(context)).also {
+            // Agregar un log para mostrar el idioma actual cuando se inicializa
+            Log.d("LanguagePreference", "Idioma actual: $it")
+        }
     }
 
     // Cambio de tema
@@ -182,14 +186,12 @@ fun AppBarWithDrawer(
                     // Botón para cambiar el idioma
                     Button(
                         onClick = {
-                            val newLanguage = if (currentLanguage == "en") "es" else "en"
+                            val newLanguage = if (currentLanguage == "es") "en" else "es"
                             currentLanguage = newLanguage
                             saveLanguagePreference(context, newLanguage) // Guardar la preferencia
                             changeLanguage(context, newLanguage)
                             // Recargar la actividad
-                            val intent = (context as Activity).intent
-                            context.finish()
-                            context.startActivity(intent)
+                            (context as Activity).recreate()
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -242,7 +244,7 @@ fun saveLanguagePreference(context: Context, languageCode: String) {
  */
 fun getSavedLanguagePreference(context: Context): String {
     val sharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-    return sharedPreferences.getString("language", Locale.getDefault().language) ?: "en"
+    return sharedPreferences.getString("language", Locale.getDefault().language) ?: "es"
 }
 
 /**

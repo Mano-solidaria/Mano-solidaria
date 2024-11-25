@@ -371,7 +371,7 @@ class ReservasActivity : ComponentActivity(){
                 }
 
                 // Botón de modificar reserva
-                if (reserva.estado == "reservado") {
+                if (reserva.estado == "pendiente") {
                     item {
                         BotonModificarReserva(
                             onModifyClick = {

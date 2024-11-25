@@ -37,7 +37,7 @@ object ReservasRepository {
             val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return emptyList()
             val snapshots = db.collection("reservas")
                 .whereEqualTo("usuarioReservador", db.collection("users").document(userId))
-                .whereIn("estado", listOf("reservado", "entregado", "cancelada"))
+                .whereIn("estado", listOf("pendiente", "entregado", "cancelada"))
                 .get()
                 .await()
 
@@ -48,7 +48,7 @@ object ReservasRepository {
                 .sortedWith(
                     compareBy<Reserva> { reserva ->
                         when (reserva.estado) {
-                            "reservado" -> 1
+                            "pendiente" -> 1
                             "entregado" -> 2
                             "cancelada" -> 3
                             else -> Int.MAX_VALUE
