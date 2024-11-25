@@ -19,7 +19,7 @@ fun calcularDuracion(fechaFin: Date?): String {
 
         // Calcular la duración entre la fecha actual y fechaFin
         val duracion = fechaFin.time - fechaActual.time
-        "${(duracion / (1000 * 60 * 60 * 24)).toInt()}"
+        "${((duracion / (1000 * 60 * 60 * 24))+1).toInt()}"
     } else {
         "-"
     }
