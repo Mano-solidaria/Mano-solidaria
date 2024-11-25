@@ -4,6 +4,7 @@ import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
+import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -41,6 +42,7 @@ import com.mano_solidaria.app.Utils.applySavedTheme
 import com.mano_solidaria.app.donadores.MainDonadoresActivity
 import com.mano_solidaria.app.solicitantes.SolicitantesPropuestasActivity
 import org.mindrot.jbcrypt.BCrypt
+import java.util.Locale
 
 class LoginActivity : AppCompatActivity() {
 
@@ -53,6 +55,8 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var oneTapClient: SignInClient
     private lateinit var db: FirebaseFirestore
     private lateinit var usersCollectionRef: CollectionReference
+
+    private lateinit var cambioIdiomaButton: Button
 
     private val oneTapResultLauncher = registerForActivityResult( //Solo se ejecuta cuando se lo llama (Solo inicia sesion)
         ActivityResultContracts.StartIntentSenderForResult()
@@ -86,6 +90,8 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
         db = Firebase.firestore
         auth = Firebase.auth
         if (auth.currentUser != null){
@@ -117,9 +123,15 @@ class LoginActivity : AppCompatActivity() {
         contrasena = findViewById(R.id.password)
         google_boton = findViewById(R.id.login_google)
 
+        cambioIdiomaButton = findViewById(R.id.change_language_button)
+
         registro.setOnClickListener{
             //Se debe de inflar la actividad Form
             showForm()
+        }
+
+        cambioIdiomaButton.setOnClickListener {
+            cambiarIdioma()
         }
 
         inicio_sesion.setOnClickListener{
@@ -142,6 +154,31 @@ class LoginActivity : AppCompatActivity() {
             startGoogle()
         }
     }
+
+    private fun cambiarIdioma() {
+        val idiomaActual = resources.configuration.locales.get(0).language
+
+        // Alterna entre español e inglés
+        val nuevoIdioma = if (idiomaActual == "es") "en" else "es"
+
+        // Cambia la configuración regional
+        val config = Configuration(resources.configuration)
+        config.setLocale(Locale(nuevoIdioma))
+        resources.updateConfiguration(config, resources.displayMetrics)
+
+        // Guarda la preferencia de idioma
+        val sharedPreferences = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        sharedPreferences.edit().putString("language", nuevoIdioma).apply()
+
+        // Recarga la actividad para aplicar el cambio de idioma
+        recreate()
+    }
+
+    fun getSavedLanguagePreference(context: Context): String {
+        val prefs = context.getSharedPreferences("user_preferences", Context.MODE_PRIVATE)
+        return prefs.getString("language_code", "es") ?: "es" // Default "es" (Español)
+    }
+
 
     private fun startGoogle(){
         //configuración
