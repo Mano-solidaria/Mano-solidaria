@@ -68,8 +68,6 @@ class HomeActivity : AppCompatActivity() {
                             val intent = Intent(this, MainDonadoresActivity::class.java)
                             startActivity(intent)
                         } else if (userRole == "solicitante") {
-                            //val intent = Intent(this, MainSolicitantesActivity::class.java)
-                            //val intent = Intent(this, MainSolicitantesActivity::class.java)
                             val intent = Intent(this, SolicitantesPropuestasActivity::class.java)
                             startActivity(intent)
                         } else {
