@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -92,7 +93,7 @@ class ReservasActivity : ComponentActivity(){
     @Composable
     fun ReservasListScreen(navController: NavController) {
         val reservas = remember { mutableStateListOf<Reserva>() }
-        val geoPointsAMostrar = remember { mutableStateListOf<GeoPoint>() }
+        val geoPointsAMostrar = remember { mutableStateListOf<GeoPointWithAlimento>() }
         val scope = rememberCoroutineScope()
 
         LaunchedEffect(true) {
@@ -103,7 +104,9 @@ class ReservasActivity : ComponentActivity(){
 
                 geoPointsAMostrar.clear()
                 geoPointsAMostrar.addAll(reservasList.mapNotNull { reserva ->
-                    reserva.ubicacionDonante
+                    reserva.ubicacionDonante.let { geoPoint ->
+                        GeoPointWithAlimento(geoPoint, reserva.alimento)
+                    }
                 })
             }
         }
@@ -133,14 +136,16 @@ class ReservasActivity : ComponentActivity(){
                 .fillMaxWidth()
                 .clickable(onClick = { onClick(reserva) })
                 .padding(vertical = 8.dp) // Relleno horizontal y vertical
-                .border(1.dp, color = MaterialTheme.colors.onBackground) // Bordes
+                .border(1.dp, color = MaterialTheme.colors.onBackground),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
             // Columna para la imagen
-            Column(
+            Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(1.dp),
-                verticalArrangement = Arrangement.Center, // Centrado verticalmente
+                    .weight(1f)  // 1/3 de la pantalla
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
                     model = reserva.imagenURL,
@@ -154,7 +159,7 @@ class ReservasActivity : ComponentActivity(){
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(1.dp)
+                    .padding(1.dp),
             ) {
                 Text(
                     stringResource(id = R.string.peso_reservado, reserva.pesoReservado),
@@ -182,7 +187,7 @@ class ReservasActivity : ComponentActivity(){
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(1.dp)
+                    .padding(1.dp),
             ) {
                 Text(
                     stringResource(id = R.string.donante, reserva.nombreDonante),
@@ -288,15 +293,19 @@ class ReservasActivity : ComponentActivity(){
                     ) {
                         Text(
                             stringResource(id = R.string.nombre_alimento, reserva.alimento),
-                            modifier = Modifier.weight(1f).padding(8.dp)
+                            modifier = Modifier.weight(1f).padding(8.dp),
+                            fontWeight = FontWeight.Bold
+
                         )
                         Text(
                             stringResource(id = R.string.peso_reservado, reserva.pesoReservado),
-                            modifier = Modifier.weight(1f).padding(8.dp)
+                            modifier = Modifier.weight(1f).padding(8.dp),
+                            fontWeight = FontWeight.Bold
                         )
                         Text(
                             stringResource(id = R.string.maxima_reserva, reserva.rangoReserva),
-                            modifier = Modifier.weight(1f).padding(8.dp))
+                            modifier = Modifier.weight(1f).padding(8.dp),
+                            fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -523,28 +532,27 @@ class ReservasActivity : ComponentActivity(){
         ) {
             Marker(
                 state = MarkerState(position = latLng),
-                title = "Marker",
                 snippet = "Lat: ${geoPoint.latitude}, Lng: ${geoPoint.longitude}"
             )
         }
     }
 
     @Composable
-    fun MostrarMapaMultiplesPuntos(geoPoints: List<GeoPoint>) {
+    fun MostrarMapaMultiplesPuntos(geoPoints: List<GeoPointWithAlimento>) {
         // Si geoPoints esta vacio, utilizar un valor predeterminado
         if (geoPoints.isEmpty()) {
             return
         }
 
         // Calcular latitudes y longitudes maximas y minimas
-        val minLat = geoPoints.minOf { it.latitude }
-        val maxLat = geoPoints.maxOf { it.latitude }
-        val minLng = geoPoints.minOf { it.longitude }
-        val maxLng = geoPoints.maxOf { it.longitude }
+        val minLat = geoPoints.minOf { it.geoPoint.latitude }
+        val maxLat = geoPoints.maxOf { it.geoPoint.latitude }
+        val minLng = geoPoints.minOf { it.geoPoint.longitude }
+        val maxLng = geoPoints.maxOf { it.geoPoint.longitude }
 
         // Calcular el centroide (promedio de las latitudes y longitudes)
-        val latitudPromedio = geoPoints.map { it.latitude }.average()
-        val longitudPromedio = geoPoints.map { it.longitude }.average()
+        val latitudPromedio = geoPoints.map { it.geoPoint.latitude }.average()
+        val longitudPromedio = geoPoints.map { it.geoPoint.longitude }.average()
         val centroide = GeoPoint(latitudPromedio, longitudPromedio)
 
         // Calcular el nivel de zoom basado en la distancia
@@ -574,11 +582,11 @@ class ReservasActivity : ComponentActivity(){
         ) {
             // Agregar los marcadores al mapa
             geoPoints.forEach { geoPoint ->
-                val latLng = LatLng(geoPoint.latitude, geoPoint.longitude)
+                val latLng = LatLng(geoPoint.geoPoint.latitude, geoPoint.geoPoint.longitude)
                 Marker(
                     state = MarkerState(position = latLng),
-                    title = "Marker",
-                    snippet = "Lat: ${geoPoint.latitude}, Lng: ${geoPoint.longitude}"
+                    title = geoPoint.alimento,
+                    snippet = "Lat: ${geoPoint.geoPoint.latitude}, Lng: ${geoPoint.geoPoint.longitude}"
                 )
             }
         }

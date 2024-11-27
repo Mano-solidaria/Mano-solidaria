@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 data class DonacionRoko(
     val id: DocumentReference,
@@ -204,12 +205,18 @@ object SolicitantesPropuestasRepository {
         val fechaInicio = snap.getTimestamp("fechaInicio")?.toDate()
         val fechaFin = snap.getTimestamp("fechaFin")?.toDate()
         //val duracion = calcularDuracion(fechaInicio, fechaFin)
+
+        val tiempoRestante = fechaFin?.let {
+            val diferencia = it.time - System.currentTimeMillis()
+            TimeUnit.MILLISECONDS.toDays(diferencia).toInt() // Convertir a días y redondear
+        } ?: 0 // Si no hay fechaFin, retorna 0 días restantes
+
         return DonacionRoko(
             FirebaseFirestore.getInstance().collection("donaciones").document(snap.id),
             snap.getString("alimento") ?: "Alimento desconocido",
             snap.getDocumentReference("donanteId") ?:
                 FirebaseFirestore.getInstance().document("users/desconocido") ,
-            "",
+            tiempoRestante.toString(),
             snap.getString("imagenURL") ?: "Imagen no encontrada",
             snap.getString("descripcion") ?: "Descripcion no disponible",
             snap.getLong("pesoReservado")?.toInt() ?: 0,

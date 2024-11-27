@@ -24,7 +24,7 @@
     <string name="mis_reservas">Mis Reservas</string>
     <string name="detalle_reserva">Detalle de la Reserva</string>
     <string name="reserva_no_encontrada">Reserva no encontrada</string>
-    <string name="peso_reservado">Peso reservado: %1$s</string>
+    <string name="peso_reservado">Reservado: %1$s kg</string>
     <string name="distancia">Distancia: %1$s km</string>
     <string name="estado">Estado: %1$s</string>
     <string name="imagen_reserva">Imagen de la reserva</string>
@@ -180,14 +180,14 @@
 
     <string name="applicants_proposals">Solicitantes propuestas</string>
     <string name="view_made_reservations">Ver reservas realizadas</string>
-    <string name="food_donation">Alimento: %1$s %2$s</string>
-    <string name="expires_in">Caduca en: %1$s días</string>
-    <string name="donor_label">Donante: </string>
+    <string name="food_donation">Alimento: %1$s</string>
+    <string name="expires_in">Quedan: %1$s días</string>
+    <string name="donor_label">Donante: %1$s</string>
     <string name="distance_label">Distancia: </string>
     <string name="reservation_details">Detalle de reserva</string>
     <string name="food_label">Alimento:</string>
-    <string name="remaining_weight_label">Peso restante:</string>
-    <string name="total_weight_label">Peso total:</string>
+    <string name="remaining_weight_label">Peso restante: %1$s kg</string>
+    <string name="total_weight_label">Peso total: %1$s kg</string>
     <string name="kilograms_to_reserve">Kilos a reservar:</string>
     <string name="invalid_quantity">Cantidad inválida</string>
     <string name="reserve_label">Reservar</string>
@@ -195,6 +195,9 @@
     <string name="unsubscribe_from_donor">Desuscribirse del donador</string>
     <string name="description_label">Descripción: %1$s</string>
     <string name="donation_status_label">Estado de donación: %1$s</string>
+    <string name="remaining_weight_label_detail">Peso restante:</string>
+    <string name="total_weight_label_detail">Peso total:</string>
+    <string name="donor_label_detail">Donante:</string>
 
 
 

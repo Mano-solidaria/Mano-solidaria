@@ -301,8 +301,9 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
 
 
     @Composable
-    fun MyReservaDisponibles(donacion: DonacionRoko, navController: NavController) {
+    fun MyReservaDisponibles(donacion: DonacionRoko, navController: NavController, viewModel: SolicitantesPropuestasRepository = SolicitantesPropuestasRepository) {
         val diasTexto = stringResource(id = R.string.dias) // Obtener el texto de "días" desde strings.xml
+
 
         Row(
             modifier = Modifier
@@ -314,54 +315,70 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                 },
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Columna 1: Imagen
             Box(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(1f)  // 1/3 de la pantalla
                     .fillMaxHeight()
             ) {
                 AsyncImage(
                     model = donacion.imagenUrl,
                     contentDescription = "Imagen de reserva",
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(end = 8.dp),
+                        .size(80.dp)  // Ajusta el tamaño de la imagen (80x80 dp en este caso)
+                        .align(Alignment.Center),  // Centra la imagen dentro del Box
                     contentScale = ContentScale.Crop
                 )
             }
+
+            // Columna 2: Nombre de comida y expiración
             Column(
                 modifier = Modifier
-                    .weight(2f)
+                    .weight(1f)  // 1/3 de la pantalla
                     .fillMaxHeight(),
+                    verticalArrangement = Arrangement.Center
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Start  // Alinear texto a la izquierda
                 ) {
-                    Text(text = getString(R.string.food_donation, donacion.descripcion, donacion.pesoTotal.toString()))
+                    Text(
+                        text = getString(R.string.food_donation, donacion.descripcion),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Start  // Alinear texto a la izquierda
                 ) {
-                    Text(getString(R.string.expires_in, donacion.tiempoRestante))
+                    Text(
+                        text = getString(R.string.expires_in, donacion.tiempoRestante),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
+
+            // Columna 3: Donante y distancia
             Column(
                 modifier = Modifier
-                    .weight(2f)
-                    .fillMaxHeight()
+                    .weight(1f)  // 1/3 de la pantalla
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.Center
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Start  // Alinear texto a la izquierda
                 ) {
-                    Text(text = getString(R.string.donor_label))
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(text = getString(R.string.distance_label),)
+                    Text(
+                        text = stringResource(R.string.remaining_weight_label, (donacion.pesoTotal - donacion.pesoEntregado - donacion.pesoReservado).toString()),
+                        //fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
@@ -502,7 +519,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                                 contentDescription = "Imagen de reserva",
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .padding(end = 8.dp),
+                                    .padding(16.dp),
                                 contentScale = ContentScale.Crop
                             )
                             Spacer(modifier = Modifier.height(16.dp))
@@ -535,7 +552,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = "${getString(R.string.remaining_weight_label)} ${pesoRestante} kg",
+                                    text = "${getString(R.string.remaining_weight_label_detail)} ${pesoRestante} kg",
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.wrapContentWidth().padding(4.dp),
                                     maxLines = 2,
@@ -549,7 +566,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = "${getString(R.string.total_weight_label)} ${donacion?.pesoTotal} kg",
+                                    text = "${getString(R.string.total_weight_label_detail)} ${donacion?.pesoTotal} kg",
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.wrapContentWidth().padding(4.dp),
                                     maxLines = 2,
@@ -559,27 +576,57 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                         }
                     }
 
-
-                    item (isSuscriptor) {
+                    item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, Color.Black), // Borde negro alrededor de la fila
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
+                            // Columna 1: Descripción
                             Column(
                                 modifier = Modifier.weight(1f),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text(text = getString(R.string.donor_label))
                                 Text(
-                                    text = donador.usuarioNombre ?: "Nombre no encontrado",
-                                    fontWeight = FontWeight.Bold,
+                                    text = getString(R.string.description_label, donacion?.descripcion),
+                                    //fontWeight = FontWeight.Bold,
                                     modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            // Columna 2: Donador (solo nombre)
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "${getString(R.string.donor_label_detail)} ${donador.usuarioNombre ?: "Nombre no encontrado"}",
+                                    //fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(4.dp),
                                     maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                            }
+                            // Columna 3
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = getString(R.string.donation_status_label, donacion?.estado),
+                                    //fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
                     }
+
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -607,22 +654,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                             }
                         }
                     }
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 15.dp),
-                            horizontalArrangement = Arrangement.Start
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text(text = getString(R.string.description_label, donacion?.descripcion))
-                                Text(text = getString(R.string.donation_status_label, donacion?.estado))
-                            }
-                        }
-                    }
+
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),

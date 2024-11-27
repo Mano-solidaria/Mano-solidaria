@@ -29,6 +29,8 @@ data class Reserva(
 
 )
 
+data class GeoPointWithAlimento(val geoPoint: GeoPoint, val alimento: String)
+
 object ReservasRepository {
     private val db = FirebaseFirestore.getInstance()
 

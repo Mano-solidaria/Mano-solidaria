@@ -26,7 +26,7 @@
     <string name="mis_reservas">My Reservations</string>
     <string name="detalle_reserva">Reservation Details</string>
     <string name="reserva_no_encontrada">Reservation not found</string>
-    <string name="peso_reservado">Reserved weight: %1$s</string>
+    <string name="peso_reservado">Reserved: %1$s kg</string>
     <string name="distancia">Distance: %1$s km</string>
     <string name="estado">Status: %1$s</string>
     <string name="imagen_reserva">Reservation image</string>
@@ -167,14 +167,14 @@
 
     <string name="applicants_proposals">Food proposals</string>
     <string name="view_made_reservations">View made reservations</string>
-    <string name="food_donation">Food: %1$s %2$s</string>
-    <string name="expires_in">Expires in: %1$s days</string>
-    <string name="donor_label">Donor: </string>
+    <string name="food_donation">Food: %1$s</string>
+    <string name="expires_in">Expiration: %1$s days</string>
+    <string name="donor_label">Donor: %1$s</string>
     <string name="distance_label">Distance: </string>
     <string name="reservation_details">Reservation details</string>
     <string name="food_label">Food:</string>
-    <string name="remaining_weight_label">Remaining weight:</string>
-    <string name="total_weight_label">Total Weight:</string>
+    <string name="remaining_weight_label">Remaining weight: %1$s kg</string>
+    <string name="total_weight_label">Total weight: %1$s kg</string>
     <string name="kilograms_to_reserve">Kilograms to reserve:</string>
     <string name="invalid_quantity">Invalid quantity</string>
     <string name="reserve_label">Reserve</string>
@@ -182,6 +182,9 @@
     <string name="unsubscribe_from_donor">Unsubscribe from donor</string>
     <string name="description_label">Description: %1$s</string>
     <string name="donation_status_label">Donation Status: %1$s</string>
+    <string name="remaining_weight_label_detail">Remaning weight:</string>
+    <string name="total_weight_label_detail">Total weight:</string>
+    <string name="donor_label_detail">Donor:</string>
 
 
 
