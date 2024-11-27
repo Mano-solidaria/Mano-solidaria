@@ -150,7 +150,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
         AppBarWithDrawer(
             scaffoldState = scaffoldState,
             coroutineScope = scope,
-            title = "Solicitantes Propuestas",
+            title = getString(R.string.applicants_proposals),
             content = { innerPadding ->
                 Content(
                     innerPadding,
@@ -294,7 +294,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                         .background(Color.LightGray),
                     contentScale = ContentScale.Crop
                 )
-                Text("Ver Reservas Realizadas")
+                Text(getString(R.string.view_made_reservations))
             }
         }
     }
@@ -337,13 +337,13 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "Alimento: ${donacion.descripcion} ${donacion.pesoTotal}",)
+                    Text(text = getString(R.string.food_donation, donacion.descripcion, donacion.pesoTotal.toString()))
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text("Caduca en: ${donacion.tiempoRestante} $diasTexto")
+                    Text(getString(R.string.expires_in, donacion.tiempoRestante))
                 }
             }
             Column(
@@ -355,13 +355,13 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "Coto")
+                    Text(text = getString(R.string.donor_label))
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "7 km",)
+                    Text(text = getString(R.string.distance_label),)
                 }
             }
         }
@@ -424,7 +424,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                 it == stateUsuarioActual.value.usuarioDocumentRef
             }
             isSuscriptor = suscriptorRefEncontrada != null
-            botonText = if (isSuscriptor) "desuscribirse del donador" else "suscribirse al donador"
+            botonText = if (isSuscriptor) getString(R.string.unsubscribe_from_donor) else getString(R.string.subscribe_to_donor)
         }
 
 
@@ -465,10 +465,10 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                     }
 
                     if (suscriptorRefEncontrada == null) {
-                        botonText = "suscribirse al donador"
+                        botonText = getString(R.string.subscribe_to_donor)
                         isSuscriptor = false
                     } else {
-                        botonText = "desuscribirse del donador"
+                        botonText = getString(R.string.unsubscribe_from_donor)
                         isSuscriptor = true
                     }
                 }
@@ -482,7 +482,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
         AppBarWithDrawer(
             scaffoldState = scaffoldState,
             coroutineScope = coroutineScope,
-            title = "Detalle de Reserva",
+            title = getString(R.string.reservation_details),
             content = { innerPadding ->
                 LazyColumn(
                     modifier = Modifier
@@ -508,52 +508,58 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
-                    item (pesoRestante) {
+                    item(pesoRestante) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, Color.Black), // Borde negro alrededor de la fila
+                            horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                Text(text = "Alimento:")
-                                Text(
-                                    text = donacion?.alimentoNombre ?: "null",
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.wrapContentWidth().padding(4.dp),
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+                            // Columna 1: Alimento (un solo texto)
                             Column(
                                 modifier = Modifier.weight(1f),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text(text = "Peso restante:")
                                 Text(
-                                    text = pesoRestante.toString(),
+                                    text = "${getString(R.string.food_label)} ${donacion?.alimentoNombre ?: "null"}",
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.wrapContentWidth().padding(4.dp),
-                                    maxLines = 3,
+                                    modifier = Modifier.padding(4.dp),
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
+
+                            // Columna 2: Peso restante
                             Column(
                                 modifier = Modifier.weight(1f),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text(text = "Peso total:")
                                 Text(
-                                    text = donacion?.pesoTotal.toString(),
+                                    text = "${getString(R.string.remaining_weight_label)} ${pesoRestante} kg",
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.wrapContentWidth().padding(4.dp),
-                                    maxLines = 3,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            // Columna 3: Peso total
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "${getString(R.string.total_weight_label)} ${donacion?.pesoTotal} kg",
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.wrapContentWidth().padding(4.dp),
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
                     }
+
+
                     item (isSuscriptor) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -563,7 +569,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                                 modifier = Modifier.weight(1f),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text(text = "Donante:")
+                                Text(text = getString(R.string.donor_label))
                                 Text(
                                     text = donador.usuarioNombre ?: "Nombre no encontrado",
                                     fontWeight = FontWeight.Bold,
@@ -577,7 +583,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start
+                            horizontalArrangement = Arrangement.Center
                         ) {
                             Button(
                                 onClick = {
@@ -612,8 +618,8 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                Text(text = "${donacion?.descripcion}")
-                                Text(text = "- ${donacion?.estado}")
+                                Text(text = getString(R.string.description_label, donacion?.descripcion))
+                                Text(text = getString(R.string.donation_status_label, donacion?.estado))
                             }
                         }
                     }
@@ -627,7 +633,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
-                                Text(text = "kilos a reservar")
+                                Text(text = getString(R.string.kilograms_to_reserve))
                                 TextField(
                                     value = value,
                                     onValueChange = { newValue ->
@@ -640,7 +646,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                                 )
                                 if (isError) {
                                     Text(
-                                        text = "cantidad invalida",
+                                        text = getString(R.string.invalid_quantity),
                                         style = MaterialTheme.typography.subtitle1
                                     )
                                 }
@@ -671,7 +677,7 @@ class SolicitantesPropuestasActivity : ComponentActivity() {
                             },
                             modifier = Modifier.fillMaxWidth(0.8f)
                         ) {
-                            Text("Reservar")
+                            Text(getString(R.string.reserve_label))
                         }
                     }
                 }

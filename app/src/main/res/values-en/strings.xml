@@ -163,5 +163,30 @@
     <string name="donacion_terminada">Donation Completed</string>
     <string name="error_terminar_donacion">Error finishing the donation</string>
 
+    <!-- strings de crear reserva -->
+
+    <string name="applicants_proposals">Food proposals</string>
+    <string name="view_made_reservations">View made reservations</string>
+    <string name="food_donation">Food: %1$s %2$s</string>
+    <string name="expires_in">Expires in: %1$s days</string>
+    <string name="donor_label">Donor: </string>
+    <string name="distance_label">Distance: </string>
+    <string name="reservation_details">Reservation details</string>
+    <string name="food_label">Food:</string>
+    <string name="remaining_weight_label">Remaining weight:</string>
+    <string name="total_weight_label">Total Weight:</string>
+    <string name="kilograms_to_reserve">Kilograms to reserve:</string>
+    <string name="invalid_quantity">Invalid quantity</string>
+    <string name="reserve_label">Reserve</string>
+    <string name="subscribe_to_donor">Subscribe to donor</string>
+    <string name="unsubscribe_from_donor">Unsubscribe from donor</string>
+    <string name="description_label">Description: %1$s</string>
+    <string name="donation_status_label">Donation Status: %1$s</string>
+
+
+
+
+
+
 
 </resources>
