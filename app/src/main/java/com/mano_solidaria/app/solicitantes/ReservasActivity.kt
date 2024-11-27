@@ -155,35 +155,30 @@ class ReservasActivity : ComponentActivity(){
                 )
             }
 
-            // Columna para la información de la reserva (peso, distancia, estado)
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .padding(1.dp),
             ) {
                 Text(
+                    stringResource(id = R.string.nombre_alimento, reserva.alimento),
+                    style = MaterialTheme.typography.body2,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1, // Limitar a 1 línea
+                    overflow = TextOverflow.Ellipsis, // Puntos suspensivos si excede
+                )
+                Text(
                     stringResource(id = R.string.peso_reservado, reserva.pesoReservado),
                     style = MaterialTheme.typography.body2,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = stringResource(id = R.string.distancia, String.format("%.2f", reserva.distancia)),
                     style = MaterialTheme.typography.body2,
-                    fontWeight = FontWeight.Normal
-                )
-                Text(
-                    stringResource(id = R.string.estado, reserva.estado),
-                    style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Normal,
-                    color = when (reserva.estado) {
-                        "entregado" -> Color.Green
-                        "cancelada" -> Color.Red
-                        else -> MaterialTheme.colors.onBackground
-                    }
                 )
             }
 
-            // Columna para la información del donante y la fecha de publicación
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -194,13 +189,17 @@ class ReservasActivity : ComponentActivity(){
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1, // Limitar a 1 línea
-                    overflow = TextOverflow.Ellipsis // Puntos suspensivos si excede
+                    overflow = TextOverflow.Ellipsis, // Puntos suspensivos si excede
                 )
                 Text(
-                    stringResource(id = R.string.fecha_publicacion, reserva.tiempoInicial),
+                    stringResource(id = R.string.estado, reserva.estado),
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Normal,
-                    color = Color.Gray
+                    color = when (reserva.estado) {
+                        "entregado" -> Color.Green
+                        "cancelada" -> Color.Red
+                        else -> MaterialTheme.colors.onBackground
+                    },
                 )
             }
         }
