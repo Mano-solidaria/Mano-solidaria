@@ -171,11 +171,15 @@ class ReservasActivity : ComponentActivity(){
                     stringResource(id = R.string.peso_reservado, reserva.pesoReservado),
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Bold,
+                    maxLines = 1, // Limitar a 1 línea
+                    overflow = TextOverflow.Ellipsis, // Puntos suspensivos si excede
                 )
                 Text(
-                    text = stringResource(id = R.string.distancia, String.format("%.2f", reserva.distancia)),
+                    text = stringResource(id = R.string.distancia_lista, String.format("%.2f", reserva.distancia)),
                     style = MaterialTheme.typography.body2,
                     fontWeight = FontWeight.Normal,
+                    maxLines = 1, // Limitar a 1 línea
+                    overflow = TextOverflow.Ellipsis, // Puntos suspensivos si excede
                 )
             }
 
@@ -200,6 +204,8 @@ class ReservasActivity : ComponentActivity(){
                         "cancelada" -> Color.Red
                         else -> MaterialTheme.colors.onBackground
                     },
+                    maxLines = 1, // Limitar a 1 línea
+                    overflow = TextOverflow.Ellipsis, // Puntos suspensivos si excede
                 )
             }
         }

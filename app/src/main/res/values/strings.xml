@@ -26,6 +26,7 @@
     <string name="reserva_no_encontrada">Reserva no encontrada</string>
     <string name="peso_reservado">Reservado: %1$s kg</string>
     <string name="distancia">Distancia: %1$s km</string>
+    <string name="distancia_lista">Dist.: %1$s km</string>
     <string name="estado">Estado: %1$s</string>
     <string name="imagen_reserva">Imagen de la reserva</string>
     <string name="nombre_alimento">Alimento: %1$s</string>

@@ -28,6 +28,7 @@
     <string name="reserva_no_encontrada">Reservation not found</string>
     <string name="peso_reservado">Reserved: %1$s kg</string>
     <string name="distancia">Distance: %1$s km</string>
+    <string name="distancia_lista">Dist.: %1$s km</string>
     <string name="estado">Status: %1$s</string>
     <string name="imagen_reserva">Reservation image</string>
     <string name="nombre_alimento">Food: %1$s</string>
